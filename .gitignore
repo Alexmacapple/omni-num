@@ -1,0 +1,64 @@
+# OmniStudio — .gitignore
+# Voir PRD-MIGRATION-001 v1.5 pour la liste des exclusions.
+
+# Système
+.DS_Store
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+venv/
+.venv/
+
+# Node (esbuild, playwright)
+node_modules/
+npm-debug.log*
+
+# OmniVoice (dépôt Git séparé, github.com/Alexmacapple/OmniVoice)
+OmniVoice/
+
+# Modèles ML lourds (téléchargés au premier boot par faster-whisper)
+data/models/
+
+# Base de données SQLite et WAL
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Audio généré et exports temporaires
+voice/
+export/
+temp/
+
+# Logs
+logs/
+*.log
+
+# Brouillons de commit (voir git-rules.md)
+.commit-drafts/
+
+# Secrets locaux
+.env
+.env.local
+CLAUDE.local.md
+gitingore/
+
+# Build frontend prod
+omnistudio/frontend/out-dist/
+
+# ===== EXCEPTIONS EXPLICITES (versionnés malgré les règles ci-dessus) =====
+
+# Les 6 voix système pré-générées DOIVENT être versionnées (décision 4 v1.4)
+!data/voices-system/
+!data/voices-system/**
+
+# Le catalogue JSON de référence DOIT être versionné
+!data/default_voices.json
