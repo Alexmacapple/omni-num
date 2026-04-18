@@ -109,29 +109,65 @@ class RenameVoiceRequest(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
+def _read_voice_meta(voice_name: str) -> dict:
+    """Lit meta.json d'une voix custom sur le disque OmniVoice.
+
+    Retourne un dict partiel (owner, system, source, description...).
+    Si le fichier est absent, retourne un dict vide.
+    """
+    meta_path = Path(OMNIVOICE_VOICES_DIR) / "custom" / voice_name / "meta.json"
+    if not meta_path.exists():
+        return {}
+    try:
+        with open(meta_path) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
 @router.get("/api/voices")
 async def list_voices(
     user=Depends(get_current_user),
     thread_id: str = Depends(get_thread_id),
 ):
-    """Lister les voix (natives OmniVoice + templates + custom)."""
+    """Liste les voix accessibles à l'utilisateur.
+
+    Filtre PRD v1.5 décision 7 (traite PRD-032) :
+    - Voix custom : owner == user.sub OU system == true
+    - Voix natives OmniVoice (inexistantes en pratique) : visibles à tous
+    """
     _verify_session_owner(thread_id, user["user_id"])
     omnivoice_voices = await asyncio.to_thread(vox_client.get_voices)
+    user_sub = user["user_id"]
 
     voices = []
     for v in omnivoice_voices:
         if v.get("type") == "custom":
+            # Enrichir avec le meta.json local (owner, system)
+            meta = _read_voice_meta(v["name"])
+            owner = meta.get("owner")
+            is_system = meta.get("system", False)
+
+            # Filtrage ownership (PRD décision 7)
+            if not is_system and owner != user_sub:
+                continue  # voix d'un autre utilisateur, skip
+
             voices.append({
                 "name": v["name"], "type": "custom",
-                "source": v.get("source", "unknown"),
-                "description": v.get("description", ""),
+                "source": v.get("source", meta.get("source", "unknown")),
+                "description": v.get("description", meta.get("description", "")),
                 "gender": v.get("gender", ""),
+                "system": is_system,
+                "owner": owner if not is_system else None,
             })
         else:
+            # Voix native OmniVoice (en pratique il n'y en a pas, OmniVoice n'a pas de natives)
             voices.append({
                 "name": v["name"], "type": "native",
                 "description": v.get("description", f"Voix native {v['name']}"),
                 "gender": v.get("gender", ""),
+                "system": True,
+                "owner": None,
             })
 
     return api_response({"voices": voices, "total": len(voices)})
@@ -443,8 +479,30 @@ async def voices_delete(
     user=Depends(get_current_user),
     thread_id: str = Depends(get_thread_id),
 ):
-    """Supprimer une voix custom."""
+    """Supprimer une voix custom.
+
+    Vérifie ownership (PRD v1.5 décision 7) :
+    - Voix `system: true` : jamais supprimable (403)
+    - Voix d'un autre utilisateur : 403
+    """
     _verify_session_owner(thread_id, user["user_id"])
+
+    # Check ownership via meta.json
+    meta = _read_voice_meta(name)
+    if meta.get("system") is True:
+        return api_error(
+            "VOICE_SYSTEM_PROTECTED",
+            "Voix système non modifiable (partagée par tous les utilisateurs).",
+            status_code=403,
+        )
+    owner = meta.get("owner")
+    if owner and owner != user["user_id"]:
+        return api_error(
+            "VOICE_NOT_OWNER",
+            f"Voix '{name}' appartient à un autre utilisateur.",
+            status_code=403,
+        )
+
     config = {"configurable": {"thread_id": thread_id}}
     state = await asyncio.to_thread(lambda: graph_app.get_state(config).values)
     assignments = state.get("assignments", {})
@@ -582,3 +640,55 @@ async def voices_import(
             imported.append(folder)
 
     return api_response({"imported": imported, "count": len(imported)})
+
+
+# ============================================================================
+# Nouveaux endpoints omnistudio (PRD v1.5 décisions 11, 12, 5 : tags, attributes, transcribe)
+# ============================================================================
+
+
+@router.get("/api/voices/tags")
+async def get_voice_tags(user=Depends(get_current_user)):
+    """Retourne les 13 tags émotionnels non-verbaux (proxy OmniVoice GET /tags).
+
+    Utilisé par la palette DSFR dans onglets 2 et 3 (PRD décision 11).
+    """
+    tags = await asyncio.to_thread(vox_client.get_tags)
+    return api_response({"tags": tags, "count": len(tags)})
+
+
+@router.get("/api/voices/design-attributes")
+async def get_design_attributes_endpoint(user=Depends(get_current_user)):
+    """Retourne les attributs Voice Design 6 catégories (proxy OmniVoice).
+
+    Utilisé pour peupler dynamiquement les selects Guidé (PRD décision 12).
+    """
+    attrs = await asyncio.to_thread(vox_client.get_design_attributes)
+    return api_response(attrs)
+
+
+@router.post("/api/voices/transcribe")
+async def transcribe_endpoint(
+    audio: UploadFile = File(...),
+    language: str = Form("auto"),
+    user=Depends(get_current_user),
+):
+    """Transcrit un audio via Whisper intégré OmniVoice (proxy POST /transcribe).
+
+    Utilisé par l'onglet 3 Clone pour remplir automatiquement reference_text (PRD décision 5).
+    """
+    temp_path = f"temp/transcribe_{user['user_id']}_{int(asyncio.get_event_loop().time()*1000)}.wav"
+    os.makedirs("temp", exist_ok=True)
+    with open(temp_path, "wb") as f:
+        f.write(await audio.read())
+
+    try:
+        text = await asyncio.to_thread(vox_client.transcribe_audio, temp_path, language)
+        if text is None:
+            return api_error("TRANSCRIBE_FAILED", "Transcription impossible", status_code=500)
+        return api_response({"text": text})
+    finally:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass

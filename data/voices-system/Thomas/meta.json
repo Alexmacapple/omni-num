@@ -1,0 +1,11 @@
+{
+  "name": "Thomas",
+  "source": "design",
+  "instruct": "male, elderly, very low pitch, authoritative",
+  "description": "Voix masculine mature, profonde et autoritaire",
+  "language": "fr",
+  "created_at": "2026-04-18T22:59:33.736978",
+  "version": "1.0",
+  "system": true,
+  "owner": null
+}

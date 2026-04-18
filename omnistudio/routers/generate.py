@@ -398,3 +398,37 @@ async def generate_sample(
         samples.append({"step_id": sid, "audio_url": audio_url})
 
     return api_response({"samples": samples})
+
+
+# ============================================================================
+# Nouvel endpoint omnistudio — voix aléatoire (PRD v1.5 décision 15)
+# ============================================================================
+
+
+class RandomRequest(BaseModel):
+    text: str
+    language: str = "auto"
+
+
+@router.post("/api/generate/random")
+async def generate_random(req: RandomRequest, user=Depends(get_current_user)):
+    """Génère un audio avec une voix aléatoire cohérente (proxy OmniVoice POST /auto).
+
+    Utile pour prototypage rapide sans sélection de voix (PRD décision 15).
+    L'audio n'est PAS sauvegardé comme voix custom.
+    """
+    try:
+        filepath = await asyncio.to_thread(vox_client.random_auto, req.text, req.language)
+        if filepath is None:
+            return api_error("RANDOM_FAILED", "Voix aléatoire échouée", status_code=500)
+
+        filename = os.path.basename(filepath)
+        return api_response({
+            "audio_url": f"api/audio/random/{filename}",
+            "filename": filename,
+            "message": "Voix aléatoire générée. Pour la conserver, cliquez sur « Ajouter à la bibliothèque ».",
+        })
+    except OmniVoiceBusyError:
+        return api_error("TTS_BUSY", "Moteur TTS occupé, réessayez dans un moment", status_code=503)
+    except OmniVoiceTimeoutError:
+        return api_error("TTS_TIMEOUT", "Génération trop longue, réessayez", status_code=504)
