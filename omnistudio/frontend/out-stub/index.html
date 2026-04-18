@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniStudio Stub — Phase 0bis</title>
+
+  <!-- Option A validée empiriquement : <base href="/omni/"> normalise tous les
+       chemins relatifs, quelle que soit l'URL d'entrée (localhost:7870/ ou
+       mac-studio-alex.tail0fc408.ts.net/omni/). -->
+  <base href="/omni/">
+
+  <link rel="stylesheet" href="css/test.css">
+
+  <!-- Chemin absolu (ne marchera QUE si <base href="/omni/"> est présent OU si
+       le server fait du rewrite. À tester en Phase 0bis étape 2. -->
+  <!-- <link rel="stylesheet" href="/css/test.css"> -->
+</head>
+<body>
+  <h1>OmniStudio — stub Phase 0bis</h1>
+
+  <p id="status">JavaScript non chargé (erreur 404 sur test.js)</p>
+
+  <table>
+    <thead>
+      <tr><th>Check</th><th>URL attendue</th><th>Statut</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Index</td>
+        <td><code>/</code> ou <code>/omni/</code></td>
+        <td>✓ vous voyez cette page</td>
+      </tr>
+      <tr>
+        <td>CSS</td>
+        <td><code>css/test.css</code> (relatif)</td>
+        <td><span id="css-check">à voir (fond coloré = OK)</span></td>
+      </tr>
+      <tr>
+        <td>JS</td>
+        <td><code>js/test.js</code> (relatif)</td>
+        <td><span id="js-check">voir #status ci-dessus</span></td>
+      </tr>
+      <tr>
+        <td>Health</td>
+        <td><code>/api/health</code></td>
+        <td><a href="api/health">tester</a> (doit retourner JSON avec <code>root_path</code>)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Cette page est servie par <code>omnistudio/stub_server.py</code> sur port 7870.
+    Elle doit fonctionner en local (<code>http://localhost:7870/</code>) ET
+    via Tailscale Funnel (<code>https://mac-studio-alex.tail0fc408.ts.net/omni/</code>).
+  </p>
+
+  <script src="js/test.js"></script>
+</body>
+</html>

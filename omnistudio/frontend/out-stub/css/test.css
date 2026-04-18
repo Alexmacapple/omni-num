@@ -1,0 +1,53 @@
+/* CSS de test pour Phase 0bis — si vous voyez un fond bleu pastel,
+   le CSS est bien servi par le stub. */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #e8f0fe;
+  color: #1a1a1a;
+  max-width: 800px;
+  margin: 2em auto;
+  padding: 1em;
+}
+
+h1 {
+  color: #0055a4;
+  border-bottom: 3px solid #e1000f;
+  padding-bottom: 0.5em;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+th, td {
+  padding: 0.5em;
+  text-align: left;
+  border-bottom: 1px solid #ccc;
+}
+
+th {
+  background: #0055a4;
+  color: white;
+}
+
+code {
+  background: #f4f4f4;
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-family: Menlo, Monaco, monospace;
+}
+
+#status {
+  padding: 0.5em;
+  border-radius: 4px;
+  background: #ffe0e0;
+  color: #a00000;
+}
+
+#status.ok {
+  background: #d4edda;
+  color: #155724;
+}
