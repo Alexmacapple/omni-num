@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="fr" data-fr-scheme="system">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OmniStudio — Studio de production vocale pour l'administration publique">
+    <title>OmniStudio — Production Vocale</title>
+    <base href="/omni/">
+
+    <!-- Prevention flash theme -->
+    <script src="js/theme-init.js"></script>
+
+    <!-- Preload polices critiques (PRD-028) -->
+    <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="dsfr/fonts/Marianne-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="dsfr/fonts/Marianne-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+    <!-- DSFR 1.11.2 -->
+    <link rel="stylesheet" href="dsfr/dsfr/dsfr.min.css">
+    <link rel="stylesheet" href="dsfr/utility/utility.min.css">
+
+    <!-- Styles custom OmniStudio -->
+    <link rel="stylesheet" href="css/app.css?v=20260410a">
+</head>
+<body>
+    <!-- Skip links -->
+    <div class="fr-skiplinks">
+        <nav class="fr-container" role="navigation" aria-label="Accès rapide">
+            <ul class="fr-skiplinks__list">
+                <li><a class="fr-link" href="#main-content">Contenu</a></li>
+                <li><a class="fr-link" href="#main-tabs">Navigation par onglets</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Header -->
+    <header role="banner" class="fr-header">
+        <div class="fr-header__body">
+            <div class="fr-container">
+                <div class="fr-header__body-row">
+                    <div class="fr-header__brand fr-enlarge-link">
+                        <div class="fr-header__brand-top">
+                            <div class="fr-header__logo">
+                                <p class="fr-logo">
+                                    République<br>Française
+                                </p>
+                            </div>
+                            <div class="fr-header__navbar">
+                                <button class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="header-menu-modal" aria-haspopup="menu" id="header-menu-btn" title="Menu">
+                                    Menu
+                                </button>
+                            </div>
+                        </div>
+                        <div class="fr-header__service">
+                            <a href="./" title="Accueil - OmniStudio">
+                                <p class="fr-header__service-title">OmniStudio</p>
+                            </a>
+                            <p class="fr-header__service-tagline">Studio de production vocale</p>
+                        </div>
+                    </div>
+                    <div class="fr-header__tools">
+                        <div class="fr-header__tools-links" data-fr-js-header-links="true">
+                            <ul class="fr-btns-group">
+                                <li>
+                                    <button class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-contrast-line"
+                                            aria-controls="fr-theme-modal" data-fr-opened="false"
+                                            type="button" title="Paramètres d'affichage"
+                                            aria-label="Paramètres d'affichage">
+                                    </button>
+                                </li>
+                                <li class="fr-ml-2w vx-header-separator">
+                                    <span id="vx-username" class="fr-text--sm fr-mr-1w"></span>
+                                </li>
+                                <li>
+                                    <button id="vx-new-session-btn"
+                                            class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-add-circle-line"
+                                            type="button" title="Nouvelle session"
+                                            aria-label="Nouvelle session">
+                                        <span class="vx-btn-label">Nouvelle session</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button id="vx-logout-btn" class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-logout-box-r-line" type="button" title="Se déconnecter" aria-label="Se déconnecter"></button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Menu mobile (requis par DSFR header-links JS pour copier les tools-links) -->
+        <div class="fr-header__menu fr-modal" id="header-menu-modal" role="dialog" aria-modal="true" aria-label="Menu de navigation">
+            <div class="fr-container">
+                <button class="fr-link--close fr-link" aria-controls="header-menu-modal">Fermer</button>
+                <div class="fr-header__menu-links"></div>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" role="main">
+        <div class="fr-container fr-mt-4w fr-mb-8w">
+
+            <!-- Ecran Login -->
+            <section id="vx-login-screen" aria-label="Connexion">
+                <div class="vx-login-card fr-p-4w">
+                    <div class="fr-mb-3w">
+                        <p class="fr-logo">République<br>Française</p>
+                    </div>
+                    <h2 class="fr-h3 fr-mb-3w">OmniStudio</h2>
+                    <p class="fr-text--sm fr-mb-3w">Studio de production vocale pour l'administration publique.</p>
+
+                    <form id="vx-login-form" novalidate>
+                        <div class="fr-input-group">
+                            <label class="fr-label" for="vx-username-input">Identifiant</label>
+                            <input class="fr-input" type="text" id="vx-username-input" name="username" autocomplete="username" required>
+                        </div>
+
+                        <div class="fr-input-group fr-mt-2w">
+                            <label class="fr-label" for="vx-password-input">Mot de passe</label>
+                            <input class="fr-input" type="password" id="vx-password-input" name="password" autocomplete="current-password" required>
+                        </div>
+
+                        <div id="vx-login-error" class="fr-error-text fr-mt-1w" role="alert" aria-live="assertive" style="display:none"></div>
+
+                        <div class="fr-mt-3w">
+                            <button type="submit" class="fr-btn fr-btn--lg vx-login__btn" title="Se connecter à OmniStudio">
+                                Se connecter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Ecran App (6 onglets) -->
+            <section id="vx-app-screen" hidden aria-label="Application OmniStudio">
+
+                <!-- Fil d'Ariane DSFR -->
+                <nav role="navigation" class="fr-breadcrumb fr-mb-2w" aria-label="vous êtes ici :">
+                    <button class="fr-breadcrumb__button" aria-expanded="false" aria-controls="vx-breadcrumb">Voir le fil d'Ariane</button>
+                    <div class="fr-collapse" id="vx-breadcrumb">
+                        <ol class="fr-breadcrumb__list" id="vx-breadcrumb-list">
+                            <li>
+                                <a class="fr-breadcrumb__link" href="#main-content">OmniStudio</a>
+                            </li>
+                            <li>
+                                <a class="fr-breadcrumb__link" aria-current="page">Import</a>
+                            </li>
+                        </ol>
+                    </div>
+                </nav>
+
+                <h1 class="fr-sr-only">OmniStudio — Studio de production vocale</h1>
+
+                <!-- Stepper mobile (visible < 768px) -->
+                <div id="vx-stepper" class="fr-stepper vx-mobile-only fr-mb-2w"
+                     role="group" aria-label="Progression des etapes">
+                    <h2 class="fr-stepper__title">
+                        <span class="fr-stepper__state">Etape 1 sur 6</span>
+                        Import
+                    </h2>
+                    <div class="fr-stepper__steps" data-fr-current-step="1" data-fr-steps="6"></div>
+                    <div class="fr-grid-row fr-grid-row--gutters fr-mt-1w">
+                        <div class="fr-col-6">
+                            <button class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-arrow-left-line vx-btn--full"
+                                    id="vx-stepper-prev" type="button" disabled>
+                                Précédent
+                            </button>
+                        </div>
+                        <div class="fr-col-6">
+                            <button class="fr-btn fr-btn--icon-right fr-icon-arrow-right-line vx-btn--full"
+                                    id="vx-stepper-next" type="button">
+                                Suivant
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="main-tabs" class="fr-tabs">
+                    <ul class="fr-tabs__list vx-desktop-only" role="tablist" aria-label="Étapes de production vocale">
+                        <li role="presentation">
+                            <button id="tab-import" class="fr-tabs__tab" tabindex="0" role="tab" aria-selected="true" aria-controls="panel-import">
+                                Import
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button id="tab-clean" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="panel-clean">
+                                Préparation
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button id="tab-voices" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="panel-voices">
+                                Voix
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button id="tab-assign" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="panel-assign">
+                                Assignation
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button id="tab-generate" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="panel-generate">
+                                Génération
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button id="tab-export" class="fr-tabs__tab" tabindex="-1" role="tab" aria-selected="false" aria-controls="panel-export">
+                                Export
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Panel 1 : Import -->
+                    <div id="panel-import" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="tab-import" tabindex="0">
+                        <h2 class="fr-h4 fr-mb-1w">Import du scénario</h2>
+                        <p class="fr-text--sm fr-text--mention-grey fr-mb-2w">
+                            Téléchargez votre fichier pour commencer. Formats acceptés : Excel, CSV, Word, PDF, Markdown ou texte brut.
+                        </p>
+
+                        <!-- Raccourci : passer l'import -->
+                        <div class="fr-callout fr-mb-3w">
+                            <h3 class="fr-callout__title">Pas de fichier ?</h3>
+                            <p class="fr-callout__text">
+                                Vous pouvez saisir vos segments manuellement dans l'onglet Préparation, sans importer de fichier.
+                            </p>
+                            <button class="fr-btn fr-btn--secondary fr-btn--sm fr-mt-1w" id="import-skip-top-btn" type="button">Passer à la préparation</button>
+                        </div>
+
+                        <!-- Upload -->
+                        <div class="fr-upload-group fr-mb-3w">
+                            <label class="fr-label" for="import-file"><span id="import-file-label">Fichier scénario</span>
+                                <span class="fr-hint-text" id="import-file-hint">Formats acceptés : .xlsx, .csv, .md, .docx, .pdf, .txt</span>
+                            </label>
+                            <input class="fr-upload" type="file" id="import-file"
+                                   accept=".xlsx,.csv,.md,.docx,.pdf,.txt"
+                                   aria-labelledby="import-file-label"
+                                   aria-describedby="import-file-hint">
+                        </div>
+
+                        <!-- FAQ formats (PRD-016) -->
+                        <div class="fr-accordions-group fr-mb-3w" id="import-format-faq">
+                            <section class="fr-accordion">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-xlsx">Excel (.xlsx)</button>
+                                </h3>
+                                <div class="fr-collapse" id="faq-xlsx">
+                                    <p>Colonne A = identifiant de l'étape (1, 2, 3...). Colonne B = texte à prononcer. La première ligne (en-tête) est ignorée. Vous pouvez choisir l'onglet à importer.</p>
+                                </div>
+                            </section>
+                            <section class="fr-accordion">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-csv">CSV (.csv)</button>
+                                </h3>
+                                <div class="fr-collapse" id="faq-csv">
+                                    <p>Même structure que Excel : colonne 1 = identifiant, colonne 2 = texte. Séparateur auto-détecté (virgule, point-virgule, tabulation). Première ligne ignorée. Encodage UTF-8 ou Latin-1.</p>
+                                </div>
+                            </section>
+                            <section class="fr-accordion">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-md">Markdown (.md)</button>
+                                </h3>
+                                <div class="fr-collapse" id="faq-md">
+                                    <p>Chaque étape commence par <code>### Étape N</code> suivi du texte à prononcer.</p>
+                                </div>
+                            </section>
+                            <section class="fr-accordion">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-docx">Word (.docx)</button>
+                                </h3>
+                                <div class="fr-collapse" id="faq-docx">
+                                    <p>Chaque paragraphe de texte = une étape. Les titres (Titre 1, Titre 2...) sont ignorés. Les tableaux et images sont ignorés. Les paragraphes longs (plus de 100 mots) sont découpés automatiquement par phrases.</p>
+                                </div>
+                            </section>
+                            <section class="fr-accordion">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-pdf">PDF (.pdf)</button>
+                                </h3>
+                                <div class="fr-collapse" id="faq-pdf">
+                                    <p>Le texte est extrait automatiquement page par page. Chaque paragraphe = une étape, numérotation automatique. Les PDF scannés (images) ne sont pas supportés : le fichier doit contenir du texte sélectionnable.</p>
+                                </div>
+                            </section>
+                            <section class="fr-accordion">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-txt">Texte brut (.txt)</button>
+                                </h3>
+                                <div class="fr-collapse" id="faq-txt">
+                                    <p>Chaque paragraphe (séparé par une ligne vide) = une étape. La numérotation est automatique. Les paragraphes longs (plus de 100 mots) sont découpés automatiquement. Encodage UTF-8 ou Latin-1.</p>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Barre de progression upload -->
+                        <div class="vx-upload-progress fr-mb-2w" hidden>
+                            <div class="fr-grid-row fr-grid-row--middle">
+                                <div class="fr-col">
+                                    <progress class="vx-upload-progress__bar" max="100" value="0" aria-label="Progression du téléchargement" title="Progression du téléchargement"></progress>
+                                </div>
+                                <div class="fr-col-auto fr-ml-1w">
+                                    <span class="vx-upload-progress__text fr-text--sm">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options Excel -->
+                        <div id="import-excel-options" class="fr-mb-3w" hidden>
+                            <div class="fr-grid-row fr-grid-row--gutters">
+                                <div class="fr-col-12 fr-col-md-6">
+                                    <div class="fr-select-group">
+                                        <label class="fr-label" for="import-sheet">Onglet Excel</label>
+                                        <select class="fr-select" id="import-sheet"></select>
+                                    </div>
+                                </div>
+                                <div class="fr-col-12 fr-col-md-6">
+                                    <fieldset class="fr-fieldset">
+                                        <legend class="fr-fieldset__legend fr-text--sm">Mode d'import</legend>
+                                        <div class="fr-fieldset__content">
+                                            <div class="fr-radio-group">
+                                                <input type="radio" id="import-mode-replace" name="import-mode" value="replace" checked>
+                                                <label class="fr-label" for="import-mode-replace">Remplacer</label>
+                                            </div>
+                                            <div class="fr-radio-group">
+                                                <input type="radio" id="import-mode-append" name="import-mode" value="append">
+                                                <label class="fr-label" for="import-mode-append">Ajouter</label>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton import -->
+                        <div class="fr-btns-group fr-mb-3w">
+                            <button class="fr-btn" id="import-btn" disabled>Importer les étapes</button>
+                        </div>
+
+                        <!-- Message statut -->
+                        <div id="import-status" role="status" aria-live="polite"></div>
+
+                        <!-- Tableau aperçu -->
+                        <div class="fr-table fr-mb-3w" id="import-table-container" hidden>
+                            <table id="import-table">
+                                <caption class="fr-sr-only">Aperçu des étapes importées</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <div class="fr-checkbox-group fr-checkbox-group--sm">
+                                                <input type="checkbox" id="import-select-all" checked>
+                                                <label class="fr-label" for="import-select-all">
+                                                    <span class="fr-sr-only">Tout sélectionner</span>
+                                                </label>
+                                            </div>
+                                        </th>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Texte Original</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Compteur selection + Continuer -->
+                        <div id="import-selection-bar" class="fr-grid-row fr-grid-row--middle fr-mb-3w" hidden>
+                            <div class="fr-col">
+                                <span id="import-selection-count" class="fr-text--sm fr-text--mention-grey"></span>
+                            </div>
+                            <div class="fr-col-auto">
+                                <button class="fr-btn" id="import-next-btn">
+                                    Continuer vers la préparation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 2 : Préparation -->
+                    <div id="panel-clean" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-clean" tabindex="0">
+                        <h2 class="fr-h4 fr-mb-1w">Préparation des textes</h2>
+                        <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
+                            L'IA prépare vos textes pour une lecture optimale par la synthèse vocale.
+                        </p>
+
+                        <!-- Configuration -->
+                        <div class="fr-accordion fr-mb-3w">
+                            <h3 class="fr-accordion__title">
+                                <button class="fr-accordion__btn" aria-expanded="false"
+                                        aria-controls="clean-config-panel">Configuration</button>
+                            </h3>
+                            <div class="fr-collapse" id="clean-config-panel">
+                                <!-- Glossaire -->
+                                <div class="fr-input-group fr-mb-2w">
+                                    <label class="fr-label" for="clean-glossary">
+                                        Glossaire et phonétique
+                                        <span class="fr-hint-text" id="clean-glossary-hint">Un remplacement par ligne : CLÉ = VALEUR</span>
+                                    </label>
+                                    <textarea class="fr-input" id="clean-glossary" rows="4"
+                                              aria-describedby="clean-glossary-hint"
+                                              placeholder="DN = Démarches Numériques&#10;MOA = maîtrise d'ouvrage"></textarea>
+                                </div>
+                                <!-- JSON corrections -->
+                                <div class="fr-upload-group fr-mb-2w">
+                                    <label class="fr-label" for="clean-json"><span id="clean-json-label">Corrections JSON (optionnel)</span>
+                                        <span class="fr-hint-text" id="clean-json-hint">Corrections automatiques appliquées avant le nettoyage IA</span>
+                                    </label>
+                                    <input class="fr-upload" type="file" id="clean-json" accept=".json"
+                                           aria-labelledby="clean-json-label"
+                                           aria-describedby="clean-json-hint clean-json-faq">
+                                </div>
+                                <div class="fr-accordions-group fr-mb-2w" id="clean-json-faq">
+                                    <section class="fr-accordion">
+                                        <h4 class="fr-accordion__title">
+                                            <button class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-json-format">Format du fichier JSON</button>
+                                        </h4>
+                                        <div class="fr-collapse" id="faq-json-format">
+                                            <p class="fr-mb-1w">Le fichier contient 3 sections, toutes optionnelles :</p>
+                                            <ul class="fr-mb-2w">
+                                                <li><strong>patterns</strong> — remplacements par expression régulière (sigles, abréviations)</li>
+                                                <li><strong>parentheses</strong> — suppressions ou remplacements exacts de parenthèses parasites</li>
+                                                <li><strong>majuscules</strong> — normalisation des mots en MAJUSCULES non naturelles</li>
+                                            </ul>
+                                            <pre class="fr-p-2w" style="background:var(--background-alt-grey);border-radius:0.25rem;font-size:0.8125rem;overflow-x:auto"><code>{
+  "patterns": {
+    "\\bEPS\\b": "éducation physique et sportive",
+    "\\bRGPD\\b": "règlement général sur la protection des données"
+  },
+  "parentheses": {
+    "(cf. annexe)": "",
+    "(voir diapo)": ""
+  },
+  "majuscules": {
+    "COMPÉTENCES": "compétences",
+    "ÉVALUATION": "évaluation"
+  }
+}</code></pre>
+                                            <p class="fr-mt-1w fr-text--sm">Les <strong>patterns</strong> utilisent des expressions régulières (<code>\b</code> = limite de mot). Les <strong>parentheses</strong> et <strong>majuscules</strong> sont des remplacements exacts. Laissez la valeur vide <code>""</code> pour supprimer.</p>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ajouter un segment -->
+                        <fieldset class="fr-fieldset fr-mb-3w" id="clean-add-step">
+                            <legend class="fr-fieldset__legend fr-h6">Ajouter un segment</legend>
+                            <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--bottom">
+                                <div class="fr-col-12 fr-col-sm-3 fr-col-md-2">
+                                    <div class="fr-input-group">
+                                        <label class="fr-label" for="clean-add-id">ID</label>
+                                        <input class="fr-input fr-input--sm" type="text" id="clean-add-id" placeholder="ex: 1">
+                                    </div>
+                                </div>
+                                <div class="fr-col">
+                                    <div class="fr-input-group">
+                                        <label class="fr-label" for="clean-add-text">Texte</label>
+                                        <input class="fr-input fr-input--sm" type="text" id="clean-add-text" placeholder="Texte du segment à ajouter">
+                                    </div>
+                                </div>
+                                <div class="fr-col-auto">
+                                    <div class="fr-input-group">
+                                        <label class="fr-label" aria-hidden="true">&nbsp;</label>
+                                        <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-add-line" id="clean-add-btn" type="button">
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Boutons d'action -->
+                        <div class="fr-btns-group fr-btns-group--inline-md fr-mb-3w">
+                            <button class="fr-btn" id="clean-btn">Lancer le nettoyage LLM</button>
+                            <button class="fr-btn fr-btn--secondary" id="clean-validate-btn" disabled>
+                                Valider tous les textes
+                            </button>
+                            <button class="fr-btn fr-btn--secondary" id="clean-delete-all-btn" type="button" disabled>
+                                Supprimer tous les segments
+                            </button>
+                        </div>
+
+                        <!-- Progression SSE -->
+                        <div id="clean-progress" class="fr-mb-2w" hidden>
+                            <div class="fr-grid-row fr-grid-row--middle">
+                                <div class="fr-col">
+                                    <progress id="clean-progress-bar" max="100" value="0" class="vx-progress" aria-label="Progression du nettoyage" title="Progression du nettoyage"></progress>
+                                </div>
+                                <div class="fr-col-auto fr-ml-1w">
+                                    <span id="clean-progress-text" class="fr-text--sm"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton Reprendre -->
+                        <div id="clean-resume" class="fr-mb-2w" hidden>
+                            <div class="fr-alert fr-alert--warning fr-alert--sm fr-mb-1w">
+                                <p><span class="fr-alert__title">Nettoyage interrompu</span> — Les étapes déjà traitées sont conservées.</p>
+                            </div>
+                            <button class="fr-btn fr-btn--secondary" id="clean-resume-btn">
+                                Reprendre le nettoyage
+                            </button>
+                        </div>
+
+                        <!-- Message statut -->
+                        <div id="clean-status" class="fr-mb-2w" role="status" aria-live="polite"></div>
+
+                        <!-- État vide (PRD-018) -->
+                        <div class="fr-callout fr-mb-3w" id="clean-empty-state" hidden>
+                            <h3 class="fr-callout__title">Aucun segment à préparer</h3>
+                            <p class="fr-callout__text">
+                                Importez un scénario depuis l'onglet Import ou ajoutez des segments
+                                manuellement pour commencer la préparation.
+                            </p>
+                        </div>
+
+                        <div class="fr-table fr-mb-3w" id="clean-table-container" hidden>
+                            <table id="clean-table">
+                                <caption>Tableau des segments avec texte original et texte préparé pour la synthèse vocale</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Texte Original</th>
+                                        <th scope="col">Texte TTS</th>
+                                        <th scope="col">Statut</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Diff (accordeon) -->
+                        <div class="fr-accordion fr-mb-3w" id="clean-diff-accordion" hidden>
+                            <h3 class="fr-accordion__title">
+                                <button class="fr-accordion__btn" aria-expanded="false"
+                                        aria-controls="clean-diff-panel">Comparaison</button>
+                            </h3>
+                            <div class="fr-collapse" id="clean-diff-panel">
+                                <div id="clean-diff-content" class="fr-p-2w"></div>
+                            </div>
+                        </div>
+
+                        <!-- Continuer -->
+                        <div class="fr-btns-group fr-btns-group--right fr-mb-3w">
+                            <button class="fr-btn" id="clean-next-btn" disabled>
+                                Continuer vers le design des voix
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel 3 : Voix -->
+                    <div id="panel-voices" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-voices" tabindex="0">
+                        <h2 class="fr-h4 fr-mb-1w">Design des voix</h2>
+                        <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
+                            Créez, explorez et verrouillez les voix pour votre production.
+                        </p>
+
+                        <!-- Phrase de test (partagee entre sous-onglets) -->
+                        <div class="fr-mb-3w">
+                            <label class="fr-label" for="voice-test-segment">
+                                Tester avec un segment
+                                <span class="fr-hint-text">Sélectionnez un de vos segments ou saisissez un texte libre</span>
+                            </label>
+                            <select class="fr-select fr-select--sm fr-mb-1w" id="voice-test-segment">
+                                <option value="">— Texte libre —</option>
+                            </select>
+                            <label class="fr-label" for="voice-test-text">Texte de test</label>
+                            <textarea class="fr-input" id="voice-test-text" rows="2"
+                                      placeholder="Bonjour, ceci est un test de timbre et de rythme pour notre nouvelle voix studio.">Ceci est un test de timbre et de rythme pour notre nouvelle voix studio.</textarea>
+                        </div>
+
+                        <!-- Sous-onglets DSFR -->
+                        <div class="fr-tabs fr-tabs--sm">
+                            <ul class="fr-tabs__list" role="tablist" aria-label="Gestion des voix">
+                                <li role="presentation">
+                                    <button id="sub-tab-library" class="fr-tabs__tab" role="tab"
+                                            aria-selected="true" aria-controls="sub-panel-library">
+                                        Bibliothèque
+                                    </button>
+                                </li>
+                                <li role="presentation">
+                                    <button id="sub-tab-design" class="fr-tabs__tab" role="tab"
+                                            aria-selected="false" aria-controls="sub-panel-design">
+                                        Créer
+                                    </button>
+                                </li>
+                                <li role="presentation">
+                                    <button id="sub-tab-clone" class="fr-tabs__tab" role="tab"
+                                            aria-selected="false" aria-controls="sub-panel-clone">
+                                        Cloner
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- 3a. Bibliothèque -->
+                            <div id="sub-panel-library" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="sub-tab-library" tabindex="0">
+                                <h3 class="fr-sr-only">Bibliothèque des voix</h3>
+                                <!-- État vide (PRD-018) -->
+                                <div class="fr-callout fr-callout--orange-terre-battue fr-mb-2w" id="voices-empty-state" hidden>
+                                    <h3 class="fr-callout__title">Aucune voix disponible</h3>
+                                    <p class="fr-callout__text">
+                                        Le moteur de synthèse vocale ne répond pas. Vérifiez que OmniVoice est démarré
+                                        puis rafraîchissez la page.
+                                    </p>
+                                </div>
+                                <p id="voice-count" class="fr-text--sm fr-text--mention-grey fr-mb-2w"></p>
+                                <div id="voice-list" class="fr-grid-row fr-grid-row--gutters fr-mb-3w"></div>
+                                <div class="fr-btns-group fr-btns-group--inline fr-mb-2w">
+                                    <button class="fr-btn fr-btn--secondary fr-btn--sm" id="voice-refresh-btn">
+                                        Actualiser
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 3b. Créer (Design) -->
+                            <div id="sub-panel-design" class="fr-tabs__panel" role="tabpanel" aria-labelledby="sub-tab-design" tabindex="0">
+
+                                <!-- Stepper unique accessible -->
+                                <div class="fr-stepper fr-mb-3w" id="design-stepper" role="group" aria-label="Progression du design vocal">
+                                    <h3 class="fr-stepper__title" id="design-stepper-title">
+                                        Décrire la voix
+                                        <span class="fr-stepper__state" id="design-stepper-state">Étape 1 sur 2</span>
+                                    </h3>
+                                    <div class="fr-stepper__steps" data-fr-current-step="1" data-fr-steps="2"></div>
+                                    <p class="fr-stepper__details fr-text--sm" id="design-stepper-details">Choisissez un profil prédéfini ou composez votre propre description.</p>
+                                </div>
+
+                                <!-- Option A : Profils prédéfinis -->
+                                <div class="fr-callout fr-mb-3w">
+                                    <h4 class="fr-callout__title">Partir d'un profil prédéfini</h4>
+                                    <p class="fr-callout__text fr-text--sm fr-mb-2w">Cliquez sur un profil pour pré-remplir la description de voix. Vous pourrez la modifier ensuite.</p>
+                                    <div id="design-templates" class="fr-btns-group fr-btns-group--inline fr-btns-group--sm"></div>
+                                </div>
+
+                                <!-- Option B : Brief IA -->
+                                <div class="fr-accordion fr-mb-3w" id="design-brief-accordion">
+                                    <h3 class="fr-accordion__title">
+                                        <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-brief-panel">Ou composer depuis zéro avec l'IA</button>
+                                    </h3>
+                                    <div class="fr-collapse" id="design-brief-panel">
+                                        <fieldset class="fr-fieldset fr-mt-2w" id="design-brief">
+                                            <legend class="fr-fieldset__legend fr-text--sm">Paramètres de la voix</legend>
+                                            <div class="fr-fieldset__content">
+                                                <div class="fr-grid-row fr-grid-row--gutters">
+                                                    <div class="fr-col-12 fr-col-md-6">
+                                                        <div class="fr-select-group">
+                                                            <label class="fr-label" for="design-context">Contexte</label>
+                                                            <select class="fr-select" id="design-context">
+                                                                <option value="" selected>— Non spécifié —</option>
+                                                                <option value="tutoriel">Tutoriel</option>
+                                                                <option value="podcast">Podcast</option>
+                                                                <option value="keynote">Keynote</option>
+                                                                <option value="documentaire">Documentaire</option>
+                                                                <option value="formation">Formation</option>
+                                                                <option value="narration">Narration</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fr-col-12 fr-col-md-6">
+                                                        <div class="fr-select-group">
+                                                            <label class="fr-label" for="design-emotion">Émotion</label>
+                                                            <select class="fr-select" id="design-emotion">
+                                                                <option value="" selected>— Non spécifié —</option>
+                                                                <option value="engageant">Engageant</option>
+                                                                <option value="rassurant">Rassurant</option>
+                                                                <option value="neutre">Neutre</option>
+                                                                <option value="autoritaire">Autoritaire</option>
+                                                                <option value="chaleureux">Chaleureux</option>
+                                                                <option value="dynamique">Dynamique</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fr-col-12 fr-col-md-6">
+                                                        <fieldset class="fr-fieldset">
+                                                            <legend class="fr-fieldset__legend fr-text--sm">Genre</legend>
+                                                            <div class="fr-fieldset__content">
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-gender-none" name="design-gender" value="" checked>
+                                                                    <label class="fr-label" for="design-gender-none">Non spécifié</label>
+                                                                </div>
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-gender-m" name="design-gender" value="masculin">
+                                                                    <label class="fr-label" for="design-gender-m">Masculin</label>
+                                                                </div>
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-gender-f" name="design-gender" value="feminin">
+                                                                    <label class="fr-label" for="design-gender-f">Féminin</label>
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+                                                    <div class="fr-col-12 fr-col-md-6">
+                                                        <fieldset class="fr-fieldset">
+                                                            <legend class="fr-fieldset__legend fr-text--sm">Âge</legend>
+                                                            <div class="fr-fieldset__content">
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-age-none" name="design-age" value="" checked>
+                                                                    <label class="fr-label" for="design-age-none">Non spécifié</label>
+                                                                </div>
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-age-young" name="design-age" value="jeune">
+                                                                    <label class="fr-label" for="design-age-young">Jeune</label>
+                                                                </div>
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-age-mature" name="design-age" value="mature">
+                                                                    <label class="fr-label" for="design-age-mature">Mature</label>
+                                                                </div>
+                                                                <div class="fr-radio-group fr-radio-group--inline">
+                                                                    <input type="radio" id="design-age-senior" name="design-age" value="age">
+                                                                    <label class="fr-label" for="design-age-senior">Âgé</label>
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+                                                    <div class="fr-col-12">
+                                                        <div class="fr-input-group">
+                                                            <label class="fr-label" for="design-extra">
+                                                                Votre description
+                                                                <span class="fr-hint-text">Décrivez la voix souhaitée. Utilisable comme brief pour l'IA ou directement comme prompt vocal.</span>
+                                                            </label>
+                                                            <textarea class="fr-input" id="design-extra" rows="3"
+                                                                      placeholder="Ex. brief : Doit inspirer confiance, pas trop rapide&#10;Ex. prompt direct : Voix masculine française mature, timbre baryton clair, ton pédagogique engagé, rythme fluide"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fr-col-12 fr-col-md-6">
+                                                        <div class="fr-input-group">
+                                                            <label class="fr-label" for="design-temperature">
+                                                                Créativité de l'IA : <span id="design-temperature-output">0.5</span>
+                                                                <span class="fr-hint-text">Créativité d'Albert pour générer le prompt vocal. Sans effet sur l'audio. Défaut : 0.5</span>
+                                                            </label>
+                                                            <input type="range" id="design-temperature"
+                                                                   min="0.1" max="1.0" step="0.1" value="0.5"
+                                                                   style="width:100%;accent-color:var(--blue-france-sun-113-625)">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                        <div class="fr-btns-group fr-btns-group--inline fr-mt-2w">
+                                            <button class="fr-btn" id="design-generate-btn">Créer le prompt vocal avec l'IA</button>
+                                            <button class="fr-btn fr-btn--secondary" id="design-use-direct-btn">Utiliser comme prompt vocal</button>
+                                        </div>
+                                        <p class="fr-hint-text fr-mt-1v">
+                                            L'IA analyse vos paramètres et génère des instructions techniques optimisées pour le moteur de synthèse vocale k2-fsa OmniVoice.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Description de voix (résultat profil ou IA) -->
+                                <div class="fr-input-group fr-mb-3w" id="design-instruct-group" hidden>
+                                    <label class="fr-label" for="design-instruct">
+                                        Prompt vocal
+                                        <span class="fr-hint-text">Instructions envoyées au moteur de synthèse. Vous pouvez le modifier avant d'écouter.</span>
+                                    </label>
+                                    <textarea class="fr-input" id="design-instruct" rows="3"></textarea>
+                                    <div class="fr-mt-1w fr-mb-1w" id="design-quick-adjust" hidden>
+                                        <p class="fr-text--xs fr-mb-1v">Ajustements rapides (modifie le prompt directement) :</p>
+                                        <ul class="fr-tags-group" id="design-modifier-tags">
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="grave" data-excludes="aigu" aria-pressed="false">+ grave</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="aigu" data-excludes="grave" aria-pressed="false">+ aigu</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="chaleureux" aria-pressed="false">+ chaleureux</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="clair" aria-pressed="false">+ clair</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="lent" data-excludes="rapide" aria-pressed="false">+ lent</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="rapide" data-excludes="lent" aria-pressed="false">+ rapide</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="pauses" aria-pressed="false">+ pauses</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="engageant" data-excludes="pose" aria-pressed="false">+ engageant</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="pose" data-excludes="engageant" aria-pressed="false">+ posé</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="autoritaire" aria-pressed="false">+ autoritaire</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="proche" aria-pressed="false">+ proche micro</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="articule" aria-pressed="false">+ articulé</button></li>
+                                        </ul>
+                                    </div>
+                                    <div class="fr-accordion fr-mt-1w" id="design-ai-details" hidden>
+                                        <h4 class="fr-accordion__title">
+                                            <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-ai-details-content">
+                                                Voir les paramètres utilisés
+                                            </button>
+                                        </h4>
+                                        <div class="fr-collapse" id="design-ai-details-content">
+                                            <div class="fr-table fr-table--sm">
+                                                <table>
+                                                    <tr><th>Paramètre</th><th>Valeur</th></tr>
+                                                    <tr><td>Genre</td><td id="ai-param-genre"></td></tr>
+                                                    <tr><td>Âge</td><td id="ai-param-age"></td></tr>
+                                                    <tr><td>Contexte</td><td id="ai-param-contexte"></td></tr>
+                                                    <tr><td>Émotion</td><td id="ai-param-emotion"></td></tr>
+                                                    <tr><td>Préférences</td><td id="ai-param-extra"></td></tr>
+                                                </table>
+                                            </div>
+                                            <p class="fr-text--xs fr-mt-1w" id="ai-details-footer">Ces paramètres ont été envoyés à Albert (LLM) qui a produit le prompt vocal ci-dessus.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Etape 2 : Écoute et ajustement -->
+                                <div id="design-listen-section" hidden>
+                                    <h3 class="fr-h5 fr-mb-2w">Écouter et ajuster</h3>
+
+                                    <div id="design-current-audio" class="fr-mb-1w" hidden>
+                                        <audio id="design-audio-player" controls class="vx-audio-player" aria-label="Aperçu de la voix en cours de design">
+                                                                                    </audio>
+                                    </div>
+
+                                    <div class="fr-btns-group fr-btns-group--inline fr-mb-2w">
+                                        <button class="fr-btn" id="design-regen-btn">Écouter cette voix</button>
+                                    </div>
+
+                                    <div class="fr-alert fr-alert--info fr-alert--sm fr-mb-2w" id="design-volatile-badge">
+                                        <p>Chaque génération produit un timbre différent. Régénérez et comparez pour trouver la voix idéale.</p>
+                                    </div>
+
+                                </div>
+
+                                <!-- Enregistrement de la voix -->
+                                <div id="design-lock-section" hidden>
+                                    <h3 class="fr-h5 fr-mb-2w">Enregistrer la voix</h3>
+
+                                    <div class="fr-callout fr-mb-3w">
+                                        <h4 class="fr-callout__title">Satisfait du résultat ?</h4>
+                                        <p class="fr-callout__text">Donnez un nom à cette voix pour l'enregistrer. Elle sera disponible dans la bibliothèque et pour l'assignation.</p>
+                                    </div>
+
+                                    <div class="fr-grid-row fr-grid-row--gutters fr-mb-2w">
+                                        <div class="fr-col-12 fr-col-md-6">
+                                            <div class="fr-input-group" id="design-lock-name-group">
+                                                <label class="fr-label" for="design-lock-name">
+                                                    Nom de la voix
+                                                    <span class="fr-hint-text">3-50 caractères, minuscules non accentuées, chiffres et tirets</span>
+                                                </label>
+                                                <input class="fr-input" type="text" id="design-lock-name"
+                                                       pattern="^[a-z0-9\-]{3,50}$"
+                                                       placeholder="narrateur-projet-alpha"
+                                                       aria-describedby="design-lock-name-error"
+                                                       autocomplete="off">
+                                                <p class="fr-error-text" id="design-lock-name-error" hidden></p>
+                                            </div>
+                                        </div>
+                                        <div class="fr-col-12 fr-col-md-6">
+                                            <div class="fr-input-group">
+                                                <label class="fr-label" for="design-lock-desc">
+                                                    Description
+                                                    <span class="fr-hint-text">Optionnel</span>
+                                                </label>
+                                                <input class="fr-input" type="text" id="design-lock-desc"
+                                                       placeholder="Voix pour le projet Alpha">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="fr-btns-group fr-mb-3w">
+                                        <button class="fr-btn" id="design-lock-btn" disabled>Verrouiller cette voix</button>
+                                    </div>
+
+                                    <div id="design-lock-result" hidden>
+                                        <div class="fr-alert fr-alert--success fr-alert--sm fr-mb-2w">
+                                            <p id="design-lock-msg"></p>
+                                        </div>
+                                        <audio id="design-locked-player" controls class="vx-audio-player" aria-label="Aperçu de la voix verrouillée">
+                                                                                    </audio>
+                                    </div>
+                                </div>
+
+                                <!-- Phase 4 : Test de stabilité -->
+                                <div id="design-stability-section" hidden>
+                                    <h4 class="fr-h6 fr-mb-2w">Test de stabilité</h4>
+                                    <button class="fr-btn fr-btn--secondary fr-btn--sm" id="design-stability-btn">
+                                        Tester la stabilité (3 générations)
+                                    </button>
+                                    <div id="design-stability-results" class="fr-grid-row fr-grid-row--gutters fr-mt-2w" hidden></div>
+                                    <div id="design-stability-indicator" class="fr-mb-3w" hidden></div>
+                                </div>
+
+                                <div id="design-status" role="status" aria-live="polite"></div>
+                            </div>
+
+                            <!-- 3c. Cloner -->
+                            <div id="sub-panel-clone" class="fr-tabs__panel" role="tabpanel" aria-labelledby="sub-tab-clone" tabindex="0">
+                                <h3 class="fr-sr-only">Cloner une voix</h3>
+                                <div class="fr-grid-row fr-grid-row--gutters fr-mb-3w">
+                                    <div class="fr-col-12">
+                                        <!-- Upload fichier -->
+                                        <div class="fr-upload-group fr-mb-2w" id="clone-audio-group">
+                                            <label class="fr-label" for="clone-audio"><span id="clone-audio-label">Fichier audio de référence pour le clonage</span>
+                                                <span class="fr-hint-text" id="clone-audio-hint">WAV, MP3, FLAC ou OGG — 1 à 30 secondes</span>
+                                            </label>
+                                            <input class="fr-upload" type="file" id="clone-audio"
+                                                   accept=".wav,.mp3,.flac,.ogg"
+                                                   aria-labelledby="clone-audio-label"
+                                                   aria-describedby="clone-audio-hint">
+                                            <p id="clone-audio-error" class="fr-error-text" style="display:none"></p>
+                                        </div>
+
+                                        <p class="fr-text--sm fr-text--mention-grey fr-mb-2w vx-text-center">— ou —</p>
+
+                                        <!-- Enregistrement micro -->
+                                        <div id="clone-record-group" class="fr-mb-2w">
+                                            <p class="fr-text--sm fr-text--bold fr-mb-1w" id="clone-record-label">Enregistrer depuis le microphone</p>
+                                            <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-mic-fill"
+                                                    id="clone-record-btn" type="button"
+                                                    aria-pressed="false"
+                                                    aria-describedby="clone-record-label"
+                                                    data-label-start="Démarrer l'enregistrement vocal"
+                                                    data-label-stop="Arrêter l'enregistrement en cours">Démarrer l'enregistrement vocal</button>
+                                            <div id="clone-record-status" class="fr-text--sm fr-mt-1v" role="status" aria-live="polite"></div>
+                                            <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-btn--icon-left fr-icon-delete-line fr-mt-1v"
+                                                    id="clone-record-delete" type="button" hidden>Supprimer et recommencer</button>
+                                        </div>
+
+                                        <!-- Aperçu audio -->
+                                        <div id="clone-preview" class="fr-mb-2w" hidden>
+                                            <p class="fr-text--sm fr-text--bold fr-mb-1v">Aperçu audio</p>
+                                            <audio id="clone-preview-player" controls class="vx-audio-player"
+                                                   aria-label="Aperçu audio de référence pour le clonage">
+                                                                                            </audio>
+                                            <p id="clone-audio-info" class="fr-text--xs fr-text--mention-grey fr-mt-1v"></p>
+                                        </div>
+                                    </div>
+                                    <div class="fr-col-12">
+                                        <div class="fr-input-group">
+                                            <label class="fr-label" for="clone-transcription">
+                                                Transcription exacte
+                                                <span class="fr-hint-text">Le texte exact prononcé dans l'audio (obligatoire)</span>
+                                            </label>
+                                            <textarea class="fr-input" id="clone-transcription" rows="3"
+                                                      required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-6">
+                                        <div class="fr-input-group">
+                                            <label class="fr-label" for="clone-name">
+                                                Nom de la voix
+                                                <span class="fr-hint-text">3-50 caractères, minuscules non accentuées, chiffres et tirets</span>
+                                            </label>
+                                            <input class="fr-input" type="text" id="clone-name"
+                                                   pattern="^[a-z0-9\-]{3,50}$" required
+                                                   placeholder="voix-clone-expert">
+                                        </div>
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-6">
+                                        <fieldset class="fr-fieldset">
+                                            <legend class="fr-fieldset__legend fr-text--sm">Modèle</legend>
+                                            <div class="fr-fieldset__content">
+                                                <div class="fr-radio-group">
+                                                    <input type="radio" id="clone-model-17b" name="clone-model" value="1.7B" checked>
+                                                    <label class="fr-label" for="clone-model-17b">1.7B (qualité)</label>
+                                                </div>
+                                                <div class="fr-radio-group">
+                                                    <input type="radio" id="clone-model-06b" name="clone-model" value="0.6B">
+                                                    <label class="fr-label" for="clone-model-06b">0.6B (rapide)</label>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="fr-col-12">
+                                        <div class="fr-input-group">
+                                            <label class="fr-label" for="clone-desc">
+                                                Description
+                                                <span class="fr-hint-text">Optionnel</span>
+                                            </label>
+                                            <input class="fr-input" type="text" id="clone-desc">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="fr-btns-group fr-mb-2w">
+                                    <button class="fr-btn" id="clone-btn" disabled>Créer le clone</button>
+                                </div>
+                                <p id="clone-validation-hint" class="fr-text--xs fr-text--mention-grey fr-mb-2w" aria-live="polite"></p>
+
+                                <!-- Statut de progression (avant le resultat) -->
+                                <div id="clone-status" class="fr-mb-2w" role="status" aria-live="polite"></div>
+
+                                <!-- Resultat du clonage -->
+                                <div id="clone-result" class="fr-mb-3w" hidden>
+                                    <div class="fr-alert fr-alert--success fr-alert--sm fr-mb-2w">
+                                        <p id="clone-result-msg"></p>
+                                    </div>
+                                    <div class="fr-mt-2w">
+                                        <p class="fr-text--sm fr-text--bold fr-mb-1w">Aperçu de la voix clonée</p>
+                                        <audio id="clone-audio-player" controls class="vx-audio-player fr-mb-1w" aria-label="Aperçu de la voix clonée"></audio>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Résumé sélection + Continuer -->
+                        <div class="fr-grid-row fr-grid-row--middle fr-grid-row--gutters fr-mt-3w fr-mb-2w">
+                            <div class="fr-col">
+                                <p class="fr-text--sm fr-text--mention-grey fr-mb-0" id="voices-selection-summary" hidden></p>
+                            </div>
+                        </div>
+                        <div class="fr-btns-group fr-btns-group--right fr-mt-1w">
+                            <button class="fr-btn" id="voices-next-btn" disabled>
+                                Continuer vers l'assignation
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel 4 : Assignation -->
+                    <div id="panel-assign" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-assign" tabindex="0">
+                        <h2 class="fr-h3 fr-mb-1w">Assignation des voix</h2>
+                        <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
+                            Attribuez une voix à chaque étape du scénario.
+                        </p>
+
+                        <!-- Selecteurs globaux -->
+                        <div class="fr-grid-row fr-grid-row--gutters fr-mb-3w">
+                            <div class="fr-col-12 fr-col-md-6 fr-col-lg-3">
+                                <div class="fr-select-group">
+                                    <label class="fr-label" for="assign-voice">Voix par défaut</label>
+                                    <select class="fr-select" id="assign-voice"></select>
+                                </div>
+                            </div>
+                            <div class="fr-col-6 fr-col-md-3 fr-col-lg-2">
+                                <div class="fr-select-group">
+                                    <label class="fr-label" for="assign-lang">Langue</label>
+                                    <select class="fr-select" id="assign-lang">
+                                        <option value="fr" selected>Français</option>
+                                        <option value="en">Anglais</option>
+                                        <option value="zh">Chinois</option>
+                                        <option value="jp">Japonais</option>
+                                        <option value="ko">Coréen</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="fr-col-6 fr-col-md-3 fr-col-lg-2">
+                                <div class="fr-range-group">
+                                    <label class="fr-label" for="assign-speed">
+                                        Vitesse
+                                        <span class="fr-hint-text" id="assign-speed-value">1.0x</span>
+                                    </label>
+                                    <div class="fr-range" data-fr-js-range="true">
+                                        <span class="fr-range__output">1.0x</span>
+                                        <input type="range" id="assign-speed"
+                                               min="0.5" max="2.0" step="0.1" value="1.0"
+                                               aria-valuetext="1.0x">
+                                        <span class="fr-range__min">0.5x</span>
+                                        <span class="fr-range__max">2.0x</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fr-col-12 fr-col-md-6 fr-col-lg-3">
+                                <div class="fr-input-group">
+                                    <label class="fr-label" for="assign-instruction">
+                                        Instruction émotionnelle
+                                        <span class="fr-hint-text">Voix natives uniquement</span>
+                                    </label>
+                                    <input class="fr-input" type="text" id="assign-instruction"
+                                           placeholder="Ex : Ton chaleureux et rassurant" disabled>
+                                </div>
+                            </div>
+                            <div class="fr-col-12 fr-col-md-6 fr-col-lg-2">
+                                <div class="fr-btns-group fr-mt-4w">
+                                    <button class="fr-btn" id="assign-apply-all-btn">Appliquer à tout</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message instruction desactivee -->
+                        <div id="assign-instruction-info" class="fr-mb-2w" hidden>
+                            <p class="fr-text--sm fr-text--mention-grey">
+                                L'instruction émotionnelle n'est disponible que pour les voix natives (Lea, Marianne, Jean…).
+                            </p>
+                        </div>
+
+                        <!-- Ajout manuel de segment -->
+                        <div class="fr-mb-3w" id="assign-add-step">
+                            <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--bottom">
+                                <div class="fr-col-4 fr-col-md-2">
+                                    <div class="fr-input-group">
+                                        <label class="fr-label" for="assign-add-id">ID</label>
+                                        <input class="fr-input fr-input--sm" type="text" id="assign-add-id" placeholder="ex: 1">
+                                    </div>
+                                </div>
+                                <div class="fr-col">
+                                    <div class="fr-input-group">
+                                        <label class="fr-label" for="assign-add-text">Texte</label>
+                                        <input class="fr-input fr-input--sm" type="text" id="assign-add-text" placeholder="Texte du segment">
+                                    </div>
+                                </div>
+                                <div class="fr-col-auto">
+                                    <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-add-line" id="assign-add-btn" type="button">Ajouter</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- État vide (PRD-018) -->
+                        <div class="fr-callout fr-mb-3w" id="assign-empty-state" hidden>
+                            <h3 class="fr-callout__title">Aucun segment à assigner</h3>
+                            <p class="fr-callout__text">
+                                Complétez les étapes Import et Préparation pour voir vos segments ici.
+                                Chaque segment recevra une voix, une langue et une vitesse.
+                            </p>
+                        </div>
+
+                        <!-- Tableau d'assignation -->
+                        <div class="fr-table fr-mb-3w vx-table-scroll" id="assign-table-container"
+                             tabindex="0" role="region" aria-label="Tableau d'assignation, défilement possible">
+                            <table id="assign-table">
+                                <caption class="fr-sr-only">Assignation voix par étape</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col" id="th-assign-id">ID</th>
+                                        <th scope="col" id="th-assign-text">Texte</th>
+                                        <th scope="col" id="th-assign-lang">Langue</th>
+                                        <th scope="col" id="th-assign-voice">Voix</th>
+                                        <th scope="col" id="th-assign-speed">Vitesse</th>
+                                        <th scope="col" id="th-assign-instruct">Instruction</th>
+                                        <th scope="col" id="th-assign-actions">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Statut + Navigation -->
+                        <div id="assign-status" role="status" aria-live="polite"></div>
+
+                        <div class="fr-btns-group fr-btns-group--right fr-mt-3w">
+                            <button class="fr-btn" id="assign-next-btn">
+                                Continuer vers la génération
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel 5 : Génération -->
+                    <div id="panel-generate" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-generate" tabindex="0">
+                        <h2 class="fr-h3 fr-mb-3w">Génération des voix</h2>
+
+                        <!-- Récapitulatif -->
+                        <div id="generate-summary" class="fr-callout fr-mb-3w">
+                            <p id="generate-summary-text" class="fr-callout__text">Chargement...</p>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="fr-grid-row fr-grid-row--gutters fr-mb-3w">
+                            <div class="fr-col-12 fr-col-md-6">
+                                <fieldset class="fr-fieldset">
+                                    <legend class="fr-fieldset__legend fr-text--sm">Fidélité</legend>
+                                    <div class="fr-fieldset__content">
+                                        <div class="fr-radio-group">
+                                            <input type="radio" id="gen-quality" name="gen-fidelity" value="quality" checked>
+                                            <label class="fr-label" for="gen-quality">Production (1.7B)</label>
+                                        </div>
+                                        <div class="fr-radio-group">
+                                            <input type="radio" id="gen-speed" name="gen-fidelity" value="speed">
+                                            <label class="fr-label" for="gen-speed">Brouillon (0.6B)</label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="fr-btns-group fr-btns-group--inline fr-mb-3w">
+                            <button class="fr-btn fr-btn--secondary" id="gen-sample-btn">Échantillon (3 étapes)</button>
+                            <button class="fr-btn" id="gen-start-btn">Lancer la production</button>
+                        </div>
+
+                        <!-- Échantillon -->
+                        <div id="gen-sample-results" class="fr-grid-row fr-grid-row--gutters fr-mb-3w" hidden aria-live="polite"></div>
+
+                        <!-- Progression SSE -->
+                        <div id="gen-progress" class="fr-mb-2w" hidden>
+                            <div class="fr-grid-row fr-grid-row--middle fr-mb-1w">
+                                <div class="fr-col">
+                                    <progress id="gen-progress-bar" max="100" value="0" class="vx-progress"
+                                              aria-label="Progression de la génération"
+                                              title="Progression de la génération"
+                                              aria-valuetext="Démarrage..."></progress>
+                                </div>
+                                <div class="fr-col-auto fr-ml-1w">
+                                    <span id="gen-progress-text" class="fr-text--sm"></span>
+                                </div>
+                            </div>
+                            <!-- Journal d'activité -->
+                            <div class="fr-accordion fr-mb-1w">
+                                <h3 class="fr-accordion__title">
+                                    <button class="fr-accordion__btn" aria-expanded="true" aria-controls="gen-log-panel">Journal de génération</button>
+                                </h3>
+                                <div class="fr-collapse fr-collapse--expanded" id="gen-log-panel">
+                                    <div id="gen-log" class="vx-gen-log" role="log" aria-live="polite" aria-label="Journal de génération en temps réel"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton Reprendre -->
+                        <div id="gen-resume" class="fr-mb-2w" hidden>
+                            <div class="fr-alert fr-alert--warning fr-alert--sm fr-mb-1w">
+                                <p><span class="fr-alert__title">Génération interrompue</span> — Les fichiers déjà produits sont conservés.</p>
+                            </div>
+                            <button class="fr-btn fr-btn--secondary" id="gen-resume-btn">Reprendre la génération</button>
+                        </div>
+
+                        <!-- Résultats audio (pagination) -->
+                        <div id="gen-results" class="fr-mb-3w" hidden>
+                            <div id="gen-results-list"></div>
+                            <nav class="fr-pagination fr-mt-2w" id="gen-pagination" hidden>
+                                <ul class="fr-pagination__list"></ul>
+                            </nav>
+                        </div>
+
+                        <!-- Statut -->
+                        <div id="gen-status" role="status" aria-live="polite"></div>
+
+                        <!-- Navigation -->
+                        <div class="fr-btns-group fr-btns-group--right fr-mt-3w">
+                            <button class="fr-btn" id="gen-next-btn" disabled>
+                                Continuer vers l'export
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel 6 : Export -->
+                    <div id="panel-export" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-export" tabindex="0">
+                        <h2 class="fr-h3 fr-mb-1w">Export final</h2>
+                        <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
+                            Post-traitement audio et packaging des livrables.
+                        </p>
+
+                        <!-- Contenu du ZIP -->
+                        <div class="fr-callout fr-mb-3w">
+                            <p class="fr-callout__title">Contenu du ZIP</p>
+                            <ul class="fr-callout__text fr-text--sm">
+                                <li><code>audio/*.wav</code> — Fichiers unitaires post-traités</li>
+                                <li><code>narration-complete.wav</code> — Si narration unique activée</li>
+                                <li><code>SCRIPT_PAROLES.md</code> — Textes finaux</li>
+                                <li><code>EQUIVALENCES.md</code> — Traçabilité technique</li>
+                            </ul>
+                        </div>
+
+                        <!-- Paramètres audio -->
+                        <fieldset class="fr-fieldset fr-mb-3w">
+                            <legend class="fr-fieldset__legend fr-h6">Paramètres audio</legend>
+                            <div class="fr-fieldset__content">
+                                <div class="fr-checkbox-group fr-mb-1w">
+                                    <input type="checkbox" id="export-normalize" checked>
+                                    <label class="fr-label" for="export-normalize">
+                                        Normaliser le volume (-3 dB)
+                                        <span class="fr-hint-text">Niveau sonore constant entre les fichiers</span>
+                                    </label>
+                                </div>
+                                <div class="fr-checkbox-group fr-mb-1w">
+                                    <input type="checkbox" id="export-stereo" checked>
+                                    <label class="fr-label" for="export-stereo">
+                                        Convertir en stéréo
+                                        <span class="fr-hint-text">Son sur les deux canaux, plus naturel</span>
+                                    </label>
+                                </div>
+                                <div class="fr-select-group fr-mb-1w">
+                                    <label class="fr-label" for="export-rate">Fréquence d'échantillonnage</label>
+                                    <select class="fr-select" id="export-rate">
+                                        <option value="24000">24 kHz (original)</option>
+                                        <option value="44100">44.1 kHz (CD)</option>
+                                        <option value="48000" selected>48 kHz (standard pro)</option>
+                                    </select>
+                                </div>
+                                <fieldset class="fr-fieldset">
+                                    <legend class="fr-fieldset__legend fr-text--sm">Profondeur de bits</legend>
+                                    <div class="fr-fieldset__content">
+                                        <div class="fr-radio-group fr-radio-group--inline">
+                                            <input type="radio" id="export-16bit" name="export-depth" value="16">
+                                            <label class="fr-label" for="export-16bit">16 bits</label>
+                                        </div>
+                                        <div class="fr-radio-group fr-radio-group--inline">
+                                            <input type="radio" id="export-24bit" name="export-depth" value="24" checked>
+                                            <label class="fr-label" for="export-24bit">24 bits</label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <div class="fr-select-group fr-mb-1w">
+                                    <label class="fr-label" for="export-format">Format de sortie</label>
+                                    <select class="fr-select" id="export-format">
+                                        <option value="wav" selected>WAV (qualité maximale)</option>
+                                        <option value="mp3">MP3 (léger, partage)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Narration unique -->
+                        <fieldset class="fr-fieldset fr-mb-3w">
+                            <legend class="fr-fieldset__legend fr-h6">Narration unique</legend>
+                            <div class="fr-fieldset__content">
+                                <div class="fr-checkbox-group fr-mb-2w">
+                                    <input type="checkbox" id="export-unique">
+                                    <label class="fr-label" for="export-unique">
+                                        Créer un fichier audio unique
+                                        <span class="fr-hint-text">Concatène toutes les étapes en un seul fichier</span>
+                                    </label>
+                                </div>
+                                <div id="export-silence-group" hidden>
+                                    <div class="fr-range-group">
+                                        <label class="fr-label" for="export-silence">
+                                            Silence entre les étapes
+                                            <span class="fr-hint-text" id="export-silence-value">1.0s</span>
+                                        </label>
+                                        <div class="fr-range" data-fr-js-range="true">
+                                            <span class="fr-range__output">1.0s</span>
+                                            <input type="range" id="export-silence"
+                                                   min="0.1" max="3.0" step="0.1" value="1.0"
+                                                   aria-valuetext="1.0s">
+                                            <span class="fr-range__min">0.1s</span>
+                                            <span class="fr-range__max">3.0s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- État vide (PRD-018) -->
+                        <div class="fr-callout fr-mb-3w" id="export-empty-state" hidden>
+                            <h3 class="fr-callout__title">Aucun audio à exporter</h3>
+                            <p class="fr-callout__text">
+                                Générez d'abord vos fichiers audio depuis l'onglet Génération.
+                                L'export produira un ZIP avec post-traitement audio (normalisation, stéréo, 48 kHz).
+                            </p>
+                        </div>
+
+                        <!-- Bouton export -->
+                        <div class="fr-btns-group fr-mb-3w">
+                            <button class="fr-btn fr-btn--lg" id="export-btn">Préparer le pack ZIP</button>
+                        </div>
+
+                        <!-- Progression SSE -->
+                        <div id="export-progress" class="fr-mb-2w" hidden>
+                            <div class="fr-grid-row fr-grid-row--middle">
+                                <div class="fr-col">
+                                    <progress id="export-progress-bar" max="100" value="0" class="vx-progress"
+                                              aria-label="Progression de l'export"
+                                              title="Progression de l'export"></progress>
+                                </div>
+                                <div class="fr-col-auto fr-ml-1w">
+                                    <span id="export-progress-text" class="fr-text--sm"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Résultat : carte de téléchargement DSFR -->
+                        <div id="export-result" hidden>
+                            <div class="fr-alert fr-alert--success fr-mb-2w">
+                                <p id="export-result-text"></p>
+                            </div>
+                            <div class="fr-card fr-card--download fr-enlarge-link fr-mt-2w">
+                                <div class="fr-card__body">
+                                    <div class="fr-card__content">
+                                        <h3 class="fr-card__title">
+                                            <a id="export-download-link" href="#" download class="fr-card__link">
+                                                Pack audio OmniStudio
+                                            </a>
+                                        </h3>
+                                        <p class="fr-card__desc" id="export-download-desc">
+                                            Fichiers audio post-traités, script et traçabilité.
+                                        </p>
+                                        <div class="fr-card__end">
+                                            <p class="fr-card__detail" id="export-download-detail">
+                                                <span class="fr-icon-download-line" aria-hidden="true"></span>
+                                                ZIP
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statut -->
+                        <div id="export-status" role="status" aria-live="polite"></div>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Paramètres d'affichage DSFR (composant natif fr-display) -->
+    <div id="fr-theme-modal" class="fr-modal" role="dialog" aria-labelledby="fr-theme-modal-title">
+        <div class="fr-container fr-container--fluid fr-container-md">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
+                    <div class="fr-modal__body">
+                        <div class="fr-modal__header">
+                            <button class="fr-btn--close fr-btn" aria-controls="fr-theme-modal" title="Fermer">Fermer</button>
+                        </div>
+                        <div class="fr-modal__content">
+                            <h2 id="fr-theme-modal-title" class="fr-modal__title">
+                                Paramètres d'affichage
+                            </h2>
+                            <div class="fr-display">
+                                <div class="fr-form-group">
+                                    <fieldset class="fr-fieldset">
+                                        <legend class="fr-fieldset__legend" id="display-fieldset-legend">
+                                            Choisissez un thème pour personnaliser l'apparence du site.
+                                        </legend>
+                                        <div class="fr-fieldset__content">
+                                            <div class="fr-radio-group fr-radio-rich">
+                                                <input type="radio" id="fr-radios-theme-light" name="fr-radios-theme" value="light">
+                                                <label class="fr-label" for="fr-radios-theme-light">
+                                                    Thème clair
+                                                </label>
+                                            </div>
+                                            <div class="fr-radio-group fr-radio-rich">
+                                                <input type="radio" id="fr-radios-theme-dark" name="fr-radios-theme" value="dark">
+                                                <label class="fr-label" for="fr-radios-theme-dark">
+                                                    Thème sombre
+                                                </label>
+                                            </div>
+                                            <div class="fr-radio-group fr-radio-rich">
+                                                <input type="radio" id="fr-radios-theme-system" name="fr-radios-theme" value="system" checked>
+                                                <label class="fr-label" for="fr-radios-theme-system">
+                                                    Système
+                                                    <span class="fr-hint-text">Utilise les paramètres système.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer minimaliste -->
+    <footer class="fr-footer fr-mt-4w" role="contentinfo" id="footer">
+        <div class="fr-container">
+            <div class="fr-footer__body">
+                <div class="fr-footer__brand fr-enlarge-link">
+                    <p class="fr-logo">
+                        République<br>Française
+                    </p>
+                </div>
+                <div class="fr-footer__content">
+                    <p class="fr-footer__content-desc">OmniStudio — Studio de production vocale pour l'administration publique</p>
+                    <ul class="fr-footer__content-list">
+                        <li class="fr-footer__content-item">
+                            <a class="fr-footer__content-link" href="https://legifrance.gouv.fr" target="_blank" rel="noopener" title="legifrance.gouv.fr - nouvelle fenêtre">legifrance.gouv.fr</a>
+                        </li>
+                        <li class="fr-footer__content-item">
+                            <a class="fr-footer__content-link" href="https://gouvernement.fr" target="_blank" rel="noopener" title="gouvernement.fr - nouvelle fenêtre">gouvernement.fr</a>
+                        </li>
+                        <li class="fr-footer__content-item">
+                            <a class="fr-footer__content-link" href="https://service-public.fr" target="_blank" rel="noopener" title="service-public.fr - nouvelle fenêtre">service-public.fr</a>
+                        </li>
+                        <li class="fr-footer__content-item">
+                            <a class="fr-footer__content-link" href="https://data.gouv.fr" target="_blank" rel="noopener" title="data.gouv.fr - nouvelle fenêtre">data.gouv.fr</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="fr-footer__bottom">
+                <ul class="fr-footer__bottom-list">
+                    <li class="fr-footer__bottom-item">
+                        <a class="fr-footer__bottom-link" href="#footer">Accessibilité : partiellement conforme</a>
+                    </li>
+                    <li class="fr-footer__bottom-item">
+                        <span class="fr-footer__bottom-link">Mentions légales</span>
+                    </li>
+                    <li class="fr-footer__bottom-item">
+                        <span class="fr-footer__bottom-link">Données personnelles</span>
+                    </li>
+                    <li class="fr-footer__bottom-item">
+                        <button class="fr-footer__bottom-link" aria-controls="fr-theme-modal" data-fr-opened="false">
+                            Paramètres d'affichage
+                        </button>
+                    </li>
+                    <li class="fr-footer__bottom-item">
+                        <button class="fr-footer__bottom-link fr-btn--icon-left fr-icon-pulse-line" id="vx-status-btn" type="button" aria-haspopup="dialog">
+                            État des services
+                        </button>
+                    </li>
+                    <li class="fr-footer__bottom-item">
+                        <a class="fr-footer__bottom-link" href="https://github.com/Alexmacapple/voice-num" target="_blank" rel="noopener" title="Dépôt GitHub OmniStudio - nouvelle fenêtre">GitHub OmniStudio</a>
+                    </li>
+                    <li class="fr-footer__bottom-item">
+                        <a class="fr-footer__bottom-link" href="https://github.com/Alexmacapple/OmniVoice" target="_blank" rel="noopener" title="Dépôt GitHub OmniVoice - nouvelle fenêtre">GitHub OmniVoice</a>
+                    </li>
+                </ul>
+                <div class="fr-footer__bottom-copy">
+                    <p>Sauf mention explicite de propriété intellectuelle détenue par des tiers, les contenus de ce site sont proposés sous
+                        <a href="https://github.com/etalab/licence-ouverte/blob/master/LO.md" target="_blank" rel="noopener" title="licence etalab-2.0 - nouvelle fenêtre">licence etalab-2.0</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modale etat des services -->
+    <!-- Modale confirmation nouvelle session -->
+    <dialog id="vx-new-session-dialog" class="vx-dialog" role="alertdialog" aria-modal="true" aria-labelledby="vx-new-session-title">
+        <div class="fr-container fr-py-4w">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <h2 id="vx-new-session-title" class="fr-h5 fr-mb-2w">Nouvelle session</h2>
+                    <p class="fr-text--sm fr-mb-3w">
+                        Les données de la session en cours (étapes importées, assignations,
+                        fichiers générés) ne seront plus accessibles.
+                    </p>
+                    <div class="fr-btns-group fr-btns-group--inline fr-btns-group--right">
+                        <button class="fr-btn fr-btn--secondary" id="vx-new-session-cancel"
+                                type="button">Annuler</button>
+                        <button class="fr-btn" id="vx-new-session-confirm"
+                                type="button">Confirmer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Modale etat des services -->
+    <dialog id="vx-status-dialog" class="vx-dialog" role="dialog" aria-modal="true" aria-labelledby="vx-status-title">
+        <div class="fr-container fr-py-4w">
+            <div class="fr-grid-row fr-grid-row--center">
+                <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+                    <div class="fr-grid-row fr-grid-row--middle fr-grid-row--gutters fr-mb-2w">
+                        <div class="fr-col">
+                            <h2 id="vx-status-title" class="fr-h4 fr-mb-0">État des services</h2>
+                        </div>
+                        <div class="fr-col-auto">
+                            <button class="fr-btn--close fr-btn" id="vx-status-close" type="button" aria-label="Fermer la fenêtre État des services">Fermer</button>
+                        </div>
+                    </div>
+                    <div id="vx-status-content" class="fr-mb-2w" aria-live="polite" aria-atomic="true">
+                        <p class="fr-text--sm">Vérification en cours…</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Toast container -->
+    <div id="vx-toast-container" role="status" aria-live="polite"></div>
+
+    <!-- DSFR JS -->
+    <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
+
+    <!-- App JS -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

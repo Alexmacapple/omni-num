@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Marianne",
+    "source": "design",
+    "system": true,
+    "instruct": "female, middle-aged, moderate pitch, warm and clear",
+    "description": "Voix féminine posée, chaleureuse et nette, idéale pour la narration",
+    "language": "fr"
+  },
+  {
+    "name": "Lea",
+    "source": "design",
+    "system": true,
+    "instruct": "female, young adult, moderate pitch, gentle",
+    "description": "Voix féminine jeune, douce et expressive",
+    "language": "fr"
+  },
+  {
+    "name": "Sophie",
+    "source": "design",
+    "system": true,
+    "instruct": "female, elderly, low pitch, assertive",
+    "description": "Voix féminine mature, grave et affirmée",
+    "language": "fr"
+  },
+  {
+    "name": "Jean",
+    "source": "design",
+    "system": true,
+    "instruct": "male, middle-aged, low pitch, calm",
+    "description": "Voix masculine posée, grave et rassurante",
+    "language": "fr"
+  },
+  {
+    "name": "Paul",
+    "source": "design",
+    "system": true,
+    "instruct": "male, young adult, moderate pitch, energetic",
+    "description": "Voix masculine jeune, dynamique et claire",
+    "language": "fr"
+  },
+  {
+    "name": "Thomas",
+    "source": "design",
+    "system": true,
+    "instruct": "male, elderly, very low pitch, authoritative",
+    "description": "Voix masculine mature, profonde et autoritaire",
+    "language": "fr"
+  }
+]

@@ -1,0 +1,660 @@
+/* app.css — Styles custom OmniStudio (prefixe vx-*) */
+/* Tokens DSFR uniquement, zero couleur en dur */
+
+/* --- Fix DSFR : onglets derriere login gate --- */
+/* Le DSFR JS initialise les tabs en display:flex avec un trick complexe
+   (left:-100%, margin-right:-100%, transform:translate(100%)) pour les panels.
+   Ce mecanisme ne fonctionne pas quand les tabs sont masquees au chargement
+   (derriere le login gate). On desactive le flex et on gere les panels
+   avec display:none/block + des attributs data-vx-active/data-vx-hidden. */
+#main-tabs.fr-tabs {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Neutraliser le positionnement flex DSFR sur les panels du main-tabs */
+#main-tabs > .fr-tabs__panel {
+    position: static !important;
+    left: auto !important;
+    margin-right: 0 !important;
+    transform: none !important;
+    flex: none !important;
+    width: 100% !important;
+}
+
+/* Panel actif : visible */
+.fr-tabs__panel[data-vx-active] {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Panels masques */
+.fr-tabs__panel[data-vx-hidden] {
+    display: none !important;
+}
+
+/* --- Header tools : alignement vertical spans / boutons --- */
+.vx-header-separator {
+    border-left: 1px solid var(--border-default-grey);
+    padding-left: 1rem;
+}
+
+.fr-header__tools {
+    align-self: center;
+}
+
+.fr-header__tools .fr-btns-group {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0 !important;
+}
+
+.fr-header__tools .fr-btns-group > li {
+    display: flex !important;
+    align-items: center !important;
+    width: auto !important;
+}
+
+.fr-header__tools .fr-btn {
+    margin-bottom: 0 !important;
+}
+
+/* --- Toast container --- */
+#vx-toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 400px;
+    width: 100%;
+    pointer-events: none;
+}
+
+#vx-toast-container > * {
+    pointer-events: auto;
+}
+
+/* --- Login screen --- */
+#vx-login-screen {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#vx-login-screen[hidden] {
+    display: none;
+}
+
+#vx-app-screen[hidden] {
+    display: none;
+}
+
+/* --- Card login --- */
+.vx-login-card {
+    max-width: 400px;
+    width: 100%;
+}
+
+.vx-login__btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* --- Audio player --- */
+.vx-audio-player {
+    margin: var(--spacing-2w) 0;
+}
+
+.vx-audio-player audio {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* --- Header username --- */
+#vx-username:not(:empty) {
+    color: var(--text-default-grey);
+    font-weight: 700;
+}
+
+/* --- Barre de progression upload --- */
+.vx-upload-progress__bar {
+    width: 100%;
+    height: 0.5rem;
+    appearance: none;
+    border: none;
+    background: var(--background-contrast-grey);
+    border-radius: 0.25rem;
+}
+.vx-upload-progress__bar::-webkit-progress-value {
+    background: var(--background-action-high-blue-france);
+    border-radius: 0.25rem;
+}
+
+/* --- Barre de progression nettoyage --- */
+.vx-progress {
+    width: 100%;
+    height: 0.5rem;
+    appearance: none;
+    border: none;
+    background: var(--background-contrast-grey);
+    border-radius: 0.25rem;
+}
+.vx-progress::-webkit-progress-value {
+    background: var(--background-action-high-blue-france);
+    border-radius: 0.25rem;
+}
+
+/* --- Colonnes equilibrees du tableau preparation (desktop) --- */
+@media (min-width: 48em) {
+    #clean-table th:nth-child(1),
+    #clean-table td:nth-child(1) { width: 4rem; }      /* ID */
+    #clean-table th:nth-child(2),
+    #clean-table td:nth-child(2) { width: 35%; }        /* Texte Original */
+    #clean-table th:nth-child(3),
+    #clean-table td:nth-child(3) { width: 35%; }        /* Texte TTS */
+    #clean-table th:nth-child(4),
+    #clean-table td:nth-child(4) { width: 6rem; }       /* Statut */
+}
+
+/* --- Cellules texte dans le tableau de preparation --- */
+.vx-text-cell {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    padding: 0.5rem;
+}
+
+.vx-tts-edit {
+    min-height: 3rem;
+    max-height: 6rem;
+    font-size: 0.875rem;
+    resize: vertical;
+}
+
+/* --- Tableau preparation --- */
+#clean-table-container thead th {
+    background: var(--background-default-grey);
+}
+
+/* --- Tableau preparation : layout carte empilee en mobile --- */
+@media (max-width: 47.99em) {
+    #clean-table thead {
+        display: none;
+    }
+
+    #clean-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    #clean-table tr {
+        display: block;
+        border: 1px solid var(--border-default-grey);
+        border-radius: 0.25rem;
+        padding: 0.75rem;
+        background: var(--background-default-grey);
+    }
+
+    #clean-table td {
+        display: block;
+        width: 100%;
+        padding: 0.25rem 0;
+        border: none;
+    }
+
+    #clean-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-mention-grey);
+        margin-bottom: 0.25rem;
+    }
+
+    /* ID : inline avec badge-style */
+    #clean-table td:first-child {
+        font-weight: 700;
+        font-size: 0.875rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-default-grey);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Textarea TTS : pleine largeur */
+    #clean-table .vx-tts-edit {
+        width: 100%;
+        max-height: 8rem;
+    }
+
+    /* Actions : alignees a droite */
+    #clean-table td:last-child {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border-default-grey);
+        margin-top: 0.5rem;
+    }
+
+    #clean-table td:last-child::before {
+        display: none;
+    }
+
+    /* Masquer le padding DSFR du fr-table en mobile */
+    #clean-table-container.fr-table {
+        overflow-x: visible;
+    }
+}
+
+/* --- Tableau assignation : pas de scroll vertical, scroll horizontal conserve --- */
+#assign-table-container table {
+    overflow-y: visible;
+}
+
+#assign-table-container thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--background-default-grey);
+}
+
+/* --- Tableau assignation : layout carte empilee en mobile --- */
+@media (max-width: 47.99em) {
+    #assign-table-container.fr-table {
+        overflow-x: visible;
+    }
+
+    #assign-table thead {
+        display: none;
+    }
+
+    #assign-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    #assign-table tr {
+        display: block;
+        border: 1px solid var(--border-default-grey);
+        border-radius: 0.25rem;
+        padding: 0.75rem;
+        background: var(--background-default-grey);
+    }
+
+    #assign-table td {
+        display: block;
+        width: 100%;
+        padding: 0.25rem 0;
+        border: none;
+    }
+
+    #assign-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-mention-grey);
+        margin-bottom: 0.25rem;
+    }
+
+    /* ID : en-tete de carte (gras, separateur bas, pas de label) */
+    #assign-table td:first-child {
+        font-weight: 700;
+        font-size: 0.875rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-default-grey);
+        margin-bottom: 0.5rem;
+    }
+
+    #assign-table td:first-child::before {
+        display: none;
+    }
+
+    /* Textarea texte : pleine largeur */
+    #assign-table .vx-assign-text {
+        width: 100%;
+        max-height: 8rem;
+    }
+
+    /* Slider vitesse : pleine largeur */
+    #assign-table .vx-assign-speed {
+        width: 100%;
+    }
+
+    #assign-table .fr-range {
+        width: 100%;
+    }
+
+    /* Actions : alignees a droite, separateur haut, pas de label */
+    #assign-table td:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border-default-grey);
+        margin-top: 0.5rem;
+    }
+
+    #assign-table td:last-child::before {
+        display: none;
+    }
+
+    /* Conteneur audio en pleine largeur */
+    #assign-table .vx-audio-container {
+        width: 100%;
+    }
+}
+
+/* --- Select statut dans le tableau --- */
+.vx-status-select {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-default-grey);
+    border-radius: 0.25rem;
+    background: var(--background-default-grey);
+    cursor: pointer;
+}
+
+/* --- Diff : tokens DSFR --- */
+.vx-diff-del {
+    background: var(--background-contrast-error);
+    text-decoration: line-through;
+}
+.vx-diff-ins {
+    background: var(--background-contrast-success);
+}
+
+/* --- Spinner chargement --- */
+@keyframes vx-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.vx-spin {
+    display: inline-block;
+    animation: vx-spin 1s linear infinite;
+}
+
+/* Bouton en etat de chargement (aria-busy) */
+.fr-btn[aria-busy="true"] {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+/* --- Audio player compact --- */
+.vx-audio-player--sm {
+    height: 2rem;
+}
+
+/* --- Carte voix : supprimer l'espace entre contenu et footer --- */
+#voice-list .fr-card__body {
+    justify-content: flex-start;
+}
+
+/* --- Carte voix sélectionnée --- */
+.fr-card[data-selected="true"] {
+    outline: 2px solid var(--background-action-high-blue-france);
+    outline-offset: -2px;
+}
+
+.fr-card[data-selected="true"] .vx-card-check {
+    color: var(--background-action-high-blue-france);
+}
+
+.vx-card-check {
+    color: var(--text-disabled-grey);
+    transition: color 0.15s;
+}
+
+.vx-card-audio {
+    width: 100%;
+    max-width: 300px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+/* --- État chargement bouton écouter --- */
+.vx-preview-loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.vx-preview-loading::before {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--text-default-grey);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: vx-spin 0.8s linear infinite;
+    margin-right: 0.25rem;
+    vertical-align: middle;
+}
+
+/* --- Message d'état sous la carte --- */
+.vx-card-status {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    min-height: 1.25rem;
+}
+
+.vx-card-status--loading {
+    color: var(--text-mention-grey);
+}
+
+.vx-card-status--error {
+    color: var(--text-default-error);
+}
+
+/* --- Slider vitesse dans le tableau d'assignation --- */
+.vx-assign-speed {
+    width: 5rem;
+    accent-color: var(--background-action-high-blue-france);
+}
+
+/* --- Scroll horizontal pour le tableau 7 colonnes sur ecrans etroits --- */
+.vx-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- Journal de generation --- */
+.vx-gen-log {
+    max-height: 12rem;
+    overflow-y: auto;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    padding: 0.75rem;
+    background: var(--background-contrast-grey);
+    border-radius: 0.25rem;
+    font-family: monospace;
+}
+
+.vx-gen-log__entry {
+    padding: 0.125rem 0;
+    border-bottom: 1px solid var(--border-default-grey);
+}
+
+.vx-gen-log__entry:last-child {
+    border-bottom: none;
+}
+
+.vx-gen-log__time {
+    color: var(--text-mention-grey);
+    margin-right: 0.5rem;
+}
+
+.vx-gen-log__entry--error {
+    color: var(--text-default-error);
+}
+
+.vx-gen-log__entry--success {
+    color: var(--text-default-success);
+}
+
+/* --- Resultats audio pagines --- */
+#gen-results-list > div {
+    border-radius: 0.25rem;
+}
+
+/* --- Indicateur enregistrement micro --- */
+.vx-recording {
+    color: var(--text-default-error);
+    font-weight: 700;
+}
+
+.vx-recording::before {
+    content: "";
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--background-action-high-error);
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    animation: vx-blink 1s ease-in-out infinite;
+}
+
+@keyframes vx-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* --- Utilitaire alignement texte --- */
+.vx-text-center {
+    text-align: center;
+}
+
+/* --- Focus visible : elements custom --- */
+.vx-status-select:focus-visible,
+.vx-assign-speed:focus-visible,
+.vx-tts-edit:focus-visible {
+    outline: 2px solid var(--border-active-blue-france);
+    outline-offset: 2px;
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+    .vx-upload-progress__bar,
+    .vx-progress {
+        transition: none;
+    }
+    .vx-spin {
+        animation: none;
+    }
+    .vx-preview-loading::before,
+    .vx-recording::before {
+        animation: none;
+    }
+    .vx-card-check {
+        transition: none;
+    }
+}
+
+/* --- Stepper mobile / Onglets desktop --- */
+.vx-mobile-only {
+    display: none;
+}
+
+@media (max-width: 47.999em) {
+    .vx-mobile-only {
+        display: block;
+    }
+    .vx-desktop-only {
+        display: none;
+    }
+    /* Bouton "Nouvelle session" : icone seule sur mobile */
+    #vx-new-session-btn .vx-btn-label {
+        display: none;
+    }
+}
+
+/* --- Navigation stepper : boutons pleine largeur --- */
+.vx-btn--full {
+    width: 100%;
+    justify-content: center;
+}
+
+/* --- Responsive --- */
+@media (max-width: 48em) {
+    #vx-toast-container {
+        left: 0.5rem;
+        right: 0.5rem;
+        max-width: none;
+    }
+
+    .fr-tabs__tab {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+}
+
+/* --- Dialog native (modale statut) --- */
+.vx-dialog {
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0;
+    max-width: 600px;
+    width: calc(100% - 2rem);
+    box-shadow: var(--overlap-shadow);
+    background: var(--background-default-grey);
+    color: var(--text-default-grey);
+}
+
+.vx-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.vx-status-table {
+    width: 100%;
+    font-size: 0.875rem;
+}
+
+.vx-status-table th,
+.vx-status-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-default-grey);
+    font-size: 0.875rem;
+    text-align: left;
+}
+
+.vx-status-table th[scope="row"] {
+    font-weight: 700;
+}
+
+.vx-status-table td:last-child {
+    text-align: right;
+}
+
+/* --- Fix contraste controles formulaire (WCAG 1.4.11 : ratio 3:1 min) --- */
+/* Le DSFR fr-input a fond #EEEEEE sans bordure sur fond blanc = 1.16:1 */
+.fr-input,
+.fr-select,
+.fr-upload {
+    border: 1px solid var(--text-mention-grey) !important;
+}
+
+/* --- Fix contraste boutons disabled (DSFR #929292 sur #E5E5E5 = 2.47:1) --- */
+/* WCAG exempte les composants disabled mais on renforce pour le RGAA */
+.fr-btn:disabled,
+.fr-btn[disabled] {
+    color: var(--text-mention-grey) !important;
+}
+
+/* --- Fix alignement bouton Ajouter dans formulaire segment (sg-visual-fix) --- */
+#clean-add-step .fr-grid-row--bottom .fr-btn--sm,
+#assign-add-step .fr-grid-row--bottom .fr-btn--sm {
+    min-height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+}
