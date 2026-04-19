@@ -36,7 +36,7 @@ async def _unhandled_exception_handler(request: Request, exc: Exception):
     """Masque les stacktraces en production."""
     if isinstance(exc, HTTPException):
         raise exc
-    logger.error(f"Erreur non geree: {exc}", exc_info=True)
+    logger.error("Erreur non geree: %s", exc, exc_info=True)
     return api_response(
         error={"code": "INTERNAL_ERROR", "message": "Erreur interne du serveur."},
         status_code=500,
@@ -148,6 +148,7 @@ app = FastAPI(
     description="API de production vocale — Import, préparation, design voix, génération TTS et export.",
     version="1.0.0",
     lifespan=lifespan,
+    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", "/omni"),
 )
 app.state.limiter = limiter
 app.add_exception_handler(Exception, _unhandled_exception_handler)
@@ -171,14 +172,27 @@ register_all(app)
 ACTIVE_FRONTEND = FRONTEND_DIST_DIR if MINIFY else FRONTEND_DIR
 
 # Fichiers statiques (front DSFR) — APRES les routeurs
-app.mount("/css", StaticFiles(directory=os.path.join(ACTIVE_FRONTEND, "css")), name="css")
-app.mount("/dsfr", StaticFiles(directory=os.path.join(ACTIVE_FRONTEND, "dsfr")), name="dsfr")
+# Vérifier que les répertoires existent avant de les monter
+css_dir = os.path.join(ACTIVE_FRONTEND, "css")
+dsfr_dir = os.path.join(ACTIVE_FRONTEND, "dsfr")
+if os.path.isdir(css_dir):
+    app.mount("/css", StaticFiles(directory=css_dir), name="css")
+else:
+    logger.warning("Repertoire CSS non trouve: %s", css_dir)
+if os.path.isdir(dsfr_dir):
+    app.mount("/dsfr", StaticFiles(directory=dsfr_dir), name="dsfr")
+else:
+    logger.warning("Repertoire DSFR non trouve: %s", dsfr_dir)
 
 
 @app.api_route("/js/{path:path}", methods=["GET", "HEAD"])
 async def serve_js(path: str):
     """Servir les fichiers JS — cache gere par CacheControlMiddleware (PRD-028)."""
-    file_path = os.path.join(ACTIVE_FRONTEND, "js", path)
+    js_dir = os.path.join(ACTIVE_FRONTEND, "js")
+    file_path = os.path.join(js_dir, path)
+    # Sécurité : vérifier que file_path est bien dans js_dir (prévention directory traversal)
+    if not os.path.abspath(file_path).startswith(os.path.abspath(js_dir)):
+        raise HTTPException(status_code=403, detail="Acces refuse")
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="Fichier non trouve")
     return FileResponse(file_path)

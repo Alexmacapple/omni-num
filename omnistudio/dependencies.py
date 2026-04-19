@@ -165,7 +165,7 @@ def _is_locked(locks: Dict[str, datetime], thread_id: str) -> bool:
         locked_at = locked_at.replace(tzinfo=timezone.utc)
     age_seconds = (datetime.now(timezone.utc) - locked_at).total_seconds()
     if age_seconds > _LOCK_TIMEOUT:
-        logger.warning(f"Verrou orphelin detecte pour {thread_id}, liberation automatique")
+        logger.warning("Verrou orphelin detecte pour %s, liberation automatique", thread_id)
         del locks[thread_id]
         return False
     return True

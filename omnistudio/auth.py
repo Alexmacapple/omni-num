@@ -16,7 +16,7 @@ _jwks_cache = {"keys": None, "expires": 0}
 async def get_jwks() -> dict:
     """Recupere les cles publiques Keycloak (cache 1h)."""
     now = time.time()
-    if _jwks_cache["keys"] and now < _jwks_cache["expires"]:
+    if _jwks_cache["keys"] is not None and now < _jwks_cache["expires"]:
         return _jwks_cache["keys"]
 
     jwks_url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
@@ -25,11 +25,19 @@ async def get_jwks() -> dict:
             response = await client.get(jwks_url, timeout=10.0)
             response.raise_for_status()
             jwks = response.json()
-            _jwks_cache["keys"] = jwks
-            _jwks_cache["expires"] = now + 3600
-            return jwks
-    except Exception as e:
+            if jwks is not None and "keys" in jwks:
+                _jwks_cache["keys"] = jwks
+                _jwks_cache["expires"] = now + 3600
+                return jwks
+            else:
+                raise ValueError("Réponse JWKS invalide ou vide")
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
         logger.error("Erreur recuperation JWKS : %s", e)
+        if _jwks_cache["keys"]:
+            return _jwks_cache["keys"]
+        raise HTTPException(status_code=503, detail="Keycloak indisponible")
+    except Exception as e:
+        logger.error("Erreur inattendue lors de la recuperation JWKS : %s", e, exc_info=True)
         if _jwks_cache["keys"]:
             return _jwks_cache["keys"]
         raise HTTPException(status_code=503, detail="Keycloak indisponible")
