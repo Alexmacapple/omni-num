@@ -216,7 +216,7 @@ class TestP3VoiceFiltering:
         """Les voix custom verrouillees doivent toujours apparaitre meme si non selectionnees.
 
         ATTENDU : si locked_voices=["alexandra"] et selected_voices=["Lea"],
-        la liste contient Lea + alexandra.
+        la liste contient Lea + alexandra (dont alexandra est owned par user).
         """
         _mock_vox_client.get_voices.return_value = [
             {"name": "Lea", "type": "native"},
@@ -228,7 +228,11 @@ class TestP3VoiceFiltering:
         _mock_state.values["selected_voices"] = ["Lea"]
         _mock_state.values["locked_voices"] = ["alexandra"]
 
-        resp = auth_client.get("/api/assign", headers=auth_headers)
+        # Mock _read_voice_meta pour que alexandra soit owned par user fake
+        # (sinon le filter ownership PRD-032 la masquerait)
+        with patch("routers.assign._read_voice_meta") as mock_meta:
+            mock_meta.return_value = {"owner": FAKE_USER["user_id"], "system": False, "source": "clone"}
+            resp = auth_client.get("/api/assign", headers=auth_headers)
         assert resp.status_code == 200
         voices = resp.json()["data"]["voices"]
         voice_names = [v["name"] for v in voices]
