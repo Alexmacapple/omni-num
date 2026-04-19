@@ -900,6 +900,11 @@ function getBrief() {
         emotion: document.getElementById('design-emotion')?.value || '',
         genre: document.querySelector('input[name="design-gender"]:checked')?.value || '',
         age: document.querySelector('input[name="design-age"]:checked')?.value || '',
+        // Décision 12 — 4 catégories OmniVoice supplémentaires (items whitelist EN)
+        pitch: document.getElementById('design-pitch')?.value || '',
+        style: document.querySelector('input[name="design-style"]:checked')?.value || '',
+        english_accent: document.getElementById('design-english-accent')?.value || '',
+        chinese_dialect: document.getElementById('design-chinese-dialect')?.value || '',
         extra: document.getElementById('design-extra')?.value || '',
     };
 }
