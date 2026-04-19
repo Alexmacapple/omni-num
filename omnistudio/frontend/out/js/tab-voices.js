@@ -234,10 +234,19 @@ function onStopRecording() {
     }
 
     const duration = totalLength / sampleRate;
+    if (totalLength === 0) {
+        if (statusEl) {
+            statusEl.className = 'fr-text--sm fr-mt-1v';
+            statusEl.textContent = 'Aucun son capté. Vérifiez que le micro est autorisé dans votre navigateur et que vous parlez assez fort, puis réessayez.';
+        }
+        rec.blob = null;
+        onCloneFormChange();
+        return;
+    }
     if (duration < 1) {
         if (statusEl) {
             statusEl.className = 'fr-text--sm fr-mt-1v';
-            statusEl.textContent = 'Enregistrement trop court (minimum 1 seconde).';
+            statusEl.textContent = `Enregistrement trop court (${duration.toFixed(1)} s, minimum 1 s). Recommencez et parlez plus longtemps.`;
         }
         rec.blob = null;
         onCloneFormChange();
@@ -355,22 +364,20 @@ function onCloneFileChange() {
         tempAudio.onloadedmetadata = () => {
             const duration = tempAudio.duration;
             URL.revokeObjectURL(tempAudio.src);
-            const invalid = !Number.isFinite(duration);
-            if (invalid || duration > MAX_RECORD_SECONDS) {
-                // Erreur accessible : associee au champ, annoncee par aria-live
+            // On ne bloque le fichier QUE si on peut mesurer une durée finie
+            // qui dépasse la limite. Les conteneurs WebM/OGG/certains MP3
+            // retournent Infinity/NaN tant que seek n'a pas été déclenché —
+            // dans ce cas on laisse le backend (OmniVoice 1-30 s) trancher.
+            if (Number.isFinite(duration) && duration > MAX_RECORD_SECONDS) {
                 if (errorEl) {
-                    errorEl.textContent = invalid
-                        ? `Impossible de lire la durée du fichier audio. Fournissez un WAV/MP3 de ${MAX_RECORD_SECONDS} secondes maximum.`
-                        : `Le fichier audio dure ${Math.round(duration)} s. La durée maximale est de ${MAX_RECORD_SECONDS} secondes. Veuillez raccourcir votre fichier.`;
+                    errorEl.textContent = `Le fichier audio dure ${Math.round(duration)} s. La durée maximale est de ${MAX_RECORD_SECONDS} secondes. Veuillez raccourcir votre fichier.`;
                     errorEl.style.display = '';
                     errorEl.setAttribute('role', 'alert');
                 }
-                // RGAA : lier l'erreur au champ + classe erreur sur le groupe
                 const input = DOM.cloneAudio();
                 if (input) input.setAttribute('aria-describedby', 'clone-audio-hint clone-audio-error');
                 const group = document.getElementById('clone-audio-group');
                 if (group) group.classList.add('fr-upload-group--error');
-                // Vider le champ file pour empecher l'envoi
                 const audioInput = DOM.cloneAudio();
                 if (audioInput) audioInput.value = '';
                 const container = DOM.previewContainer();
@@ -378,14 +385,18 @@ function onCloneFileChange() {
                 onCloneFormChange();
                 return;
             }
-            showAudioPreview(URL.createObjectURL(file), `${file.name} — ${formatFileSize(file.size)} — ${Math.round(duration)}s`);
+            const durLabel = Number.isFinite(duration) ? ` — ${Math.round(duration)} s` : '';
+            showAudioPreview(URL.createObjectURL(file), `${file.name} — ${formatFileSize(file.size)}${durLabel}`);
             onCloneFormChange();
             // Auto-transcribe Whisper (parité Gradio app.py ligne 495)
             autoTranscribeClone(file);
         };
         tempAudio.onerror = () => {
+            // Format métadata illisible côté navigateur : afficher quand même,
+            // le backend validera (Whisper + OmniVoice).
             showAudioPreview(URL.createObjectURL(file), `${file.name} — ${formatFileSize(file.size)}`);
             onCloneFormChange();
+            autoTranscribeClone(file);
         };
     } else {
         onCloneFormChange();
