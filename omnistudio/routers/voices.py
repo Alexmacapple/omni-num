@@ -58,7 +58,8 @@ RESERVED_VOICE_NAMES = {
     "vivian", "serena", "uncle-fu", "uncle_fu", "dylan", "eric",
     "ryan", "aiden", "ono-anna", "ono_anna", "sohee",
 }
-VOICE_NAME_RE = re.compile(r"^[a-z0-9-]{3,50}$")
+# PRD-010 : strict regex pour éviter XSS — commence par lettre, 2-49 chars total
+VOICE_NAME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{2,49}$")
 
 
 def _validate_voice_name(name: str) -> Optional[str]:
@@ -113,15 +114,16 @@ def _read_voice_meta(voice_name: str) -> dict:
     """Lit meta.json d'une voix custom sur le disque OmniVoice.
 
     Retourne un dict partiel (owner, system, source, description...).
-    Si le fichier est absent, retourne un dict vide.
+    Si le fichier est absent ou malformé, retourne un dict vide.
     """
     meta_path = Path(OMNIVOICE_VOICES_DIR) / "custom" / voice_name / "meta.json"
     if not meta_path.exists():
         return {}
     try:
-        with open(meta_path) as f:
+        with open(meta_path, encoding="utf-8") as f:
             return json.load(f)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError) as e:
+        logger.debug(f"Failed to read voice meta {voice_name}: {e}")
         return {}
 
 
@@ -136,19 +138,21 @@ def _inject_owner_in_meta(voice_name: str, user_sub: str) -> bool:
     if not meta_path.exists():
         return False
     try:
-        with open(meta_path) as f:
+        with open(meta_path, encoding="utf-8") as f:
             meta = json.load(f)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(f"Failed to read voice meta for {voice_name}: {e}")
         meta = {}
     if meta.get("system") is True:
         return False  # Ne jamais écraser une voix système
     meta.setdefault("owner", user_sub)
     meta["system"] = False
     try:
-        with open(meta_path, "w") as f:
+        with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2, ensure_ascii=False)
         return True
-    except OSError:
+    except OSError as e:
+        logger.error(f"Failed to write voice meta for {voice_name}: {e}")
         return False
 
 
@@ -623,7 +627,7 @@ async def voices_rename(
 @router.post("/api/voices/export")
 async def voices_export(user=Depends(get_current_user)):
     """Exporter les voix custom en ZIP."""
-    voices_dir = Path(OMNIVOICE_VOICES_DIR)
+    voices_dir = Path(OMNIVOICE_VOICES_DIR) / "custom"
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         if voices_dir.exists():
@@ -647,8 +651,11 @@ async def voices_import(
     overwrite: bool = False,
     user=Depends(get_current_user),
 ):
-    """Importer des voix custom depuis un ZIP."""
-    voices_dir = Path(OMNIVOICE_VOICES_DIR)
+    """Importer des voix custom depuis un ZIP.
+
+    PRD-032 : injecte automatiquement owner=<JWT.sub> dans chaque meta.json.
+    """
+    voices_dir = Path(OMNIVOICE_VOICES_DIR) / "custom"
     imported = []
 
     content = await file.read()
@@ -668,8 +675,12 @@ async def voices_import(
             if dest.exists() and not overwrite:
                 continue
             dest.mkdir(parents=True, exist_ok=True)
-            (dest / "meta.json").write_bytes(zf.read(meta_path))
+            meta_bytes = zf.read(meta_path)
+            (dest / "meta.json").write_bytes(meta_bytes)
             (dest / "prompt.pt").write_bytes(zf.read(prompt_path))
+
+            # PRD-032 : injecter owner=<JWT.sub> dans chaque voix importée
+            await asyncio.to_thread(_inject_owner_in_meta, folder, user["user_id"])
             imported.append(folder)
 
     return api_response({"imported": imported, "count": len(imported)})
@@ -710,7 +721,7 @@ async def transcribe_endpoint(
 
     Utilisé par l'onglet 3 Clone pour remplir automatiquement reference_text (PRD décision 5).
     """
-    temp_path = f"temp/transcribe_{user['user_id']}_{int(asyncio.get_event_loop().time()*1000)}.wav"
+    temp_path = f"temp/transcribe_{user['user_id']}_{int(asyncio.get_running_loop().time()*1000)}.wav"
     os.makedirs("temp", exist_ok=True)
     with open(temp_path, "wb") as f:
         f.write(await audio.read())

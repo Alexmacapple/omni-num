@@ -73,7 +73,8 @@ async def create_session(request: Request, user=Depends(get_current_user)):
             (thread_id, user["user_id"], now, now, label),
         )
         conn.commit()
-    except Exception:
+    except sqlite3.Error as e:
+        logger.error(f"Session creation failed (DB error): {e}")
         conn.rollback()
         raise
     finally:
