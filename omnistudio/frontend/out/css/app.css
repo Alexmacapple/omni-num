@@ -702,3 +702,21 @@
     text-align: center;
     font-size: 0.9rem;
 }
+
+/* Modale native <dialog> : style cohérent DSFR, alternative à fr-modal quand on ouvre via showModal() */
+.ov-modal {
+    border: none;
+    padding: 0;
+    background: transparent;
+    max-width: 32rem;
+    width: calc(100% - 2rem);
+}
+.ov-modal::backdrop {
+    background: rgba(22, 22, 22, 0.64);
+}
+.ov-modal__body {
+    background: var(--background-default-grey, #fff);
+    border-radius: 0.25rem;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}

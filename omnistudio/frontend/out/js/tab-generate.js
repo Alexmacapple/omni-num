@@ -52,6 +52,10 @@ function init() {
     DOM.paginationList().addEventListener('click', onPageClick);
 
     eventBus.on('tab-activated:tab-generate', loadSummary);
+    // Charger le résumé au démarrage (pas seulement quand l'onglet devient actif)
+    // → l'utilisateur arrivant directement via URL ne reste pas bloqué sur le
+    //   message de vérification initial.
+    loadSummary();
 
     eventBus.on('session-reset', () => {
         generatedItems = [];

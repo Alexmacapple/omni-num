@@ -871,28 +871,86 @@ async function previewVoice(voiceName, btn) {
     }
 }
 
+/** Ouvre la modale DSFR de renommage et retourne le nouveau nom saisi,
+ *  ou null si l'utilisateur annule / ferme la modale. Validation inline
+ *  (pas d'alert() qui casse le flow), patterne identique à l'ancien prompt().
+ */
+function promptNewVoiceName(currentName) {
+    const modal = document.getElementById('rename-voice-modal');
+    const input = document.getElementById('rename-modal-input');
+    const errorEl = document.getElementById('rename-modal-error');
+    const inputGroup = document.getElementById('rename-modal-input-group');
+    const cancelBtn = document.getElementById('rename-modal-cancel');
+    const currentLabel = document.getElementById('rename-modal-current');
+    const form = modal?.querySelector('form');
+    if (!modal || !input || !form) return Promise.resolve(null);
+
+    if (currentLabel) currentLabel.textContent = currentName;
+    input.value = currentName;
+    errorEl.hidden = true;
+    errorEl.textContent = '';
+    inputGroup.classList.remove('fr-input-group--error');
+
+    return new Promise((resolve) => {
+        const cleanup = () => {
+            form.removeEventListener('submit', onSubmit);
+            cancelBtn.removeEventListener('click', onCancel);
+            modal.removeEventListener('close', onClose);
+        };
+        const onSubmit = (e) => {
+            e.preventDefault();
+            const trimmed = input.value.trim().toLowerCase();
+            if (!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(trimmed)) {
+                errorEl.textContent = 'Nom invalide : 3 à 50 caractères — minuscules, chiffres et tirets uniquement.';
+                errorEl.hidden = false;
+                inputGroup.classList.add('fr-input-group--error');
+                input.focus();
+                return;
+            }
+            if (trimmed === currentName) {
+                modal.close();
+                cleanup();
+                resolve(null);
+                return;
+            }
+            modal.close();
+            cleanup();
+            resolve(trimmed);
+        };
+        const onCancel = () => {
+            modal.close();
+            cleanup();
+            resolve(null);
+        };
+        const onClose = () => {
+            cleanup();
+            resolve(null);
+        };
+        form.addEventListener('submit', onSubmit);
+        cancelBtn.addEventListener('click', onCancel);
+        modal.addEventListener('close', onClose, { once: true });
+        if (typeof modal.showModal === 'function') modal.showModal();
+        else modal.setAttribute('open', '');
+        setTimeout(() => input.focus(), 50);
+    });
+}
+
 async function renameVoice(voiceName) {
-    const newName = prompt(`Nouveau nom pour "${voiceName}" :`, voiceName);
-    if (!newName || newName.trim() === voiceName) return;
-    const trimmed = newName.trim().toLowerCase();
-    if (!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(trimmed)) {
-        alert('Nom invalide : 3-50 caractères, minuscules, chiffres et tirets uniquement.');
-        return;
-    }
+    const newName = await promptNewVoiceName(voiceName);
+    if (!newName) return;
     try {
-        const result = await apiPost(`/api/voices/${encodeURIComponent(voiceName)}/rename`, { new_name: trimmed });
+        const result = await apiPost(`/api/voices/${encodeURIComponent(voiceName)}/rename`, { new_name: newName });
         if (result.error) {
-            alert(result.error.message || 'Erreur lors du renommage.');
+            showError(result.error.message || 'Erreur lors du renommage.');
             return;
         }
-        // Mettre a jour la selection si la voix etait selectionnee
         if (selectedVoices.has(voiceName)) {
             selectedVoices.delete(voiceName);
-            selectedVoices.add(trimmed);
+            selectedVoices.add(newName);
         }
         await loadVoices();
     } catch (err) {
-        alert(err.message || 'Erreur lors du renommage.');
+        showError(err.message || 'Erreur lors du renommage.');
     }
 }
 
