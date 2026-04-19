@@ -292,12 +292,13 @@ async def voices_design_flow(
         if wav_path:
             audio_url = f"/api/audio/{os.path.basename(wav_path)}"
 
-    from core.omnivoice_client import normalize_voice_instruct
+    from core.omnivoice_client import normalize_voice_instruct, describe_instruct_fr
     normalized_instruct = normalize_voice_instruct(voice_instruct)
 
     return api_response({
         "voice_instruct": voice_instruct,
         "normalized_instruct": normalized_instruct,
+        "instruct_fr": describe_instruct_fr(normalized_instruct or voice_instruct),
         "audio_url": audio_url,
         "iteration": result.get("iteration", 1),
     })
@@ -355,8 +356,9 @@ async def voices_explore(
     all_paths = state.get("wav_paths", [])
     history = [f"/api/audio/{os.path.basename(p)}" for p in all_paths[-5:]]
 
-    from core.omnivoice_client import normalize_voice_instruct
+    from core.omnivoice_client import normalize_voice_instruct, describe_instruct_fr
     normalized_instruct = normalize_voice_instruct(voice_instruct)
+    instruct_fr = describe_instruct_fr(normalized_instruct or voice_instruct)
 
     # Génération SRT optionnelle si want_subtitles=true
     srt_url = None
@@ -376,6 +378,7 @@ async def voices_explore(
     return api_response({
         "voice_instruct": voice_instruct,
         "normalized_instruct": normalized_instruct,
+        "instruct_fr": instruct_fr,
         "audio_url": audio_url,
         "srt_url": srt_url,
         "iteration": state.get("iteration", 0),

@@ -525,6 +525,41 @@ class OmniVoiceClient:
         except Exception:
             return {}
 
+    _design_attributes_cache: Optional[Dict] = None
+    _design_attributes_cache_ts: float = 0.0
+
+    def fetch_design_attributes(self, force: bool = False, ttl_seconds: float = 3600.0) -> Dict:
+        """Récupère la whitelist Voice Design depuis GET /design/attributes.
+
+        Cache en mémoire (classe) avec TTL d'1h. Fallback sur les constantes
+        locales `_OMNIVOICE_VALID_ITEMS` / `_CATEGORIES` si l'endpoint est
+        indisponible (mode dégradé, surveille).
+        """
+        import time
+        now = time.time()
+        cache = OmniVoiceClient._design_attributes_cache
+        ts = OmniVoiceClient._design_attributes_cache_ts
+        if not force and cache is not None and (now - ts) < ttl_seconds:
+            return cache
+        try:
+            resp = httpx.get(f"{self.base_url}/design/attributes", timeout=self.timeout_admin)
+            if resp.status_code == 200:
+                data = resp.json().get("attributes", {})
+                OmniVoiceClient._design_attributes_cache = data
+                OmniVoiceClient._design_attributes_cache_ts = now
+                return data
+        except Exception as e:
+            logger.warning("fetch_design_attributes failed, fallback constants: %s", e)
+        # Fallback mode dégradé
+        return {
+            "gender": ["male", "female"],
+            "age": ["child", "teenager", "young adult", "middle-aged", "elderly"],
+            "pitch": ["very low", "low", "moderate", "high", "very high"],
+            "style": ["whisper"],
+            "english_accent": [],
+            "chinese_dialect": [],
+        }
+
     def random_auto(self, text: str, language: str = "auto", output_dir: str = "temp") -> Optional[str]:
         """Appel POST /auto (voix aléatoire cohérente). Retourne le chemin du WAV généré.
 
@@ -645,4 +680,71 @@ def design_from_attributes(
     if extra_en:
         parts.append(extra_en.strip())
 
+    return ", ".join(parts)
+
+
+# Traduction rule-based whitelist EN → français lisible, pour l'UI (pas de LLM).
+_ITEM_TO_FR = {
+    "male": "masculine",
+    "female": "féminine",
+    "child": "d'enfant",
+    "teenager": "d'adolescent",
+    "young adult": "de jeune adulte",
+    "middle-aged": "d'âge mûr",
+    "elderly": "âgée",
+    "very low pitch": "timbre très grave",
+    "low pitch": "timbre grave",
+    "moderate pitch": "timbre moyen",
+    "high pitch": "timbre aigu",
+    "very high pitch": "timbre très aigu",
+    "whisper": "style chuchoté",
+    "american accent": "accent américain",
+    "british accent": "accent britannique",
+    "australian accent": "accent australien",
+    "canadian accent": "accent canadien",
+    "chinese accent": "accent chinois",
+    "indian accent": "accent indien",
+    "japanese accent": "accent japonais",
+    "korean accent": "accent coréen",
+    "portuguese accent": "accent portugais",
+    "russian accent": "accent russe",
+}
+
+
+def describe_instruct_fr(instruct: str) -> str:
+    """Traduit un voice_instruct whitelist EN en phrase française lisible.
+
+    Entrée : « female, middle-aged, low pitch »
+    Sortie : « Voix féminine d'âge mûr, timbre grave »
+    """
+    if not instruct:
+        return ""
+    raw_items = [i.strip().lower() for i in instruct.split(",") if i.strip()]
+    if not raw_items:
+        return ""
+    # Genre en premier (porte « Voix »), puis âge, puis les autres
+    gender_fr = None
+    age_fr = None
+    others_fr = []
+    for item in raw_items:
+        cat = _category_of(item)
+        fr = _ITEM_TO_FR.get(item)
+        if not fr:
+            continue
+        if cat == "gender":
+            gender_fr = fr
+        elif cat == "age":
+            age_fr = fr
+        else:
+            others_fr.append(fr)
+    parts = []
+    if gender_fr and age_fr:
+        parts.append(f"Voix {gender_fr} {age_fr}")
+    elif gender_fr:
+        parts.append(f"Voix {gender_fr}")
+    elif age_fr:
+        parts.append(f"Voix {age_fr}")
+    else:
+        parts.append("Voix")
+    parts.extend(others_fr)
     return ", ".join(parts)

@@ -63,15 +63,20 @@ class TestGenererVoiceInstruct:
         self, mock_api_key, mock_llm_cls,
         etat_design, config_runnable,
     ):
-        """Le noeud retourne un voice_instruct genere par le LLM."""
+        """Le noeud compose un voice_instruct whitelist depuis les dropdowns
+        + les items inférés par le LLM depuis la description libre."""
         mock_llm = MagicMock()
-        mock_llm.ask.return_value = "Voix feminine chaleureuse, timbre doux et veloute."
+        # Nouveau prompt = classifieur : le LLM renvoie des items whitelist
+        mock_llm.ask.return_value = "middle-aged, moderate pitch"
         mock_llm_cls.return_value = mock_llm
 
         result = generate_voice_instruct(etat_design, config_runnable)
 
-        assert result["voice_instruct"] == "Voix feminine chaleureuse, timbre doux et veloute."
-        assert len(result["voice_instruct"]) > 0
+        # genre=feminin → female (dropdown), age=30-40 ans non mappable,
+        # extra fourni → LLM complète avec middle-aged + moderate pitch
+        assert "female" in result["voice_instruct"]
+        assert "middle-aged" in result["voice_instruct"]
+        assert "moderate pitch" in result["voice_instruct"]
 
     @patch("graph.subgraphs.design_loop.LLMClient")
     @patch("graph.subgraphs.design_loop.get_api_key", return_value="fake-key")
@@ -95,19 +100,21 @@ class TestGenererVoiceInstruct:
         self, mock_api_key, mock_llm_cls,
         etat_design, config_runnable,
     ):
-        """Le brief est passe dans le user_prompt envoye au LLM."""
+        """Le nouveau prompt classifieur ne reçoit QUE la description libre
+        (le reste du brief est déjà mappé via les dropdowns en amont)."""
         mock_llm = MagicMock()
-        mock_llm.ask.return_value = "Instruct genere."
+        mock_llm.ask.return_value = "middle-aged"
         mock_llm_cls.return_value = mock_llm
 
         generate_voice_instruct(etat_design, config_runnable)
 
-        # Verifier que ask() a ete appele avec le brief dans le user_prompt
         call_args = mock_llm.ask.call_args
-        user_prompt = call_args[0][1]  # Deuxieme argument positionnel
-        assert "formation professionnelle" in user_prompt
-        assert "bienveillante" in user_prompt
-        assert "feminin" in user_prompt
+        user_prompt = call_args[0][1]
+        # La description libre (extra) est transmise au LLM
+        assert "rythme calme" in user_prompt
+        assert "ton pedagogique" in user_prompt
+        # Les catégories à inférer sont explicitées
+        assert "Catégories à inférer" in user_prompt
 
 
 # ---------------------------------------------------------------------------

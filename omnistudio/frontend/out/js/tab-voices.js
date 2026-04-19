@@ -1009,13 +1009,14 @@ function getDesignLanguage() {
     return val || getSessionLanguage();
 }
 
-/** Affiche les attributs effectivement retenus par la whitelist OmniVoice. */
-function showNormalizedInstruct(normalized) {
+/** Affiche les attributs whitelist OmniVoice + leur traduction FR lisible. */
+function showNormalizedInstruct(normalized, instructFr) {
     const box = document.getElementById('design-instruct-normalized');
     const val = document.getElementById('design-instruct-normalized-value');
     if (!box || !val) return;
     if (normalized && normalized.trim()) {
-        val.textContent = normalized;
+        const frText = (instructFr && instructFr.trim()) ? ` — ${instructFr}` : '';
+        val.textContent = normalized + frText;
         box.hidden = false;
     } else {
         val.textContent = '(aucun attribut reconnu — la voix sera générée avec les défauts OmniVoice)';
@@ -1152,7 +1153,7 @@ async function onComposeAttrs() {
         });
         if (result.error) throw new Error(result.error.message);
         if (result.data.audio_url) showDesignAudio(result.data.audio_url, result.data.srt_url);
-        showNormalizedInstruct(result.data.normalized_instruct);
+        showNormalizedInstruct(result.data.normalized_instruct, result.data.instruct_fr);
         const lockSection = DOM.designLockSection();
         if (lockSection) lockSection.hidden = false;
         const listen = DOM.designListenSection();
@@ -1229,7 +1230,7 @@ async function onUseDirectPrompt() {
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url, result.data.srt_url);
         }
-        showNormalizedInstruct(result.data.normalized_instruct);
+        showNormalizedInstruct(result.data.normalized_instruct, result.data.instruct_fr);
         if (status) status.innerHTML = '';
     } catch (err) {
         if (status) status.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
@@ -1269,7 +1270,7 @@ async function onGenerateBrief() {
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url, result.data.srt_url);
         }
-        showNormalizedInstruct(result.data.normalized_instruct);
+        showNormalizedInstruct(result.data.normalized_instruct, result.data.instruct_fr);
 
         // Remplir l'accordéon transparence IA
         const brief = getBrief();
@@ -1324,7 +1325,7 @@ async function onExplore(regenerateInstruct) {
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url, result.data.srt_url);
         }
-        showNormalizedInstruct(result.data.normalized_instruct);
+        showNormalizedInstruct(result.data.normalized_instruct, result.data.instruct_fr);
 
         const lockSection = DOM.designLockSection();
         if (lockSection) lockSection.hidden = false;
