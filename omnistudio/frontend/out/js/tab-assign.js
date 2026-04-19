@@ -126,6 +126,30 @@ function updateAssignEmptyState(rows) {
     if (nextBtn) nextBtn.disabled = !hasSteps;
 }
 
+/**
+ * Regroupe les voix par catégorie (système / personnelles / clonées) via <optgroup>.
+ * Clarifie la distinction avec les voix voxstudio homonymes.
+ */
+function renderVoiceOptions(voices, selected) {
+    const systemVoices = voices.filter(v => v.system);
+    const cloneVoices = voices.filter(v => !v.system && v.source === 'clone');
+    const designVoices = voices.filter(v => !v.system && v.source !== 'clone');
+
+    const opt = v => `<option value="${escapeAttr(v.name)}" ${v.name === selected ? 'selected' : ''}>${escapeHtml(v.name)}</option>`;
+
+    let html = '';
+    if (systemVoices.length) {
+        html += `<optgroup label="Voix système OmniStudio (partagées)">${systemVoices.map(opt).join('')}</optgroup>`;
+    }
+    if (designVoices.length) {
+        html += `<optgroup label="Mes voix design (créées par vous)">${designVoices.map(opt).join('')}</optgroup>`;
+    }
+    if (cloneVoices.length) {
+        html += `<optgroup label="Mes voix clonées (depuis audio)">${cloneVoices.map(opt).join('')}</optgroup>`;
+    }
+    return html;
+}
+
 function renderTable(rows, voices) {
     DOM.tableBody().innerHTML = rows.map(r => `
         <tr data-step-id="${escapeAttr(r.step_id)}">
@@ -142,9 +166,7 @@ function renderTable(rows, voices) {
             </td>
             <td data-label="Voix">
                 <select class="fr-select fr-select--sm ov-assign-voice" data-step-id="${escapeAttr(r.step_id)}" title="Voix étape ${escapeAttr(r.step_id)}">
-                    ${voices.map(v =>
-                        `<option value="${escapeAttr(v.name)}" ${v.name === r.voice ? 'selected' : ''}>${escapeHtml(v.name)}</option>`
-                    ).join('')}
+                    ${renderVoiceOptions(voices, r.voice)}
                 </select>
             </td>
             <td data-label="Vitesse">

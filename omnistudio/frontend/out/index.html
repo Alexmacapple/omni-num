@@ -8,7 +8,7 @@
     <base href="/omni/">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419b"></script>
+    <script src="js/theme-init.js?v=20260419c"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419b">
+    <link rel="stylesheet" href="css/app.css?v=20260419c">
 </head>
 <body>
     <!-- Skip links -->
@@ -826,6 +826,59 @@
                                         <p class="fr-hint-text fr-mt-1v">
                                             L'IA analyse vos paramètres et génère des instructions techniques optimisées pour le moteur de synthèse vocale k2-fsa OmniVoice.
                                         </p>
+                                    </div>
+                                </div>
+
+                                <!-- Options de synthèse Design (PRD v1.5 + amendement parité Gradio) -->
+                                <div class="fr-grid-row fr-grid-row--gutters fr-mb-2w">
+                                    <div class="fr-col-12 fr-col-md-6">
+                                        <div class="fr-select-group">
+                                            <label class="fr-label" for="design-language">
+                                                Langue de sortie
+                                                <span class="fr-hint-text">Auto = détection automatique (OmniVoice supporte 646 langues)</span>
+                                            </label>
+                                            <select class="fr-select" id="design-language">
+                                                <option value="auto" selected>Auto (détection)</option>
+                                                <option value="fr">Français</option>
+                                                <option value="en">Anglais</option>
+                                                <option value="es">Espagnol</option>
+                                                <option value="de">Allemand</option>
+                                                <option value="it">Italien</option>
+                                                <option value="pt">Portugais</option>
+                                                <option value="zh">Chinois (mandarin)</option>
+                                                <option value="ja">Japonais</option>
+                                                <option value="ko">Coréen</option>
+                                                <option value="ar">Arabe</option>
+                                                <option value="ru">Russe</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-6">
+                                        <fieldset class="fr-fieldset">
+                                            <legend class="fr-fieldset__legend fr-text--regular">
+                                                Sous-titres
+                                                <span class="fr-hint-text">Transcription via faster-whisper (99 langues)</span>
+                                            </legend>
+                                            <div class="fr-fieldset__element">
+                                                <div class="fr-checkbox-group">
+                                                    <input type="checkbox" id="design-want-subtitles">
+                                                    <label class="fr-label" for="design-want-subtitles">Générer un SRT après synthèse</label>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+
+                                <!-- Palette marqueurs émotionnels (partagée avec #clean) -->
+                                <div class="fr-accordion fr-mb-2w">
+                                    <h3 class="fr-accordion__title">
+                                        <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-tag-palette-panel">
+                                            Marqueurs émotionnels (insèrent dans la description)
+                                        </button>
+                                    </h3>
+                                    <div class="fr-collapse" id="design-tag-palette-panel">
+                                        <p class="fr-hint-text fr-mb-1w">Cliquez un tag pour l'insérer dans la zone texte active.</p>
+                                        <div id="design-tag-palette" aria-label="Palette de marqueurs émotionnels design"></div>
                                     </div>
                                 </div>
 
@@ -1742,6 +1795,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419b"></script>
+    <script type="module" src="js/app.js?v=20260419c"></script>
 </body>
 </html>

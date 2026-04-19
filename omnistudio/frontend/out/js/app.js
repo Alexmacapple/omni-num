@@ -236,10 +236,13 @@ function showApp() {
         tabGenerate.init();
         tabExport.init();
 
-        // Palette de marqueurs émotionnels (montée à l'activation de l'onglet Préparation)
+        // Palette de marqueurs émotionnels (montée à l'activation de l'onglet)
         initTagPalette();
         eventBus.on('tab-activated:tab-clean', () => {
             mountTagPalette('clean-tag-palette');
+        });
+        eventBus.on('tab-activated:tab-voices', () => {
+            mountTagPalette('design-tag-palette');
         });
 
         // Observer les onglets DSFR
