@@ -310,6 +310,32 @@ Inchangé v1.3 + :
 - Test audio 10 min avec sous-titres cochés → chunks correctement découpés
 - Check `monitor.sh` : `memory_pressure < 0.5` tout le long
 
+### Phase 9 — Audit UX + remédiation post-livraison (v1.6, livrée partiellement 2026-04-19)
+
+Ajoutée après le smoke test de Phase 8 pour corriger les écarts UX détectés via le skill `/ux-checklist` appliqué à chaque onglet (6 audits parallèles).
+
+**Livré (commits `d372f3c` → `c085289`, 19-20 avril)** :
+
+- Onglet Voix / Design : refonte 3 parcours (Attributs directs / Description IA / Profil prédéfini) + stepper 3 étapes + prompt visible + ajustements rapides whitelist EN.
+- Onglet Voix / Clone : stepper 3 étapes, MediaRecorder (remplace ScriptProcessor déprécié), cap 30 s strict, modale rename (au lieu de `prompt()`), feedback sélection `data-selected` + bordure + icône ✓ (WCAG 1.4.1).
+- Onglet Préparation : pagination 25 lignes par page.
+- Onglet Assignation : bouton Supprimer en variant danger (classe `ov-btn-danger`), renommage accordéon « Paramètres batch », tiroir d'aperçu audio sticky (ne déforme plus les lignes du tableau).
+- Onglet Génération : hiérarchie des boutons (Lancer production seul en primary, outils de test repliés dans `<details>`), résumé chargé au démarrage, sélecteur Fidélité 1.7B/0.6B retiré (résidu VoxQwen).
+- Onglet Export : paramètres audio scindés en essentiels (normalisation, stéréo) visibles / avancés (fréquence, profondeur, format) dans `<details>`.
+- Cohérence cross-onglets : badge « Étape N / 6 » en tête de chaque panel.
+- Langue : dictionnaire FR → whitelist OmniVoice enrichi dans `normalize_voice_instruct()` + helper `describe_instruct_fr()` + classifieur LLM strict (prompt META calé sur la whitelist `/design/attributes`).
+- Tests : 31 cas anti-régression ajoutés dans `tests/test_voice_helpers.py`. **539 passed / 0 failed.**
+
+**Restant à planifier (P2/P3 non livré)** :
+
+- **Audit RGAA 4.1.2 détaillé** (est. 6 h) : lancer `/audit-rgaa-dsfr` sur l'app en production, trier les écarts par sévérité NC/RECO/NOTE, générer les fiches via `/pre-audit-rgaa-dsfr`, remédier par `/fix-accessibilite`. Cible : taux de conformité ≥ 90 %, déclaration d'accessibilité à publier.
+- **Focus-visible cohérent sur les composants custom** (est. 2 h) : auditer `:focus-visible` sur `.ov-modal`, `.ov-preview-drawer`, `.ov-btn-danger`, `.ov-card[data-selected]`, `.design-mode-content`, les boutons de la palette `fr-tags-group` et les `<details>` ajoutés. Garantir `outline: 2-3px solid var(--border-active-blue-france); outline-offset: 2px;` cohérent avec le DSFR. WCAG 2.4.7.
+
+**Dépendances** :
+
+- La Phase 9 suppose Phases 1-8 livrées (smoke test OK).
+- Le ticket RGAA ≥ 90 % est **bloquant** avant toute ouverture publique au-delà de Tailscale Funnel interne (décret n° 2019-768).
+
 ---
 
 ## Critères de validation (30 critères)
@@ -501,6 +527,7 @@ Script `scripts/verify-assets-prefix.sh` parcourt `frontend/out/` et liste tous 
 
 ## Changelog du PRD
 
+- **v1.6 (2026-04-19)** : **Phase 9 UX post-livraison ajoutée** suite à l'audit `/ux-checklist` parallèle sur les 6 onglets (Import, Clean, Voix, Assign, Generate, Export). Verdict initial unanime « À corriger ». P1 et P2 livrés dans 8 commits (`d372f3c` → `c085289`) : refonte Voix/Design (3 parcours + stepper), Voix/Clone (MediaRecorder + stepper + cap 30 s), modale rename, pagination Clean, tiroir preview Assign, hiérarchie boutons Generate, paramètres Export scindés, badges d'étape cross-onglets, retrait des résidus VoxQwen (sélecteurs Fidélité et Modèle 1.7B/0.6B), classifieur LLM strict calé sur `/design/attributes` (whitelist 6 catégories). Ajout des helpers `describe_instruct_fr()` et `fetch_design_attributes()`. 31 nouveaux tests anti-régression dans `tests/test_voice_helpers.py`. **Reste à faire** : audit RGAA 4.1.2 détaillé (est. 6 h, bloquant ouverture publique) + focus-visible cohérent sur composants custom (est. 2 h, WCAG 2.4.7).
 - **v1.5 (2026-04-18)** : **Intégration des 5 points Codex (3e avis indépendant)**. (1) Nouvelle **Phase 0bis — Architecture check (2 h)** : stub FastAPI + audit assets sous `root_path="/omni"` + Keycloak redirects + Funnel path-based. Économise 3-5 h debug Phase 3-4. (2) Critère #29 amendé : `memory_pressure < 0.5` (macOS native) au lieu de RAM < 80 %. (3) Nouvelle **Annexe M** : matrice 20 cas limites parser multi-voix dont injection XSS (regex `^[a-zA-Z][a-zA-Z0-9_-]{2,49}$`). Nouveau risque **#19** sécurité parser. (4) Nouvelle doc `ARCHITECTURE-LANGGRAPH-OMNI.md` en Phase 1 : décision Option B extension graphe. (5) Spec chunking SRT en Phase 3ter : max 3 lignes / max 8 s, par format. Nouveau risque **#20** chunking. Nouveaux tests : `test_tag_explicite.py` enrichi (20 cas), `test_assets_prefix.py`. Nouveau script `verify-assets-prefix.sh`. Nouveau RUNBOOK `RUNBOOK-DEPLOYMENT.md`. 20 risques (vs 18), 30 critères (vs 29). Estimation ~33 h → **~37 h best-case / ~52 h planifié (buffer 40 %)**. ROI positif : +4 h investis économisent 3-5 h de debug et ferment un trou de sécurité XSS.
 - **v1.4 (2026-04-18)** : 3 bloquants critiques résolus (voix versionnées, tag explicite, 4 voix manuelles), 4 ajustements Haute/Moyenne, statut Validé, ~33 h.
 - **v1.3 (2026-04-18)** : 25/25 routes OmniVoice + 7 enrichissements Colab, ~33 h.

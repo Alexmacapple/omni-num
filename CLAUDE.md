@@ -4,7 +4,7 @@
 
 - Fork de `voice-num/voxstudio/` branché sur OmniVoice (k2-fsa, 646 langues) au lieu de VoxQwen.
 - Stack : FastAPI + DSFR 1.11.2 + LangGraph + OmniVoice (port 8070) + Keycloak (client `omnistudio`, realm `harmonia`).
-- Statut : projet en création (Phase 0 à 0bis). PRD-MIGRATION-001 v1.5 validé.
+- Statut : Phases 1-8 livrées, UX P1+P2 livrée 19-20 avril (commits `d372f3c` → `c085289`). Phase 9 ouverte, reste RGAA détaillé + focus-visible (voir PRD v1.6). PRD-MIGRATION-001 v1.6.
 
 ## Comment je travaille
 
