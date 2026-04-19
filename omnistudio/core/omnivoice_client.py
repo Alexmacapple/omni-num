@@ -415,7 +415,14 @@ class OmniVoiceClient:
             data = {"name": name, "source": source, "model": model, "language": language}
             files = {}
             if source == "design":
-                data["voice_description"] = voice_instruct
+                # Normalise vers items whitelist pour que /preset sur cette voix fonctionne
+                normalized = normalize_voice_instruct(voice_instruct)
+                if not normalized:
+                    return {"ok": False, "detail": f"voice_instruct '{voice_instruct[:60]}' ne contient aucun item reconnu par OmniVoice"}
+                if normalized != voice_instruct.strip():
+                    logger.info("save_custom_voice: voice_instruct normalisé '%s' → '%s'",
+                                voice_instruct[:60], normalized)
+                data["voice_description"] = normalized
             elif source == "clone":
                 audio_file = open(audio_path, "rb")
                 files["reference_audio"] = audio_file
