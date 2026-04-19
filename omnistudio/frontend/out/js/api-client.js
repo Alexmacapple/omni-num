@@ -38,7 +38,18 @@ function getHeaders(extra = {}) {
 
 // --- Request avec retry et intercepteur 401 ---
 
+// Stripper le "/" initial pour que <base href="/omni/"> s'applique
+// (sinon fetch absolu contourne base href et tape sur la racine du domaine = voxstudio).
+// Bug Codex #1, fix Phase 3bis.
+function _normalizeUrl(url) {
+    if (typeof url === 'string' && url.startsWith('/')) {
+        return url.slice(1);
+    }
+    return url;
+}
+
 export async function apiRequest(url, options = {}) {
+    url = _normalizeUrl(url);
     const mergedOptions = {
         ...options,
         headers: {
@@ -149,6 +160,7 @@ export function uploadFile(url, formData, onProgress) {
 // --- SSE via fetch + ReadableStream ---
 
 export async function fetchSSE(url, body, { onProgress, onDone, onError, onAbort, onHeartbeat }) {
+    url = _normalizeUrl(url);
     const controller = new AbortController();
     fetchSSE._currentController = controller;
 
