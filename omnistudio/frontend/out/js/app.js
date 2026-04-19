@@ -2,18 +2,23 @@
  * app.js — Point d'entree OmniStudio DSFR.
  * Initialise l'authentification, les onglets, le theme et l'event bus.
  */
-import { isAuthenticated, login, logout, scheduleTokenRefresh, onAuthStateChange } from './auth.js';
-import { apiGet, apiPost } from './api-client.js';
-import { escapeHtml } from './dom-utils.js';
-import { showError, showSuccess, showWarning } from './toast.js';
-import { initUrlState } from './url-state.js';
-import tabImport from './tab-import.js';
-import tabClean from './tab-clean.js';
-import tabVoices from './tab-voices.js';
-import tabAssign from './tab-assign.js';
-import tabGenerate from './tab-generate.js';
-import tabExport from './tab-export.js';
-import { initTagPalette, mountTagPalette } from './tag-palette.js';
+// Cache-buster propagé aux imports ES afin que les modules internes soient
+// re-téléchargés quand app.js est bumpé côté index.html. Sans ce suffixe,
+// les navigateurs continuent d'utiliser l'ancien tab-voices.js même si
+// app.js est re-téléchargé (les imports statiques sont cachés indépendamment).
+const _v = '20260419u';
+import { isAuthenticated, login, logout, scheduleTokenRefresh, onAuthStateChange } from './auth.js?v=20260419u';
+import { apiGet, apiPost } from './api-client.js?v=20260419u';
+import { escapeHtml } from './dom-utils.js?v=20260419u';
+import { showError, showSuccess, showWarning } from './toast.js?v=20260419u';
+import { initUrlState } from './url-state.js?v=20260419u';
+import tabImport from './tab-import.js?v=20260419u';
+import tabClean from './tab-clean.js?v=20260419u';
+import tabVoices from './tab-voices.js?v=20260419u';
+import tabAssign from './tab-assign.js?v=20260419u';
+import tabGenerate from './tab-generate.js?v=20260419u';
+import tabExport from './tab-export.js?v=20260419u';
+import { initTagPalette, mountTagPalette } from './tag-palette.js?v=20260419u';
 
 // --- Mode ---
 const _isMinified = !import.meta.url.includes('/js/app.js');

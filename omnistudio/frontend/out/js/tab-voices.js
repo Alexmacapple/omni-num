@@ -184,12 +184,26 @@ async function onStartRecording() {
         if (e.data && e.data.size > 0) rec.chunks.push(e.data);
     };
     rec.mediaRecorder.onerror = (e) => {
-        console.warn('MediaRecorder error:', e?.error);
+        console.warn('[omnistudio] MediaRecorder error:', e?.error);
     };
-    // Démarre — timeslice 250 ms pour garantir des chunks partiels
-    // (utile si le navigateur plante avant le stop final).
-    rec.mediaRecorder.start(250);
+    // Démarrer SANS timeslice : certains navigateurs émettent un chunk size=0
+    // immédiat avec timeslice, ce qui perturbe la détection « aucun son ».
+    // Le blob complet est livré une fois au stop().
+    try {
+        rec.mediaRecorder.start();
+    } catch (err) {
+        console.warn('[omnistudio] MediaRecorder.start() a échoué:', err);
+        if (statusEl) {
+            statusEl.className = 'fr-text--sm fr-mt-1v';
+            statusEl.textContent = 'Impossible de démarrer l\'enregistrement : ' + (err?.message || err?.name || 'erreur inconnue');
+        }
+        rec.stream.getTracks().forEach(t => t.stop());
+        rec.stream = null;
+        rec.mediaRecorder = null;
+        return;
+    }
     rec.startTime = Date.now();
+    console.info('[omnistudio] Enregistrement micro démarré, mimeType=', rec.mimeType, 'state=', rec.mediaRecorder.state);
 
     // UI : basculer en état "enregistrement en cours"
     if (recordBtn) {
@@ -243,9 +257,14 @@ async function onStopRecording() {
     const sourceBlob = await new Promise((resolve) => {
         rec.mediaRecorder.onstop = () => {
             const type = rec.mimeType || rec.mediaRecorder.mimeType || 'audio/webm';
-            resolve(new Blob(rec.chunks, { type }));
+            const blob = new Blob(rec.chunks, { type });
+            console.info('[omnistudio] Enregistrement micro arrêté : chunks=', rec.chunks.length, 'size=', blob.size, 'type=', type);
+            resolve(blob);
         };
-        try { rec.mediaRecorder.stop(); } catch { resolve(new Blob(rec.chunks, { type: rec.mimeType || 'audio/webm' })); }
+        try { rec.mediaRecorder.stop(); } catch (err) {
+            console.warn('[omnistudio] MediaRecorder.stop() a échoué:', err);
+            resolve(new Blob(rec.chunks, { type: rec.mimeType || 'audio/webm' }));
+        }
     });
 
     // Libérer le micro
@@ -1606,7 +1625,9 @@ async function onClone() {
     }
     formData.append('transcription', DOM.cloneTranscription().value);
     formData.append('name', DOM.cloneName().value);
-    formData.append('model', document.querySelector('input[name="clone-model"]:checked')?.value || '1.7B');
+    // Le paramètre model est accepté par le backend (compat VoxQwen) mais
+    // OmniVoice a un seul modèle — toujours « 1.7B » pour compat arrière.
+    formData.append('model', document.getElementById('clone-model-hidden')?.value || '1.7B');
     formData.append('description', document.getElementById('clone-desc')?.value || '');
     formData.append('test_text', DOM.testText()?.value || '');
     formData.append('language', document.getElementById('clone-language')?.value || getSessionLanguage());

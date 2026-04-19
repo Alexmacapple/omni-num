@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419s"></script>
+    <script src="js/theme-init.js?v=20260419u"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419s">
+    <link rel="stylesheet" href="css/app.css?v=20260419u">
 </head>
 <body>
     <!-- Skip links -->
@@ -1133,21 +1133,10 @@
                                                    placeholder="voix-clone-expert">
                                         </div>
                                     </div>
-                                    <div class="fr-col-12 fr-col-md-6">
-                                        <fieldset class="fr-fieldset">
-                                            <legend class="fr-fieldset__legend fr-text--sm">Modèle</legend>
-                                            <div class="fr-fieldset__content">
-                                                <div class="fr-radio-group">
-                                                    <input type="radio" id="clone-model-17b" name="clone-model" value="1.7B" checked>
-                                                    <label class="fr-label" for="clone-model-17b">1.7B (qualité)</label>
-                                                </div>
-                                                <div class="fr-radio-group">
-                                                    <input type="radio" id="clone-model-06b" name="clone-model" value="0.6B">
-                                                    <label class="fr-label" for="clone-model-06b">0.6B (rapide)</label>
-                                                </div>
-                                            </div>
-                                        </fieldset>
-                                    </div>
+                                    <!-- Sélecteur modèle 1.7B/0.6B retiré : OmniVoice n'a qu'un
+                                         seul modèle (2.45 Go, 1.2 Go VRAM). Le paramètre `model`
+                                         n'était accepté que pour compat VoxQwen et était ignoré. -->
+                                    <input type="hidden" id="clone-model-hidden" name="clone-model" value="1.7B">
                                     <div class="fr-col-12">
                                         <div class="fr-input-group">
                                             <label class="fr-label" for="clone-desc">
@@ -1977,6 +1966,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419s"></script>
+    <script type="module" src="js/app.js?v=20260419u"></script>
 </body>
 </html>
