@@ -30,19 +30,23 @@ class TestHTMLSansCheminsAbsolus:
         """Aucun <link href="/..."> ni <script src="/..."> dans index.html.
 
         Règle : tous les chemins doivent être relatifs, résolus par <base href="/omni/">.
+        Exception : la balise <base> elle-même est autorisée (son rôle est justement
+        d'être absolue).
         """
         files = _list_files(".html")
         for f in files:
             content = open(f).read()
-            # Exclure href="/" (racine) qui reste OK
-            absolu = re.findall(r'href="/[a-zA-Z]', content)
+            # Retirer la balise <base ...> avant la vérification (elle est légitime)
+            stripped = re.sub(r'<base\b[^>]*>', '', content)
+            absolu = re.findall(r'href="/[a-zA-Z]', stripped)
             assert absolu == [], f"Chemins absolus dans {f} : {absolu}"
 
     def test_aucun_src_absolu_dans_index_html(self):
         files = _list_files(".html")
         for f in files:
             content = open(f).read()
-            absolu = re.findall(r'src="/[a-zA-Z]', content)
+            stripped = re.sub(r'<base\b[^>]*>', '', content)
+            absolu = re.findall(r'src="/[a-zA-Z]', stripped)
             assert absolu == [], f"src= absolu dans {f} : {absolu}"
 
     def test_base_href_omni_present(self):

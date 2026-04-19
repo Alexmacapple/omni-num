@@ -62,10 +62,12 @@
     margin-bottom: 0 !important;
 }
 
-/* --- Toast container --- */
+/* --- Toast container ---
+   top: 5rem pour passer SOUS le header DSFR (hauteur ~60-80px).
+   Évite que les notifications empiètent sur le menu header. */
 #ov-toast-container {
     position: fixed;
-    top: 1rem;
+    top: 5rem;
     right: 1rem;
     z-index: 1000;
     display: flex;
