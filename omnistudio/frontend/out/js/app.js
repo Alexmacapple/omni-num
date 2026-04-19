@@ -325,6 +325,7 @@ const newSessionDialog = document.getElementById('ov-new-session-dialog');
 const newSessionCancel = document.getElementById('ov-new-session-cancel');
 const newSessionConfirm = document.getElementById('ov-new-session-confirm');
 
+let _sessionCreating = false;
 if (newSessionBtn && newSessionDialog) {
     newSessionBtn.addEventListener('click', () => {
         if (window.__ovGenerating) {
@@ -338,6 +339,9 @@ if (newSessionBtn && newSessionDialog) {
         newSessionDialog.close();
     });
     newSessionConfirm?.addEventListener('click', async () => {
+        // Guard anti double-toast : si déjà en cours, absorber le click silencieusement.
+        if (_sessionCreating) return;
+        _sessionCreating = true;
         newSessionConfirm.disabled = true;
         try {
             const result = await apiPost('/api/session', { label: '' });
@@ -351,6 +355,7 @@ if (newSessionBtn && newSessionDialog) {
         } catch (err) {
             showError(err.message || 'Impossible de créer la session. Vérifiez la connexion.');
         } finally {
+            _sessionCreating = false;
             newSessionConfirm.disabled = false;
         }
     });
@@ -462,6 +467,7 @@ async function checkStatus() {
                     ${generationHtml}
                     ${modelsHtml}
                     <tr><th scope="row">Albert API (nettoyage LLM)</th><td>${d.albert ? badge(d.albert.ok, d.albert.ok ? escapeHtml(d.albert.model || 'Actif') : 'Injoignable') : badge(false, 'Non configuré')}</td></tr>
+                    <tr><th scope="row">Whisper (sous-titres SRT, transcription clone)</th><td>${d.whisper?.installed ? badge(true, d.whisper.model_cached ? 'Installé (modèle en cache)' : 'Installé (modèle téléchargé à la 1re utilisation)') : badge(false, 'Non installé')}</td></tr>
                     <tr><th scope="row">SoX (post-traitement)</th><td>${badge(d.audio_tools?.sox)}</td></tr>
                     <tr><th scope="row">FFmpeg</th><td>${badge(d.audio_tools?.ffmpeg)}</td></tr>
                 </tbody>

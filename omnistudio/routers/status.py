@@ -69,11 +69,33 @@ async def system_status():
     except Exception as e:
         logger.debug("Albert API status check failed: %s", e)
 
+    # faster-whisper (sous-titres SRT + auto-transcribe Clone)
+    whisper_installed = False
+    whisper_model_cached = False
+    try:
+        from importlib.util import find_spec
+        whisper_installed = find_spec("faster_whisper") is not None
+        if whisper_installed:
+            # Check présence du modèle en cache pour éviter download ~800 Mo au 1er usage
+            cache_dir = os.getenv(
+                "OMNISTUDIO_WHISPER_CACHE",
+                os.path.join(os.path.dirname(__file__), "..", "..", "data", "models"),
+            )
+            whisper_model_cached = os.path.isdir(cache_dir) and any(
+                name.startswith("models--") for name in os.listdir(cache_dir)
+            ) if os.path.isdir(cache_dir) else False
+    except Exception as e:
+        logger.debug("Whisper status check failed: %s", e)
+
     return api_response({
         "omnivoice": omnivoice_ok,
         "models": models_status,
         "audio_tools": {"sox": sox_ok, "ffmpeg": ffmpeg_ok},
         "albert": {"ok": albert_ok, "model": albert_model},
+        "whisper": {
+            "installed": whisper_installed,
+            "model_cached": whisper_model_cached,
+        },
     })
 
 
