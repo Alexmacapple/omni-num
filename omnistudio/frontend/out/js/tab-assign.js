@@ -70,6 +70,17 @@ function init() {
     eventBus.on('tab-activated:tab-assign', loadAssignData);
     eventBus.on('tab-deactivated:tab-assign', autoSave);
 
+    // Fermeture du tiroir de preview audio (sticky en bas)
+    const drawerClose = document.getElementById('assign-preview-drawer-close');
+    const drawer = document.getElementById('assign-preview-drawer');
+    if (drawerClose && drawer) {
+        drawerClose.addEventListener('click', () => {
+            const audio = document.getElementById('assign-preview-drawer-audio');
+            if (audio) { audio.pause(); audio.src = ''; }
+            drawer.hidden = true;
+        });
+    }
+
     eventBus.on('session-reset', () => {
         assignData = [];
         voicesList = [];
@@ -246,14 +257,6 @@ function renderTable(rows, voices) {
                             title="Supprimer le segment ${escapeAttr(r.step_id)}">Supprimer</button>
                 </div>
                 <div class="ov-card-status" data-status-zone="${escapeAttr(r.step_id)}" aria-live="polite"></div>
-                <div class="ov-audio-container" data-audio-zone="${escapeAttr(r.step_id)}" hidden>
-                    <p class="fr-text--xs fr-mb-0">Audio étape ${escapeHtml(r.step_id)}</p>
-                    <audio class="ov-card-audio" controls title="Audio généré pour l'étape ${escapeAttr(r.step_id)}"></audio>
-                    <a class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-mt-1v ov-download-link"
-                       data-action="download" data-step-id="${escapeAttr(r.step_id)}"
-                       download="etape-${escapeAttr(r.step_id)}.wav"
-                       title="Télécharger l'audio de l'étape ${escapeAttr(r.step_id)}">Télécharger</a>
-                </div>
             </td>
         </tr>
     `).join('');
@@ -291,8 +294,13 @@ async function onTableAction(e) {
     const text = row.querySelector('.ov-assign-text')?.value || '';
 
     const statusZone = document.querySelector(`[data-status-zone="${CSS.escape(stepId)}"]`);
-    const audioContainer = document.querySelector(`[data-audio-zone="${CSS.escape(stepId)}"]`);
-    const audioEl = audioContainer?.querySelector('audio');
+    // Tiroir de preview audio unique (partagé par toutes les lignes du tableau).
+    const audioContainer = document.getElementById('assign-preview-drawer');
+    const audioEl = document.getElementById('assign-preview-drawer-audio');
+    const drawerStep = document.getElementById('assign-preview-drawer-step');
+    const drawerDownload = document.getElementById('assign-preview-drawer-download');
+    if (drawerStep) drawerStep.textContent = stepId;
+    if (drawerDownload) drawerDownload.setAttribute('download', `etape-${stepId}.wav`);
 
     // Note : pas de pre-check busy — OmniVoice a son propre semaphore et
     // mettra la requête en attente jusqu'à queue_timeout (5s). Si saturé
@@ -337,8 +345,7 @@ async function onTableAction(e) {
                 audioEl.src = authUrl;
                 if (audioContainer) {
                     audioContainer.hidden = false;
-                    const dlLink = audioContainer.querySelector('.ov-download-link');
-                    if (dlLink) dlLink.href = authUrl;
+                    if (drawerDownload) drawerDownload.href = authUrl;
                 }
                 audioEl.play().then(() => {
                     if (statusZone) {

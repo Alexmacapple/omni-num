@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260420a"></script>
+    <script src="js/theme-init.js?v=20260420b"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260420a">
+    <link rel="stylesheet" href="css/app.css?v=20260420b">
 </head>
 <body>
     <!-- Skip links -->
@@ -1482,6 +1482,26 @@
                         </div>
                     </div>
 
+                    <!-- Tiroir de preview audio (partagé par toutes les lignes du tableau
+                         Assignation) : évite de déformer la ligne du tableau quand on
+                         écoute. Sticky en bas de l'écran, se met à jour à chaque nouvelle
+                         preview, refermable. -->
+                    <aside id="assign-preview-drawer" class="ov-preview-drawer" hidden aria-label="Aperçu audio de l'étape">
+                        <div class="ov-preview-drawer__body">
+                            <p class="ov-preview-drawer__title">
+                                Aperçu étape <strong id="assign-preview-drawer-step">—</strong>
+                            </p>
+                            <audio id="assign-preview-drawer-audio" controls class="ov-preview-drawer__audio"></audio>
+                            <a class="fr-link fr-text--sm" id="assign-preview-drawer-download" href="#" download="etape.wav">
+                                Télécharger
+                            </a>
+                            <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-btn--icon-left fr-icon-close-line"
+                                    id="assign-preview-drawer-close" type="button" title="Fermer l'aperçu">
+                                <span class="fr-sr-only">Fermer l'aperçu audio</span>
+                            </button>
+                        </div>
+                    </aside>
+
                     <!-- Panel 5 : Génération -->
                     <div id="panel-generate" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-generate" tabindex="0">
                         <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 5 sur 6 du projet">Étape 5 / 6</p>
@@ -2040,6 +2060,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260420a"></script>
+    <script type="module" src="js/app.js?v=20260420b"></script>
 </body>
 </html>
