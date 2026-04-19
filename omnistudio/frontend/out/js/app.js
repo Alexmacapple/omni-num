@@ -6,19 +6,19 @@
 // re-téléchargés quand app.js est bumpé côté index.html. Sans ce suffixe,
 // les navigateurs continuent d'utiliser l'ancien tab-voices.js même si
 // app.js est re-téléchargé (les imports statiques sont cachés indépendamment).
-const _v = '20260419w';
-import { isAuthenticated, login, logout, scheduleTokenRefresh, onAuthStateChange } from './auth.js?v=20260419w';
-import { apiGet, apiPost } from './api-client.js?v=20260419w';
-import { escapeHtml } from './dom-utils.js?v=20260419w';
-import { showError, showSuccess, showWarning } from './toast.js?v=20260419w';
-import { initUrlState } from './url-state.js?v=20260419w';
-import tabImport from './tab-import.js?v=20260419w';
-import tabClean from './tab-clean.js?v=20260419w';
-import tabVoices from './tab-voices.js?v=20260419w';
-import tabAssign from './tab-assign.js?v=20260419w';
-import tabGenerate from './tab-generate.js?v=20260419w';
-import tabExport from './tab-export.js?v=20260419w';
-import { initTagPalette, mountTagPalette } from './tag-palette.js?v=20260419w';
+const _v = '20260419x';
+import { isAuthenticated, login, logout, scheduleTokenRefresh, onAuthStateChange } from './auth.js?v=20260419x';
+import { apiGet, apiPost } from './api-client.js?v=20260419x';
+import { escapeHtml } from './dom-utils.js?v=20260419x';
+import { showError, showSuccess, showWarning } from './toast.js?v=20260419x';
+import { initUrlState } from './url-state.js?v=20260419x';
+import tabImport from './tab-import.js?v=20260419x';
+import tabClean from './tab-clean.js?v=20260419x';
+import tabVoices from './tab-voices.js?v=20260419x';
+import tabAssign from './tab-assign.js?v=20260419x';
+import tabGenerate from './tab-generate.js?v=20260419x';
+import tabExport from './tab-export.js?v=20260419x';
+import { initTagPalette, mountTagPalette } from './tag-palette.js?v=20260419x';
 
 // --- Mode ---
 const _isMinified = !import.meta.url.includes('/js/app.js');

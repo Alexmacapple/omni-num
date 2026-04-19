@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419w"></script>
+    <script src="js/theme-init.js?v=20260419x"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419w">
+    <link rel="stylesheet" href="css/app.css?v=20260419x">
 </head>
 <body>
     <!-- Skip links -->
@@ -931,20 +931,13 @@
                                         <strong>Attributs retenus par OmniVoice :</strong> <span id="design-instruct-normalized-value"></span>
                                     </p>
                                     <div class="fr-mt-1w fr-mb-1w" id="design-quick-adjust" hidden>
-                                        <p class="fr-text--xs fr-mb-1v">Ajustements rapides (modifie le prompt directement) :</p>
+                                        <p class="fr-text--xs fr-mb-1v">Ajustements rapides (ajoutent un item whitelist OmniVoice — cliquez « Écouter cette voix » pour entendre le changement) :</p>
                                         <ul class="fr-tags-group" id="design-modifier-tags">
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="grave" data-excludes="aigu" aria-pressed="false">+ grave</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="aigu" data-excludes="grave" aria-pressed="false">+ aigu</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="chaleureux" aria-pressed="false">+ chaleureux</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="clair" aria-pressed="false">+ clair</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="lent" data-excludes="rapide" aria-pressed="false">+ lent</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="rapide" data-excludes="lent" aria-pressed="false">+ rapide</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="pauses" aria-pressed="false">+ pauses</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="engageant" data-excludes="pose" aria-pressed="false">+ engageant</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="pose" data-excludes="engageant" aria-pressed="false">+ posé</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="autoritaire" aria-pressed="false">+ autoritaire</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="proche" aria-pressed="false">+ proche micro</button></li>
-                                            <li><button class="fr-tag fr-tag--sm" data-modifier="articule" aria-pressed="false">+ articulé</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="tres-grave" data-excludes="grave,aigu,tres-aigu" aria-pressed="false">+ très grave</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="grave" data-excludes="tres-grave,aigu,tres-aigu" aria-pressed="false">+ grave</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="aigu" data-excludes="tres-grave,grave,tres-aigu" aria-pressed="false">+ aigu</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="tres-aigu" data-excludes="tres-grave,grave,aigu" aria-pressed="false">+ très aigu</button></li>
+                                            <li><button class="fr-tag fr-tag--sm" data-modifier="chuchote" aria-pressed="false">+ chuchoté</button></li>
                                         </ul>
                                     </div>
                                     <div class="fr-accordion fr-mt-1w" id="design-ai-details" hidden>
@@ -2010,6 +2003,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419w"></script>
+    <script type="module" src="js/app.js?v=20260419x"></script>
 </body>
 </html>

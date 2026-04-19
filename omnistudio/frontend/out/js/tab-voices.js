@@ -1001,25 +1001,25 @@ function initDesignModeRadios() {
 
 // --- Ajustements rapides (tags modificateurs) ---
 
+// Ajustements rapides — uniquement les items whitelist OmniVoice pour éviter
+// que de la prose FR dans l'instruct fasse basculer le modèle vers l'anglais.
+// Chaque modifier ajoute directement un item EN valide (même catégorie que
+// pitch ou style), remplaçant celui déjà présent si besoin via exclusion
+// mutuelle (data-excludes).
 const MODIFIERS = {
-    grave:       ', timbre plus grave',
-    aigu:        ', timbre plus aigu',
-    chaleureux:  ', timbre plus chaleureux',
-    clair:       ', timbre plus clair',
-    lent:        ', rythme plus lent avec pauses longues',
-    rapide:      ', rythme plus soutenu',
-    pauses:      ', avec des pauses marquées entre les phrases',
-    engageant:   ', ton plus engageant et dynamique',
-    pose:        ', ton plus posé et calme',
-    autoritaire: ', ton plus autoritaire et assuré',
-    proche:      ', texture proche du micro',
-    articule:    ', diction très articulée et nette',
+    'tres-grave': ', very low pitch',
+    grave:        ', low pitch',
+    aigu:         ', high pitch',
+    'tres-aigu':  ', very high pitch',
+    chuchote:     ', whisper',
 };
 
 const MODIFIER_KEYWORDS = {
-    grave: 'grave', aigu: 'aigu', chaleureux: 'chaleureux', clair: 'clair',
-    lent: 'lent', rapide: 'soutenu', pauses: 'pauses', engageant: 'engageant',
-    pose: 'posé', autoritaire: 'autoritaire', proche: 'proche', articule: 'articulé',
+    'tres-grave': 'very low pitch',
+    grave:        'low pitch',
+    aigu:         'high pitch',
+    'tres-aigu':  'very high pitch',
+    chuchote:     'whisper',
 };
 
 const activeModifiers = new Set();
@@ -1045,16 +1045,17 @@ function onModifierTag(e) {
         if (promptLower.includes(keyword)) {
             return; // Déjà présent, ne rien faire
         }
-        // Désactiver l'exclusion mutuelle
-        const excludes = btn.dataset.excludes;
-        if (excludes && activeModifiers.has(excludes)) {
-            const exBtn = document.querySelector(`[data-modifier="${excludes}"]`);
-            if (exBtn) {
-                instruct.value = instruct.value.replace(MODIFIERS[excludes], '');
-                activeModifiers.delete(excludes);
-                exBtn.setAttribute('aria-pressed', 'false');
-                exBtn.classList.remove('fr-tag--dismiss');
-            }
+        // Désactiver les exclusions mutuelles (CSV : "a,b,c")
+        const excludesAttr = btn.dataset.excludes || '';
+        const excludesList = excludesAttr.split(',').map(s => s.trim()).filter(Boolean);
+        for (const excluded of excludesList) {
+            if (!activeModifiers.has(excluded)) continue;
+            const exBtn = document.querySelector(`[data-modifier="${excluded}"]`);
+            if (!exBtn) continue;
+            instruct.value = instruct.value.replace(MODIFIERS[excluded], '');
+            activeModifiers.delete(excluded);
+            exBtn.setAttribute('aria-pressed', 'false');
+            exBtn.classList.remove('fr-tag--dismiss');
         }
         // Ajouter le modificateur
         instruct.value = instruct.value.trimEnd() + MODIFIERS[mod];
