@@ -43,6 +43,9 @@ function init() {
         return;
     }
 
+    const advResetBtn = document.getElementById('assign-adv-reset-btn');
+    if (advResetBtn) advResetBtn.addEventListener('click', resetAssignAdvancedParams);
+
     applyAllBtn.addEventListener('click', onApplyAll);
     nextBtn.addEventListener('click', onContinue);
     speedRange.addEventListener('input', () => {
@@ -124,6 +127,52 @@ function updateAssignEmptyState(rows) {
     if (emptyState) emptyState.hidden = hasSteps;
     if (tableContainer) tableContainer.hidden = !hasSteps;
     if (nextBtn) nextBtn.disabled = !hasSteps;
+}
+
+/**
+ * Paramètres avancés OmniVoice (accordion Assign — applique au preview).
+ * Retourne null si toutes valeurs par défaut (évite payload inutile).
+ */
+function getAssignAdvancedParams() {
+    const num = (id) => {
+        const el = document.getElementById(id);
+        if (!el || !el.value) return null;
+        const v = parseFloat(el.value);
+        return isNaN(v) ? null : v;
+    };
+    const bool = (id) => {
+        const el = document.getElementById(id);
+        return el ? !!el.checked : null;
+    };
+    const out = {
+        num_step: num('assign-adv-num-step'),
+        guidance_scale: num('assign-adv-guidance'),
+        t_shift: num('assign-adv-t-shift'),
+        denoise: bool('assign-adv-denoise'),
+        postprocess_output: bool('assign-adv-postprocess'),
+        preprocess_prompt: bool('assign-adv-preprocess'),
+    };
+    const allDefault =
+        out.num_step === 32 && out.guidance_scale === 2.0 &&
+        out.t_shift === 0.1 && out.denoise === true &&
+        out.postprocess_output === true && out.preprocess_prompt === true;
+    return allDefault ? null : out;
+}
+
+function resetAssignAdvancedParams() {
+    const defaults = {
+        'assign-adv-num-step': '32',
+        'assign-adv-guidance': '2.0',
+        'assign-adv-t-shift': '0.1',
+    };
+    for (const [id, v] of Object.entries(defaults)) {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+    }
+    ['assign-adv-denoise', 'assign-adv-postprocess', 'assign-adv-preprocess'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = true;
+    });
 }
 
 /**
@@ -265,9 +314,10 @@ async function onTableAction(e) {
     if (audioContainer) audioContainer.hidden = true;
 
     try {
-        const result = await apiPost(`/api/assign/preview/${stepId}`, {
-            voice, language: lang, speed, instruction, text,
-        });
+        const advanced = getAssignAdvancedParams();
+        const payload = { voice, language: lang, speed, instruction, text };
+        if (advanced) payload.advanced = advanced;
+        const result = await apiPost(`/api/assign/preview/${stepId}`, payload);
         if (result.error) throw new Error(result.error.message || 'Erreur de synthèse');
 
         if (result.data?.audio_url) {

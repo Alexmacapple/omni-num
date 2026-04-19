@@ -272,6 +272,41 @@ function onDeleteRecording() {
     onCloneFormChange();
 }
 
+async function autoTranscribeClone(file) {
+    const transcriptionEl = DOM.cloneTranscription();
+    if (!transcriptionEl) return;
+    // Ne pas écraser une transcription déjà saisie manuellement
+    if (transcriptionEl.value.trim()) return;
+
+    const originalPlaceholder = transcriptionEl.placeholder;
+    transcriptionEl.placeholder = 'Transcription automatique Whisper en cours…';
+    transcriptionEl.disabled = true;
+    try {
+        const form = new FormData();
+        form.append('audio', file);
+        form.append('language', 'auto');
+        const token = localStorage.getItem('ov_access_token') || '';
+        const resp = await fetch('api/voices/transcribe', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: form,
+        });
+        if (resp.ok) {
+            const json = await resp.json();
+            const text = json?.data?.text || '';
+            if (text && !transcriptionEl.value.trim()) {
+                transcriptionEl.value = text;
+                transcriptionEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    } catch {
+        // Silencieux : user peut saisir manuellement
+    } finally {
+        transcriptionEl.placeholder = originalPlaceholder;
+        transcriptionEl.disabled = false;
+    }
+}
+
 function onCloneFileChange() {
     const file = DOM.cloneAudio()?.files?.[0];
     const errorEl = document.getElementById('clone-audio-error');
@@ -320,6 +355,8 @@ function onCloneFileChange() {
             }
             showAudioPreview(URL.createObjectURL(file), `${file.name} — ${formatFileSize(file.size)} — ${Math.round(duration)}s`);
             onCloneFormChange();
+            // Auto-transcribe Whisper (parité Gradio app.py ligne 495)
+            autoTranscribeClone(file);
         };
         tempAudio.onerror = () => {
             showAudioPreview(URL.createObjectURL(file), `${file.name} — ${formatFileSize(file.size)}`);
@@ -1071,10 +1108,20 @@ async function onExplore(regenerateInstruct) {
 function showDesignAudio(url) {
     const player = DOM.designAudioPlayer();
     const container = DOM.designCurrentAudio();
+    const authUrl = authenticatedUrl(url);
     if (player) {
-        player.src = authenticatedUrl(url);
+        player.src = authUrl;
         if (container) container.hidden = false;
         player.play();
+    }
+    // Lien download WAV (reflète la dernière exploration)
+    const dl = document.getElementById('design-download-link');
+    if (dl && authUrl) {
+        dl.href = authUrl;
+        dl.hidden = false;
+        // Nom de fichier suggéré depuis l'URL (ex: design_242.wav)
+        const filename = (url || '').split('/').pop().split('?')[0] || 'voix-exploration.wav';
+        dl.setAttribute('download', filename);
     }
     // Après la première génération, le bouton devient "Régénérer"
     const regenBtn = DOM.designRegenBtn();
@@ -1269,9 +1316,17 @@ async function onClone() {
         const cloneResult = DOM.cloneResult();
         const cloneResultMsg = DOM.cloneResultMsg();
         const cloneAudioPlayer = DOM.cloneAudioPlayer();
+        const authUrl = authenticatedUrl(result.data.audio_url);
         if (cloneResult) cloneResult.hidden = false;
         if (cloneResultMsg) cloneResultMsg.textContent = `Voix "${result.data.name}" clonée et verrouillée.`;
-        if (cloneAudioPlayer) cloneAudioPlayer.src = authenticatedUrl(result.data.audio_url);
+        if (cloneAudioPlayer) cloneAudioPlayer.src = authUrl;
+        // Lien download WAV du clone
+        const dl = document.getElementById('clone-download-link');
+        if (dl && authUrl) {
+            dl.href = authUrl;
+            dl.hidden = false;
+            dl.setAttribute('download', `${result.data.name || 'voix-clone'}.wav`);
+        }
         if (status) status.innerHTML = '';
 
         await loadVoices();

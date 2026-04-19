@@ -92,12 +92,23 @@ class ApplyAllRequest(BaseModel):
         return v
 
 
+class AdvancedPreviewParams(BaseModel):
+    """Paramètres avancés OmniVoice pour le preview d'assignation."""
+    num_step: int | None = None
+    guidance_scale: float | None = None
+    t_shift: float | None = None
+    denoise: bool | None = None
+    postprocess_output: bool | None = None
+    preprocess_prompt: bool | None = None
+
+
 class PreviewAssignRequest(BaseModel):
     voice: str
     language: str = "fr"
     speed: float = 1.0
     instruction: str = ""
     text: str = ""
+    advanced: AdvancedPreviewParams | None = None
 
     @field_validator('voice')
     @classmethod

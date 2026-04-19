@@ -8,7 +8,7 @@
     <base href="/omni/">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419f"></script>
+    <script src="js/theme-init.js?v=20260419g"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419f">
+    <link rel="stylesheet" href="css/app.css?v=20260419g">
 </head>
 <body>
     <!-- Skip links -->
@@ -935,6 +935,9 @@
                                     <div id="design-current-audio" class="fr-mb-1w" hidden>
                                         <audio id="design-audio-player" controls class="ov-audio-player" aria-label="Aperçu de la voix en cours de design">
                                                                                     </audio>
+                                        <a class="fr-link fr-text--sm fr-mt-1v" id="design-download-link" href="#" download="voix-exploration.wav" hidden>
+                                            Télécharger ce WAV
+                                        </a>
                                     </div>
 
                                     <div class="fr-btns-group fr-btns-group--inline fr-mb-2w">
@@ -1098,6 +1101,27 @@
                                     </div>
                                 </div>
 
+                                <!-- Options clone (parité Gradio) -->
+                                <fieldset class="fr-fieldset fr-mb-2w">
+                                    <legend class="fr-fieldset__legend fr-text--regular">Options</legend>
+                                    <div class="fr-fieldset__content">
+                                        <div class="fr-checkbox-group fr-mb-1w">
+                                            <input type="checkbox" id="clone-preprocess-prompt" checked>
+                                            <label class="fr-label" for="clone-preprocess-prompt">
+                                                Nettoyer le WAV de référence
+                                                <span class="fr-hint-text">Retire les silences longs avant clonage (recommandé)</span>
+                                            </label>
+                                        </div>
+                                        <div class="fr-checkbox-group">
+                                            <input type="checkbox" id="clone-want-subtitles">
+                                            <label class="fr-label" for="clone-want-subtitles">
+                                                Générer un SRT après clonage
+                                                <span class="fr-hint-text">Sous-titres Whisper du WAV test produit</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
                                 <div class="fr-btns-group fr-mb-2w">
                                     <button class="fr-btn" id="clone-btn" disabled>Créer le clone</button>
                                 </div>
@@ -1114,6 +1138,9 @@
                                     <div class="fr-mt-2w">
                                         <p class="fr-text--sm fr-text--bold fr-mb-1w">Aperçu de la voix clonée</p>
                                         <audio id="clone-audio-player" controls class="ov-audio-player fr-mb-1w" aria-label="Aperçu de la voix clonée"></audio>
+                                        <a class="fr-link fr-text--sm fr-mt-1v" id="clone-download-link" href="#" download="voix-clone.wav" hidden>
+                                            Télécharger ce WAV
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -1189,6 +1216,80 @@
                             <div class="fr-col-12 fr-col-md-6 fr-col-lg-2">
                                 <div class="fr-btns-group fr-mt-4w">
                                     <button class="fr-btn" id="assign-apply-all-btn">Appliquer à tout</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accordéon Paramètres avancés OmniVoice (PRD décision 14) -->
+                        <div class="fr-accordion fr-mb-3w">
+                            <h3 class="fr-accordion__title">
+                                <button class="fr-accordion__btn" aria-expanded="false" aria-controls="assign-advanced-panel">
+                                    Paramètres avancés OmniVoice
+                                </button>
+                            </h3>
+                            <div class="fr-collapse" id="assign-advanced-panel">
+                                <p class="fr-hint-text fr-mb-2w">
+                                    Ces paramètres s'appliquent à la <strong>génération batch</strong> (onglet Génération) et sont
+                                    transmis au moteur k2-fsa. Pour l'écoute unitaire « Écouter » ici, OmniVoice utilise ses
+                                    défauts car l'endpoint <code>/preset</code> n'accepte pas ces overrides.
+                                </p>
+                                <div class="fr-grid-row fr-grid-row--gutters">
+                                    <div class="fr-col-12 fr-col-md-4">
+                                        <label for="assign-adv-num-step" class="fr-label">
+                                            num_step <span class="fr-hint-text">Itérations (4–64)</span>
+                                        </label>
+                                        <input class="fr-input" type="number" id="assign-adv-num-step" min="4" max="64" step="1" value="32">
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-4">
+                                        <label for="assign-adv-guidance" class="fr-label">
+                                            guidance_scale <span class="fr-hint-text">Force guidage (0–4)</span>
+                                        </label>
+                                        <input class="fr-input" type="number" id="assign-adv-guidance" min="0" max="4" step="0.5" value="2.0">
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-4">
+                                        <label for="assign-adv-t-shift" class="fr-label">
+                                            t_shift <span class="fr-hint-text">Décalage bruit (0–1)</span>
+                                        </label>
+                                        <input class="fr-input" type="number" id="assign-adv-t-shift" min="0" max="1" step="0.05" value="0.1">
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-4">
+                                        <fieldset class="fr-fieldset">
+                                            <legend class="fr-fieldset__legend fr-text--regular">denoise</legend>
+                                            <div class="fr-fieldset__element">
+                                                <div class="fr-checkbox-group">
+                                                    <input type="checkbox" id="assign-adv-denoise" checked>
+                                                    <label class="fr-label" for="assign-adv-denoise">Activé</label>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-4">
+                                        <fieldset class="fr-fieldset">
+                                            <legend class="fr-fieldset__legend fr-text--regular">postprocess_output</legend>
+                                            <div class="fr-fieldset__element">
+                                                <div class="fr-checkbox-group">
+                                                    <input type="checkbox" id="assign-adv-postprocess" checked>
+                                                    <label class="fr-label" for="assign-adv-postprocess">Activé</label>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="fr-col-12 fr-col-md-4">
+                                        <fieldset class="fr-fieldset">
+                                            <legend class="fr-fieldset__legend fr-text--regular">preprocess_prompt</legend>
+                                            <div class="fr-fieldset__element">
+                                                <div class="fr-checkbox-group">
+                                                    <input type="checkbox" id="assign-adv-preprocess" checked>
+                                                    <label class="fr-label" for="assign-adv-preprocess">Activé (silence removal)</label>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <div class="fr-mt-2w">
+                                    <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="assign-adv-reset-btn" type="button">
+                                        Réinitialiser les valeurs par défaut
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1795,6 +1896,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419f"></script>
+    <script type="module" src="js/app.js?v=20260419g"></script>
 </body>
 </html>
