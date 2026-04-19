@@ -119,7 +119,7 @@
     },
     "r1:z03": {
       "zone_id": "z03",
-      "status": "started",
+      "status": "completed",
       "paths": [
         "omnistudio/routers/sessions.py",
         "omnistudio/routers/status.py",
@@ -128,22 +128,44 @@
       "file_count": 3,
       "agent_id": "r1:z03",
       "round": 1,
-      "started_at": "2026-04-19T11:11:28Z"
+      "started_at": "2026-04-19T11:11:28Z",
+      "ended_at": "2026-04-19T11:12:23Z",
+      "duration_ms": 112611,
+      "tokens": {
+        "total": 76482,
+        "input": 45889,
+        "output": 30593
+      },
+      "estimated_cost_usd": 0.32,
+      "tool_uses": 21,
+      "bugs_found": 12,
+      "files_audited": 3
     },
     "r1:z04": {
       "zone_id": "z04",
-      "status": "started",
+      "status": "completed",
       "paths": [
         "omnistudio/core/"
       ],
       "file_count": 10,
       "agent_id": "r1:z04",
       "round": 1,
-      "started_at": "2026-04-19T11:11:28Z"
+      "started_at": "2026-04-19T11:11:28Z",
+      "ended_at": "2026-04-19T11:12:40Z",
+      "duration_ms": 120699,
+      "tokens": {
+        "total": 79520,
+        "input": 47712,
+        "output": 31808
+      },
+      "estimated_cost_usd": 0.33,
+      "tool_uses": 31,
+      "bugs_found": 8,
+      "files_audited": 10
     },
     "r1:z05": {
       "zone_id": "z05",
-      "status": "started",
+      "status": "completed",
       "paths": [
         "omnistudio/auth.py",
         "omnistudio/config.py",
@@ -154,7 +176,18 @@
       "file_count": 5,
       "agent_id": "r1:z05",
       "round": 1,
-      "started_at": "2026-04-19T11:11:28Z"
+      "started_at": "2026-04-19T11:11:28Z",
+      "ended_at": "2026-04-19T11:12:29Z",
+      "duration_ms": 107312,
+      "tokens": {
+        "total": 71811,
+        "input": 43087,
+        "output": 28724
+      },
+      "estimated_cost_usd": 0.3,
+      "tool_uses": 25,
+      "bugs_found": 12,
+      "files_audited": 5
     },
     "r1:z06": {
       "zone_id": "z06",
@@ -169,14 +202,25 @@
     },
     "r1:z07": {
       "zone_id": "z07",
-      "status": "started",
+      "status": "completed",
       "paths": [
         "omnistudio/frontend/out/"
       ],
       "file_count": 15,
       "agent_id": "r1:z07",
       "round": 1,
-      "started_at": "2026-04-19T11:11:28Z"
+      "started_at": "2026-04-19T11:11:28Z",
+      "ended_at": "2026-04-19T11:12:56Z",
+      "duration_ms": 116911,
+      "tokens": {
+        "total": 112988,
+        "input": 67793,
+        "output": 45195
+      },
+      "estimated_cost_usd": 0.47,
+      "tool_uses": 32,
+      "bugs_found": 8,
+      "files_audited": 17
     },
     "r1:z08": {
       "zone_id": "z08",

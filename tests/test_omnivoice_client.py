@@ -84,7 +84,11 @@ class TestGetVoices:
     def test_erreur(self, mock_get):
         mock_get.side_effect = Exception("network error")
         client = OmniVoiceClient()
-        assert client.get_voices() == []
+        # get_voices doit attraper l'exception et logger, pas retourner [] silencieusement
+        with patch("logging.exception") as mock_log:
+            result = client.get_voices()
+            assert result == []
+            mock_log.assert_called()  # Verifier que l'erreur est loggee
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +143,11 @@ class TestEstimateDuration:
     def test_erreur(self, mock_post):
         mock_post.side_effect = Exception("timeout")
         client = OmniVoiceClient()
-        assert client.estimate_duration(["texte"]) == 0.0
+        # estimate_duration doit attraper l'exception ET logger
+        with patch("logging.exception") as mock_log:
+            result = client.estimate_duration(["texte"])
+            assert result == 0.0
+            mock_log.assert_called()  # Verifier que l'erreur est loggee
 
 
 # ---------------------------------------------------------------------------
@@ -335,10 +343,13 @@ class TestSaveCustomVoice:
     def test_exception(self, mock_post):
         mock_post.side_effect = Exception("connection lost")
         client = OmniVoiceClient()
-        result = client.save_custom_voice(
-            name="test",
-            source="design",
-            voice_instruct="test",
-        )
-        assert result["ok"] is False
-        assert "connection lost" in result["detail"]
+        # save_custom_voice doit attraper l'exception ET logger
+        with patch("logging.exception") as mock_log:
+            result = client.save_custom_voice(
+                name="test",
+                source="design",
+                voice_instruct="test",
+            )
+            assert result["ok"] is False
+            assert "connection lost" in result["detail"]
+            mock_log.assert_called()  # Verifier que l'erreur est loggee

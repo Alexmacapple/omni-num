@@ -165,12 +165,14 @@ def client():
         if hasattr(mod, "validate_token"):
             mod.validate_token = fake_validate_token
 
-    with TestClient(server.app, raise_server_exceptions=False) as c:
+    c = TestClient(server.app, raise_server_exceptions=False)
+    try:
         yield c
-
-    server.app.dependency_overrides.clear()
-    for mod, orig in originals:
-        mod.validate_token = orig
+    finally:
+        c.close()
+        server.app.dependency_overrides.clear()
+        for mod, orig in originals:
+            mod.validate_token = orig
 
 
 @pytest.fixture

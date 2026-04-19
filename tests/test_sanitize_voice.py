@@ -14,12 +14,18 @@ RESERVED_VOICE_NAMES = {"vivian", "serena", "uncle-fu", "dylan", "eric", "ryan",
 
 
 def sanitize_voice_name(name: str) -> str:
-    """Copie locale de tab_voices.sanitize_voice_name."""
+    """Copie locale de tab_voices.sanitize_voice_name.
+
+    Doit valider avec regex stricte ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$ (PRD annexe M).
+    """
     name = name.strip()
-    name = re.sub(r'[\s_]+', '-', name)
-    name = re.sub(r'[^a-zA-Z0-9\-]', '', name)
-    name = re.sub(r'-+', '-', name).strip('-')
+    name = re.sub(r'[\s]+', '-', name)  # Espaces seulement (pas underscores)
+    name = re.sub(r'[^a-zA-Z0-9\-_]', '', name)  # Garder lettres, chiffres, tirets, underscores
+    name = re.sub(r'-+', '-', name).strip('-').strip('_')  # Collapse repeats
     name = name[:50]
+    # Valider regex strict: commence par lettre, 3-50 chars total
+    if not re.match(r'^[a-zA-Z][a-zA-Z0-9_-]{2,49}$', name):
+        return ""  # Invalide — retourner vide
     return name
 
 
@@ -55,7 +61,18 @@ class TestSanitizeVoiceName:
 
     def test_complex_combination(self):
         result = sanitize_voice_name("  Ma Voix @Special!  ")
+        # Apres sanitization: "Ma-Voix-Special" (14 chars) — valide regex
         assert result == "Ma-Voix-Special"
+
+    def test_minimum_length_3(self):
+        """Nom avec moins de 3 chars -> invalide."""
+        result = sanitize_voice_name("ab")
+        assert result == ""  # Trop court
+
+    def test_starts_with_number_invalid(self):
+        """Nom commençant par chiffre -> invalide."""
+        result = sanitize_voice_name("123voix")
+        assert result == ""
 
 
 class TestReservedVoiceNames:

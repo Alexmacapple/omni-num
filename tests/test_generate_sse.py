@@ -72,15 +72,21 @@ def client():
     async def fake_get_current_user(request=None):
         return FAKE_USER
     server.app.dependency_overrides[_auth_get_current_user] = fake_get_current_user
-    # Reset rate limiter
-    server.app.state.limiter.reset()
+    # Reset rate limiter (si present)
+    if hasattr(server.app.state, 'limiter') and hasattr(server.app.state.limiter, 'reset'):
+        server.app.state.limiter.reset()
     original_sleep = asyncio.sleep
     async def fast_sleep(delay, *args, **kwargs):
         await original_sleep(0)
-    with patch("routers.generate.asyncio.sleep", side_effect=fast_sleep):
-        with TestClient(server.app, raise_server_exceptions=False) as c:
-            yield c
-    server.app.dependency_overrides.clear()
+    sleep_patch = patch("routers.generate.asyncio.sleep", side_effect=fast_sleep)
+    sleep_patch.start()
+    c = TestClient(server.app, raise_server_exceptions=False)
+    try:
+        yield c
+    finally:
+        c.close()
+        sleep_patch.stop()
+        server.app.dependency_overrides.clear()
 
 
 @pytest.fixture

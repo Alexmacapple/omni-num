@@ -35,14 +35,14 @@ for arg in "$@"; do
 done
 
 # Verifier que le serveur tourne
-if ! curl -s "http://localhost:7860/api/status" >/dev/null 2>&1; then
-    echo "[ERREUR] VoxStudio ne repond pas sur localhost:7860"
+if ! curl -s "http://localhost:7870/api/status" >/dev/null 2>&1; then
+    echo "[ERREUR] OmniStudio ne repond pas sur localhost:7870"
     echo "Lancez ./start.sh avant de lancer les tests E2E."
     exit 1
 fi
 
-echo "=== Tests E2E VoxStudio ==="
-echo "URL   : ${E2E_BASE_URL:-http://localhost:7860}"
+echo "=== Tests E2E OmniStudio ==="
+echo "URL   : ${E2E_BASE_URL:-http://localhost:7870}"
 echo "User  : ${E2E_USERNAME:-alex}"
 echo "Mode  : $([ "${E2E_HEADLESS:-1}" = "1" ] && echo "headless" || echo "headed")"
 echo ""

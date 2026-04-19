@@ -1,0 +1,152 @@
+{
+  "zone": "omnistudio/routers/sessions.py",
+  "round": 1,
+  "files_audited": 3,
+  "duration_ms": 0,
+  "bugs": [
+    {
+      "id": "r1-z03-001",
+      "severity": "high",
+      "category": "silent-exception",
+      "subcategory": "exception without logging before reraise",
+      "file": "omnistudio/routers/sessions.py",
+      "line": 76,
+      "title": "Exception caught but not logged before reraise",
+      "description": "Exception block at line 76 catches all exceptions and immediately reraises without logging. This makes debugging harder as the error context is lost. Changed to catch sqlite3.Error specifically and log before reraise.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-002",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "exception too broad",
+      "file": "omnistudio/routers/sessions.py",
+      "line": 76,
+      "title": "Bare Exception catch is too broad",
+      "description": "Using 'except Exception' catches SystemExit and KeyboardInterrupt which should not be caught. Changed to catch sqlite3.Error specifically, which is the only expected error from sqlite3 operations.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-003",
+      "severity": "medium",
+      "category": "dead-code",
+      "subcategory": "duplicate import",
+      "file": "omnistudio/routers/status.py",
+      "line": 49,
+      "title": "Duplicate import shutil at line 49",
+      "description": "shutil module is imported at line 11 and again at line 49 inside system_status() function. Removed duplicate import.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-004",
+      "severity": "high",
+      "category": "silent-exception",
+      "subcategory": "silent exception in status check",
+      "file": "omnistudio/routers/status.py",
+      "line": 46,
+      "title": "Silent exception in OmniVoice status check",
+      "description": "Exception at line 45-46 silently passes without logging. When OmniVoice connection fails, no trace is recorded. Changed to log at debug level.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-005",
+      "severity": "high",
+      "category": "silent-exception",
+      "subcategory": "silent exception in Albert API check",
+      "file": "omnistudio/routers/status.py",
+      "line": 69,
+      "title": "Silent exception in Albert API health check",
+      "description": "Exception at line 68-70 silently passes without logging Albert API failures. Changed to log at debug level for troubleshooting.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-006",
+      "severity": "medium",
+      "category": "api-guard",
+      "subcategory": "mixing async and blocking I/O",
+      "file": "omnistudio/routers/status.py",
+      "line": 102,
+      "title": "asyncio.to_thread + blocking httpx.get in async context",
+      "description": "Line 102-103 uses asyncio.to_thread() with a lambda calling blocking httpx.get(). Since httpx.AsyncClient is already async-capable, this is unnecessary overhead and antipattern. Changed to use async with statement directly with _omnivoice_client.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-007",
+      "severity": "critical",
+      "category": "security",
+      "subcategory": "XSS via voice name regex",
+      "file": "omnistudio/routers/voices.py",
+      "line": 61,
+      "title": "Voice name regex allows XSS patterns",
+      "description": "VOICE_NAME_RE at line 61 was ^[a-z0-9-]{3,50}$ which allows numbers at start and rejects uppercase/underscores. PRD-010 requires ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$ (must start with letter, allow underscore, 2-49 total length). This prevents XSS injection via voice names. Fixed to strict regex.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-008",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "unguarded JSON parsing",
+      "file": "omnistudio/routers/voices.py",
+      "line": 128,
+      "title": "JSON decode error not logged in _read_voice_meta()",
+      "description": "Line 124 catches JSONDecodeError but doesn't log it. Without logging, corrupted meta.json files go undetected. Added logging and explicit encoding parameter.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-009",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "unguarded JSON write",
+      "file": "omnistudio/routers/voices.py",
+      "line": 149,
+      "title": "JSON write errors not logged in _inject_owner_in_meta()",
+      "description": "Lines 147-151 catch OSError on JSON write but don't log it. Silently returning False hides meta.json corruption. Added logging at warning/error levels and explicit encoding parameter.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-010",
+      "severity": "medium",
+      "category": "api-guard",
+      "subcategory": "asyncio antipattern",
+      "file": "omnistudio/routers/voices.py",
+      "line": 713,
+      "title": "get_event_loop() called within async def",
+      "description": "Line 713 uses asyncio.get_event_loop().time() within async function. Should use asyncio.get_running_loop() instead. get_event_loop() can return wrong loop in certain circumstances.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-011",
+      "severity": "high",
+      "category": "input-validation",
+      "subcategory": "incorrect directory scope in export",
+      "file": "omnistudio/routers/voices.py",
+      "line": 630,
+      "title": "Export iterates all OMNIVOICE_VOICES_DIR instead of custom/ subdirectory",
+      "description": "voices_export() at line 630 iterates OMNIVOICE_VOICES_DIR directly, which exports all directories (system voices, models, etc). Should iterate only custom/ subdirectory. Changed Path to include /custom.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    },
+    {
+      "id": "r1-z03-012",
+      "severity": "high",
+      "category": "security",
+      "subcategory": "missing ownership enforcement on import",
+      "file": "omnistudio/routers/voices.py",
+      "line": 654,
+      "title": "voices_import() does not enforce ownership (PRD-032)",
+      "description": "voices_import() accepts ZIP files but does not call _inject_owner_in_meta() to tag imported voices with current user. This violates PRD-032 isolation requirement. Added asyncio.to_thread call to _inject_owner_in_meta for each imported voice.",
+      "fix_applied": true,
+      "fix_commit": "ec7c4b6"
+    }
+  ]
+}

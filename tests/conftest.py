@@ -12,7 +12,7 @@ sys.path.insert(0, str(OMNISTUDIO_DIR))
 
 @pytest.fixture
 def sample_steps():
-    """5 etapes type pour les tests."""
+    """5 etapes type pour les tests (scope: function pour isolation)."""
     return [
         {"step_id": "1", "text_original": "Bienvenue dans le portail DN.", "text_tts": "", "cleaning_status": "pending", "language_override": None, "speed_factor": 1.0},
         {"step_id": "2", "text_original": "Liste :\n- Premier point\n- Deuxième point", "text_tts": "", "cleaning_status": "pending", "language_override": None, "speed_factor": 1.0},
@@ -24,7 +24,9 @@ def sample_steps():
 
 @pytest.fixture
 def sample_state(sample_steps):
-    """WorkflowState complet initialise."""
+    """WorkflowState complet initialise (scope: function pour isolation)."""
+    # Creer une copie profonde pour eviter la contamination entre tests
+    steps_copy = [dict(step) for step in sample_steps]
     return {
         "llm_provider": "Albert Large 120B",
         "llm_model_override": "",
@@ -37,7 +39,7 @@ def sample_state(sample_steps):
         "source_file": "",
         "source_format": "",
         "excel_sheet": "PLAN",
-        "steps": sample_steps,
+        "steps": steps_copy,
         "cleaning_mode": "auto",
         "cleaning_validated": False,
         "cleaning_log": [],
@@ -89,7 +91,8 @@ def fake_wav_file(tmp_path):
 
 @pytest.fixture
 def sample_generated_files(fake_wav_file):
-    """Liste de GeneratedFile pour les tests d'export."""
+    """Liste de GeneratedFile pour les tests d'export (scope: function pour isolation)."""
+    # Creer une nouvelle liste a chaque test pour eviter la contamination
     return [
         {"step_id": "1", "filename": "etape-01.wav", "voice_name": "Lea", "wav_path": fake_wav_file, "status": "done"},
         {"step_id": "2", "filename": "etape-02.wav", "voice_name": "Lea", "wav_path": fake_wav_file, "status": "done"},

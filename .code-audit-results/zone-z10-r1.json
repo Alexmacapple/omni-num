@@ -1,0 +1,92 @@
+{
+  "zone": "scripts/seed-default-voices.sh",
+  "round": 1,
+  "files_audited": 7,
+  "duration_ms": 420,
+  "bugs": [
+    {
+      "id": "r1-z10-001",
+      "severity": "high",
+      "category": "infra",
+      "subcategory": "shell-error-handling",
+      "file": "scripts/seed-default-voices.sh",
+      "line": 15,
+      "title": "Manque set -euo pipefail — erreurs en tuyau ignorées",
+      "description": "Le script utilise 'set -e' uniquement, ce qui ignore les erreurs dans les tuyaux. Les défaillances de curl ou grep peuvent passer inaperçues, compromettant la sécurité du seed de voix. Remplacé par 'set -euo pipefail' pour traiter chaque erreur.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    },
+    {
+      "id": "r1-z10-002",
+      "severity": "high",
+      "category": "infra",
+      "subcategory": "shell-security",
+      "file": "scripts/setup-keycloak.sh",
+      "line": 27,
+      "title": "Extraction de password non robuste — risque injection shell",
+      "description": "Ligne 27 : 'cut -d= -f2' retourne tout après le premier = (y compris les = subséquents). Pattern incorrect pour 'KEY=VALUE'. Corrigé avec 'grep \"^KEYCLOAK_ADMIN_PASSWORD=\" | cut -d= -f2-' pour capturer la totalité du secret, et ajout de 'set -euo pipefail' pour traiter les erreurs.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    },
+    {
+      "id": "r1-z10-003",
+      "severity": "medium",
+      "category": "infra",
+      "subcategory": "shell-error-handling",
+      "file": "scripts/verify-assets-prefix.sh",
+      "line": 14,
+      "title": "Manque set -euo pipefail — pas de gestion d'erreurs stricte",
+      "description": "Le script audite des chemins sans erreurs actives. Les appels grep peuvent échouer silencieusement. Ajout de 'set -euo pipefail' pour conformité.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    },
+    {
+      "id": "r1-z10-004",
+      "severity": "high",
+      "category": "infra",
+      "subcategory": "shell-error-handling",
+      "file": "tests/test-migration.sh",
+      "line": 1,
+      "title": "Manque set -euo pipefail — risque erreurs muettes en tests",
+      "description": "Test suite critique de migration sans gestion stricte des erreurs. Risque que les défaillances soient ignorées, faussant les résultats. Ajout de 'set -euo pipefail' après ligne 3 pour garantir l'arrêt sur erreur.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    },
+    {
+      "id": "r1-z10-005",
+      "severity": "medium",
+      "category": "infra",
+      "subcategory": "dependency-management",
+      "file": "omnistudio/requirements.txt",
+      "line": 1,
+      "title": "Absence de versions pinned — divergence avec lock file",
+      "description": "requirements.txt utilise des versions min (>=) tandis que requirements-lock.txt pinne les versions. Risque de divergence au pip install sur deux machines. Corrigé en pinnant les versions principales du lock file dans requirements.txt.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    },
+    {
+      "id": "r1-z10-006",
+      "severity": "low",
+      "category": "infra",
+      "subcategory": "dead-dependency",
+      "file": "omnistudio/requirements-lock.txt",
+      "line": 48,
+      "title": "nest-asyncio inutilisé — reste de Gradio (PRD v1.5)",
+      "description": "nest-asyncio==1.6.0 n'est plus un prérequis après suppression de Gradio (décision PRD v1.5). Dépendance morte qui peut polluer la mémoire en temps de runtime. Commentée avec explication.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    },
+    {
+      "id": "r1-z10-007",
+      "severity": "medium",
+      "category": "infra",
+      "subcategory": "configuration-mismatch",
+      "file": "tests/pytest.ini",
+      "line": 3,
+      "title": "pythonpath référence 'voxstudio' — doit être 'omnistudio'",
+      "description": "pytest.ini configure pythonpath=voxstudio (source du fork voice-num). Doit pointer sur omnistudio pour la structure locale. Corrigé pour éviter les import errors et les ambiguïtés de chemin.",
+      "fix_applied": true,
+      "fix_commit": "3015cde"
+    }
+  ]
+}

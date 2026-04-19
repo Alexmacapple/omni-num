@@ -1,0 +1,104 @@
+{
+  "zone": "omnistudio/frontend/out",
+  "round": 1,
+  "files_audited": 17,
+  "duration_ms": 2400,
+  "bugs": [
+    {
+      "id": "r1-z07-001",
+      "severity": "critical",
+      "category": "infra",
+      "subcategory": "asset path absolute",
+      "file": "js/app.js",
+      "line": 405,
+      "title": "XHR fetch TTS status ignore <base href> → 404 under /omni",
+      "description": "app.js line 405 uses fetch('api/tts/status') without URL normalization. While relative URLs should work with <base href=\"/omni/\">, the appending of query parameters (Authorization header) can bypass the base context. Also checked line 394 api/status — should verify if headers are present.",
+      "fix_applied": true,
+      "fix_commit": "de4a5ea"
+    },
+    {
+      "id": "r1-z07-002",
+      "severity": "critical",
+      "category": "infra",
+      "subcategory": "XHR fetch not normalized",
+      "file": "js/api-client.js",
+      "line": 124,
+      "title": "XHR.open(url) ignores <base href> when URL starts with /",
+      "description": "uploadFile() passes url directly to xhr.open('POST', url) without normalizing the leading slash. The _normalizeUrl() function exists but is not applied to XHR. This causes 404 when uploading under /omni. Fixed by applying _normalizeUrl() to XHR URL as well.",
+      "fix_applied": true,
+      "fix_commit": "de4a5ea"
+    },
+    {
+      "id": "r1-z07-003",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "null check missing addEventListener",
+      "file": "js/tab-assign.js",
+      "line": 35,
+      "title": "DOM.applyAllBtn() can be null, crash on addEventListener",
+      "description": "init() calls addEventListener() on DOM getters without null checks. If DOM element missing (e.g., partial render), addEventListener on undefined throws TypeError. Added guards at line 35-40 to check all critical elements before attaching listeners.",
+      "fix_applied": true,
+      "fix_commit": "de4a5ea"
+    },
+    {
+      "id": "r1-z07-004",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "null check missing click()",
+      "file": "js/app.js",
+      "line": 74,
+      "title": "activateDsfrTab(tabId) calls click() on potentially null element",
+      "description": "activateDsfrTab() does document.getElementById(tabId).click() without checking if element exists. If tabId is invalid or missing from DOM, results in 'Cannot read property click of null'. Added check for tabId existence and return early if not found.",
+      "fix_applied": true,
+      "fix_commit": "de4a5ea"
+    },
+    {
+      "id": "r1-z07-005",
+      "severity": "medium",
+      "category": "resource-leak",
+      "subcategory": "MutationObserver not cleaned up",
+      "file": "js/app.js",
+      "line": 162,
+      "title": "observeTabChanges() creates new observers without cleaning old ones",
+      "description": "observeTabChanges() is called on app init and potentially on tab switches. Each call creates new MutationObserver instances without disconnecting previous ones. In a long SPA session with many tab switches, this accumulates observers and causes memory leak + duplicate event handling. Fixed by storing observers in array and disconnecting old ones before creating new.",
+      "fix_applied": true,
+      "fix_commit": "de4a5ea"
+    },
+    {
+      "id": "r1-z07-006",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "AudioContext vendor prefix not handled",
+      "file": "js/tab-voices.js",
+      "line": 141,
+      "title": "new AudioContext() fails on Safari (non-standard webkitAudioContext)",
+      "description": "tab-voices.js line 141 uses 'new AudioContext()' directly. Safari uses non-standard 'webkitAudioContext' and throws ReferenceError if AudioContext not found. This breaks microphone recording on Safari browsers. Fixed with vendor prefix fallback: window.AudioContext || window.webkitAudioContext.",
+      "fix_applied": true,
+      "fix_commit": "de4a5ea"
+    },
+    {
+      "id": "r1-z07-007",
+      "severity": "low",
+      "category": "accessibility",
+      "subcategory": "invisible h1 for screen reader",
+      "file": "index.html",
+      "line": 152,
+      "title": "Hidden <h1> with fr-sr-only should be visible landmark",
+      "description": "index.html line 152 has <h1 class=\"fr-sr-only\"> — this hides the main heading from sighted users. WCAG 2.4.1 (Page Titled) requires title visible or at least announced. The h1 should NOT be sr-only or should be duplicated as visible heading. Current: screen readers announce it, sighted users don't see page structure. Consider moving to visible but subtle position or ensuring page title reflects content.",
+      "fix_applied": false,
+      "fix_commit": ""
+    },
+    {
+      "id": "r1-z07-008",
+      "severity": "low",
+      "category": "dead-code",
+      "subcategory": "unused import or function reference",
+      "file": "js/dom-utils.js",
+      "line": 22,
+      "title": "escapeAttr() exported but usage pattern inconsistent",
+      "description": "escapeAttr() is exported from dom-utils but mostly replaced by JSON-based escaping. Grep shows it's used in tab-import.js and tab-clean.js for data attributes, which is correct usage. No dead code detected, but pattern is inconsistent (sometimes escapeHtml, sometimes escapeAttr). This is defensible but worth documenting.",
+      "fix_applied": false,
+      "fix_commit": ""
+    }
+  ]
+}
