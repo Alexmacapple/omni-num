@@ -1,46 +1,104 @@
+"""VOICE_TEMPLATES — 12 profils de voix prédéfinis, format OmniVoice (EN).
+
+PRD-MIGRATION-001 v1.5 décision 10 : 12 templates au format whitelist
+OmniVoice (items séparés par virgules, 1 par catégorie : gender, age,
+pitch, style, accent). Ces templates évitent le passage par un LLM
+(Albert) pour les cas courants — le voice_instruct est directement
+accepté par POST /design.
+
+Catégories OmniVoice valides (cf. GET /design/attributes) :
+- gender     : male, female
+- age        : child, teenager, young adult, middle-aged, elderly
+- pitch      : very low pitch, low pitch, moderate pitch, high pitch, very high pitch
+- style      : whisper
+- english_accent : American/Australian/British/Canadian/Chinese/Indian/
+                   Japanese/Korean/Portuguese/Russian accent
+"""
 from typing import List, Dict
 
-VOICE_TEMPLATES = [
+VOICE_TEMPLATES: List[Dict] = [
     {
         "name": "Narrateur institutionnel",
-        "badge": "Template",
-        "gender": "masculin",
-        "description": "Voix masculine, grave, pédagogique et posée. Idéale pour les présentations officielles et les discours institutionnels.",
-        "voice_instruct": "Voix masculine mature au timbre grave et autoritaire, ton pédagogique et posé. Diction claire, style professionnel et digne de confiance, rythme régulier adapté aux narrations institutionnelles."
+        "badge": "Institution",
+        "gender": "male",
+        "description": "Voix masculine grave et posée, pour discours officiels.",
+        "voice_instruct": "male, middle-aged, low pitch",
     },
     {
         "name": "Narratrice pédagogique",
-        "badge": "Template",
-        "gender": "féminin",
-        "description": "Voix féminine, chaleureuse et bienveillante. Parfaite pour l'e-learning et les tutoriels accompagnants.",
-        "voice_instruct": "Voix féminine chaleureuse et bienveillante. Ton encourageant, clair et pédagogique, texture amicale avec un rythme modéré et engageant. Idéale pour les contenus éducatifs et les tutoriels."
+        "badge": "Formation",
+        "gender": "female",
+        "description": "Voix féminine chaleureuse, idéale e-learning et tutoriels.",
+        "voice_instruct": "female, middle-aged, moderate pitch",
     },
     {
         "name": "Narrateur dynamique",
-        "badge": "Template",
-        "gender": "masculin",
-        "description": "Voix masculine, jeune et énergique. Recommandée pour les contenus promotionnels et les réseaux sociaux.",
-        "voice_instruct": "Voix masculine jeune et énergique. Texture brillante, style dynamique et entraînant, rythme légèrement rapide mais articulé. Idéale pour les contenus promotionnels et les annonces sur les réseaux sociaux."
+        "badge": "Promo",
+        "gender": "male",
+        "description": "Voix masculine jeune et énergique, promo et réseaux.",
+        "voice_instruct": "male, young adult, moderate pitch",
     },
     {
         "name": "Narratrice claire",
-        "badge": "Template",
-        "gender": "féminin",
-        "description": "Voix féminine, neutre et factuelle. Adaptée pour les annonces de service et les informations pratiques.",
-        "voice_instruct": "Voix féminine neutre et factuelle. Articulation très claire, texture nette et ton équilibré et professionnel. Aucun biais émotionnel marqué, adaptée aux annonces de service et informations pratiques."
+        "badge": "Service",
+        "gender": "female",
+        "description": "Voix féminine neutre et factuelle, annonces de service.",
+        "voice_instruct": "female, young adult, moderate pitch",
     },
     {
         "name": "Narrateur chaleureux",
-        "badge": "Template",
-        "gender": "masculin",
-        "description": "Voix masculine, empathique et rassurante. Pour les sujets sensibles ou l'accompagnement usager.",
-        "voice_instruct": "Voix masculine empathique et rassurante. Texture douce, ton chaleureux et rythme posé. Style compatissant et bienveillant, idéal pour les sujets sensibles ou l'accompagnement des usagers."
+        "badge": "Accompagnement",
+        "gender": "male",
+        "description": "Voix masculine rassurante pour sujets sensibles.",
+        "voice_instruct": "male, middle-aged, moderate pitch",
     },
     {
         "name": "Narratrice experte",
-        "badge": "Template",
-        "gender": "féminin",
-        "description": "Voix féminine, inspirant confiance et didactique. Pour les analyses d'experts et les formations pointues.",
-        "voice_instruct": "Voix féminine confiante et didactique. Ton professionnel au style expert, texture solide et fiable. Parfaite pour les analyses approfondies, les interventions d'experts et les modules de formation avancés."
-    }
+        "badge": "Expert",
+        "gender": "female",
+        "description": "Voix féminine confiante et didactique, formations avancées.",
+        "voice_instruct": "female, elderly, low pitch",
+    },
+    {
+        "name": "Jeune narrateur",
+        "badge": "Jeunesse",
+        "gender": "male",
+        "description": "Voix masculine jeune et pétillante, contenu fun et jeunesse.",
+        "voice_instruct": "male, young adult, high pitch",
+    },
+    {
+        "name": "Jeune narratrice",
+        "badge": "Jeunesse",
+        "gender": "female",
+        "description": "Voix féminine jeune et dynamique, contenus ludiques.",
+        "voice_instruct": "female, young adult, high pitch",
+    },
+    {
+        "name": "Narrateur senior",
+        "badge": "Senior",
+        "gender": "male",
+        "description": "Voix masculine âgée et posée, récits et mémoires.",
+        "voice_instruct": "male, elderly, low pitch",
+    },
+    {
+        "name": "Narratrice senior",
+        "badge": "Senior",
+        "gender": "female",
+        "description": "Voix féminine âgée et veloutée, narration patrimoniale.",
+        "voice_instruct": "female, elderly, moderate pitch",
+    },
+    {
+        "name": "Narration confidentielle",
+        "badge": "Chuchoté",
+        "gender": "female",
+        "description": "Voix féminine chuchotée, pour contenus intimistes et ASMR.",
+        "voice_instruct": "female, middle-aged, moderate pitch, whisper",
+    },
+    {
+        "name": "Narrateur anglophone",
+        "badge": "Accent EN",
+        "gender": "male",
+        "description": "Voix masculine à accent britannique, contenu international.",
+        "voice_instruct": "male, middle-aged, low pitch, British accent",
+    },
 ]
