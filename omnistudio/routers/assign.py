@@ -8,11 +8,12 @@ Endpoints :
 """
 import asyncio
 import os
+import re
 import time
 from typing import Dict
 
-from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Request, HTTPException
+from pydantic import BaseModel, field_validator
 
 from auth import get_current_user
 from core.audio import change_speed
@@ -55,6 +56,15 @@ class AssignRequest(BaseModel):
     speeds: Dict[str, float] = {}
     languages: Dict[str, str] = {}
 
+    @field_validator('assignments')
+    @classmethod
+    def validate_assignments(cls, v):
+        """Valider que chaque voix respecte le format (prevention XSS)."""
+        for step_id, voice in v.items():
+            if voice and not re.match(r'^[a-zA-Z][a-zA-Z0-9_-]{2,49}$', voice):
+                raise ValueError(f'Voix invalide pour étape {step_id}: {voice}')
+        return v
+
 
 class ApplyAllRequest(BaseModel):
     voice: str
@@ -63,6 +73,23 @@ class ApplyAllRequest(BaseModel):
     instruction: str = ""
     selected_voices: list[str] = []
 
+    @field_validator('voice')
+    @classmethod
+    def validate_voice(cls, v):
+        """Valider format voix contre regex ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$ (prevention XSS)."""
+        if not v or not re.match(r'^[a-zA-Z][a-zA-Z0-9_-]{2,49}$', v):
+            raise ValueError('Nom de voix invalide (format: lettres/chiffres/tirets/underscores, 3-50 car)')
+        return v
+
+    @field_validator('selected_voices')
+    @classmethod
+    def validate_selected_voices(cls, v):
+        """Valider chaque voix dans la liste."""
+        for voice in v:
+            if not voice or not re.match(r'^[a-zA-Z][a-zA-Z0-9_-]{2,49}$', voice):
+                raise ValueError(f'Voix invalide: {voice}')
+        return v
+
 
 class PreviewAssignRequest(BaseModel):
     voice: str
@@ -70,6 +97,14 @@ class PreviewAssignRequest(BaseModel):
     speed: float = 1.0
     instruction: str = ""
     text: str = ""
+
+    @field_validator('voice')
+    @classmethod
+    def validate_voice(cls, v):
+        """Valider format voix contre regex ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$ (prevention XSS)."""
+        if not v or not re.match(r'^[a-zA-Z][a-zA-Z0-9_-]{2,49}$', v):
+            raise ValueError('Nom de voix invalide (format: lettres/chiffres/tirets/underscores, 3-50 car)')
+        return v
 
 
 # ---------------------------------------------------------------------------
