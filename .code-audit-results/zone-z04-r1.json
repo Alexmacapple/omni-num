@@ -1,0 +1,132 @@
+{
+  "zone": "omnistudio/core/",
+  "round": 1,
+  "files_audited": 9,
+  "duration_ms": 180000,
+  "bugs": [
+    {
+      "id": "r1-z04-001",
+      "severity": "medium",
+      "category": "resource-leak",
+      "subcategory": "unclosed_file_handle",
+      "file": "omnistudio/core/omnivoice_client.py",
+      "line": 282,
+      "title": "Ressource leak — fichier audio jamais fermé",
+      "description": "La méthode save_custom_voice() ouvre un fichier audio pour le mode 'clone' mais ne le ferme jamais en cas d'erreur ou succès. Peut causer une accumulation de file descriptors.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-002",
+      "severity": "high",
+      "category": "input-validation",
+      "subcategory": "missing_xss_protection",
+      "file": "omnistudio/core/schemas.py",
+      "line": 80,
+      "title": "Validation XSS manquante sur noms de voix",
+      "description": "Le champ 'name' de VoiceMeta accepte les entrées sans validation stricte. PRD impose regex ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$ pour éviter XSS. Même manque sur GenerateRequest.voice.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-003",
+      "severity": "medium",
+      "category": "error-handling",
+      "subcategory": "uncaught_exception",
+      "file": "omnistudio/core/audio.py",
+      "line": 114,
+      "title": "Exception générales non loggées dans concatenate_audio",
+      "description": "Fallback FFmpeg in concatenate_audio() lance une exception silencieuse sans log à la ligne 114-119. Complique le diagnostic.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-004",
+      "severity": "medium",
+      "category": "resource-leak",
+      "subcategory": "temp_file_cleanup",
+      "file": "omnistudio/core/audio.py",
+      "line": 35,
+      "title": "Nettoyage fragile de fichier tmp_path",
+      "description": "change_speed() utilise un fichier tmp mais le cleanup en ligne 35 peut échouer silencieusement, laissant des fichiers orphelins.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-005",
+      "severity": "medium",
+      "category": "error-handling",
+      "subcategory": "silent_exception",
+      "file": "omnistudio/core/audio.py",
+      "line": 68,
+      "title": "Fallback copie sans vérification existence",
+      "description": "process_audio() ligne 69 tente une copie fallback sans vérifier que input_path existe, peut échouer sans log clair.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-006",
+      "severity": "high",
+      "category": "type-mismatch",
+      "subcategory": "wrong_request_format",
+      "file": "omnistudio/core/omnivoice_client.py",
+      "line": 256,
+      "title": "Mismatch json vs data sur /design endpoint",
+      "description": "design() utilise json=data mais l'endpoint OmniVoice attend form-encoded data=. Retournera erreur 400 ou traitement incorrect.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-007",
+      "severity": "medium",
+      "category": "input-validation",
+      "subcategory": "missing_null_check",
+      "file": "omnistudio/core/segments_parser.py",
+      "line": 88,
+      "title": "Pas de check type step_text None",
+      "description": "parse_segments() suppose step_text est str mais ne valide pas le type. Si None est passé, step_text.strip() lancera AttributeError.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    },
+    {
+      "id": "r1-z04-008",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "missing_precondition_check",
+      "file": "omnistudio/core/subtitle_client.py",
+      "line": 81,
+      "title": "Pas de vérification existence wav_path ni état modèle",
+      "description": "transcribe() charge le modèle mais ne vérifie pas que le fichier WAV existe. Whisper échouera silencieusement. Aussi, _model peut rester None en cas d'exception.",
+      "fix_applied": true,
+      "fix_commit": "dc782b7"
+    }
+  ],
+  "summary": {
+    "total_bugs": 8,
+    "critical": 0,
+    "high": 3,
+    "medium": 5,
+    "low": 0,
+    "fixed": 8,
+    "unfixed": 0
+  },
+  "audit_metadata": {
+    "checklist_applied": ["R1-Surface", "Python-Checklist"],
+    "files_scanned": [
+      "omnistudio/core/__init__.py",
+      "omnistudio/core/audio.py",
+      "omnistudio/core/llm_client.py",
+      "omnistudio/core/omnivoice_client.py",
+      "omnistudio/core/schemas.py",
+      "omnistudio/core/segments_parser.py",
+      "omnistudio/core/security.py",
+      "omnistudio/core/subtitle_client.py",
+      "omnistudio/core/templates.py",
+      "omnistudio/core/voice_profiles.py"
+    ],
+    "excluded_files": [
+      "__pycache__",
+      "*.pyc"
+    ]
+  }
+}
