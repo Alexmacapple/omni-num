@@ -526,14 +526,21 @@ class OmniVoiceClient:
             return {}
 
     def random_auto(self, text: str, language: str = "auto", output_dir: str = "temp") -> Optional[str]:
-        """Appel POST /auto (voix aléatoire cohérente). Retourne le chemin du WAV généré."""
+        """Appel POST /auto (voix aléatoire cohérente). Retourne le chemin du WAV généré.
+
+        Nom de fichier unique par appel : OmniVoice échantillonne une voix
+        aléatoire à chaque requête, donc deux générations avec le même texte
+        doivent produire deux fichiers distincts sous peine que le navigateur
+        rejoue depuis son cache (même URL → même contenu pour le player HTML5).
+        """
+        import secrets
         os.makedirs(output_dir, exist_ok=True)
         try:
             data = {"text": text, "language": language}
             response = httpx.post(f"{self.base_url}/auto", json=data, timeout=self.timeout_generate)
             self._check_tts_error(response)
             if response.status_code == 200:
-                filepath = os.path.join(output_dir, f"random_{hash(text) % 10000}.wav")
+                filepath = os.path.join(output_dir, f"random_{secrets.token_urlsafe(8)}.wav")
                 with open(filepath, "wb") as f:
                     f.write(response.content)
                 return filepath
