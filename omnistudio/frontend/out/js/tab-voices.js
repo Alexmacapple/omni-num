@@ -951,9 +951,23 @@ function showQuickAdjust() {
     });
 }
 
-/** Langue cible de synthèse Design (défaut 'auto' = détection OmniVoice). */
+/** Langue cible de synthèse Design (défaut 'fr' — évite la bascule EN d'OmniVoice quand l'instruct est normalisé en items anglais). */
 function getDesignLanguage() {
-    return document.getElementById('design-language')?.value || 'auto';
+    return document.getElementById('design-language')?.value || 'fr';
+}
+
+/** Affiche les attributs effectivement retenus par la whitelist OmniVoice. */
+function showNormalizedInstruct(normalized) {
+    const box = document.getElementById('design-instruct-normalized');
+    const val = document.getElementById('design-instruct-normalized-value');
+    if (!box || !val) return;
+    if (normalized && normalized.trim()) {
+        val.textContent = normalized;
+        box.hidden = false;
+    } else {
+        val.textContent = '(aucun attribut reconnu — la voix sera générée avec les défauts OmniVoice)';
+        box.hidden = false;
+    }
 }
 
 /** Génération SRT Whisper après synthèse. */
@@ -1092,6 +1106,7 @@ async function onUseDirectPrompt() {
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url);
         }
+        showNormalizedInstruct(result.data.normalized_instruct);
         if (status) status.innerHTML = '';
     } catch (err) {
         if (status) status.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
@@ -1131,6 +1146,7 @@ async function onGenerateBrief() {
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url);
         }
+        showNormalizedInstruct(result.data.normalized_instruct);
 
         // Remplir l'accordéon transparence IA
         const brief = getBrief();
@@ -1185,6 +1201,7 @@ async function onExplore(regenerateInstruct) {
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url);
         }
+        showNormalizedInstruct(result.data.normalized_instruct);
 
         const lockSection = DOM.designLockSection();
         if (lockSection) lockSection.hidden = false;

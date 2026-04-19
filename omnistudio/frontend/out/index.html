@@ -8,7 +8,7 @@
     <base href="/omni/">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419k"></script>
+    <script src="js/theme-init.js?v=20260419l"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419k">
+    <link rel="stylesheet" href="css/app.css?v=20260419l">
 </head>
 <body>
     <!-- Skip links -->
@@ -835,11 +835,11 @@
                                         <div class="fr-select-group">
                                             <label class="fr-label" for="design-language">
                                                 Langue de sortie
-                                                <span class="fr-hint-text">Auto = détection automatique (OmniVoice supporte 646 langues)</span>
+                                                <span class="fr-hint-text">Langue dans laquelle la voix lit le texte de test. Garder « Français » sauf test explicite dans une autre langue. « Auto » peut basculer en anglais si la description contient des attributs anglais.</span>
                                             </label>
                                             <select class="fr-select" id="design-language">
-                                                <option value="auto" selected>Auto (détection)</option>
-                                                <option value="fr">Français</option>
+                                                <option value="fr" selected>Français</option>
+                                                <option value="auto">Auto (détection)</option>
                                                 <option value="en">Anglais</option>
                                                 <option value="es">Espagnol</option>
                                                 <option value="de">Allemand</option>
@@ -917,9 +917,12 @@
                                 <div class="fr-input-group fr-mb-3w" id="design-instruct-group" hidden>
                                     <label class="fr-label" for="design-instruct">
                                         Prompt vocal
-                                        <span class="fr-hint-text">Instructions envoyées au moteur de synthèse. Vous pouvez le modifier avant d'écouter.</span>
+                                        <span class="fr-hint-text">Instructions envoyées au moteur OmniVoice. <strong>Le moteur n'accepte que 6 attributs anglais</strong> : genre (<code>male</code>/<code>female</code>), âge (<code>child</code>, <code>teenager</code>, <code>young adult</code>, <code>middle-aged</code>, <code>elderly</code>), timbre (<code>very low</code>/<code>low</code>/<code>moderate</code>/<code>high</code>/<code>very high pitch</code>), style (<code>whisper</code>), accent anglais (<code>british accent</code>, etc. — texte EN uniquement), dialecte chinois (texte ZH uniquement). Une prose en français sera scannée pour en extraire ces attributs ; le reste est ignoré. Pour un contrôle précis, utilisez le parcours guidé ci-dessous.</span>
                                     </label>
                                     <textarea class="fr-input" id="design-instruct" rows="3"></textarea>
+                                    <p class="fr-hint-text fr-mt-1v" id="design-instruct-normalized" hidden>
+                                        <strong>Attributs retenus par OmniVoice :</strong> <span id="design-instruct-normalized-value"></span>
+                                    </p>
                                     <div class="fr-mt-1w fr-mb-1w" id="design-quick-adjust" hidden>
                                         <p class="fr-text--xs fr-mb-1v">Ajustements rapides (modifie le prompt directement) :</p>
                                         <ul class="fr-tags-group" id="design-modifier-tags">
@@ -1927,6 +1930,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419k"></script>
+    <script type="module" src="js/app.js?v=20260419l"></script>
 </body>
 </html>
