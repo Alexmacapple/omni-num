@@ -243,6 +243,19 @@ function onStopRecording() {
         onCloneFormChange();
         return;
     }
+    if (duration > MAX_RECORD_SECONDS) {
+        if (statusEl) {
+            statusEl.className = 'fr-text--sm fr-mt-1v';
+            statusEl.textContent = `Enregistrement trop long (${Math.round(duration)} s). La durée maximale est de ${MAX_RECORD_SECONDS} secondes. Veuillez recommencer.`;
+        }
+        rec.blob = null;
+        const deleteBtn = document.getElementById('clone-record-delete');
+        if (deleteBtn) deleteBtn.hidden = true;
+        const container = DOM.previewContainer();
+        if (container) container.hidden = true;
+        onCloneFormChange();
+        return;
+    }
 
     if (statusEl) {
         statusEl.className = 'fr-text--sm fr-mt-1v';
@@ -333,10 +346,13 @@ function onCloneFileChange() {
         tempAudio.onloadedmetadata = () => {
             const duration = tempAudio.duration;
             URL.revokeObjectURL(tempAudio.src);
-            if (duration > 30) {
+            const invalid = !Number.isFinite(duration);
+            if (invalid || duration > MAX_RECORD_SECONDS) {
                 // Erreur accessible : associee au champ, annoncee par aria-live
                 if (errorEl) {
-                    errorEl.textContent = `Le fichier audio dure ${Math.round(duration)}s. La durée maximale est de 30 secondes. Veuillez raccourcir votre fichier.`;
+                    errorEl.textContent = invalid
+                        ? `Impossible de lire la durée du fichier audio. Fournissez un WAV/MP3 de ${MAX_RECORD_SECONDS} secondes maximum.`
+                        : `Le fichier audio dure ${Math.round(duration)} s. La durée maximale est de ${MAX_RECORD_SECONDS} secondes. Veuillez raccourcir votre fichier.`;
                     errorEl.style.display = '';
                     errorEl.setAttribute('role', 'alert');
                 }
