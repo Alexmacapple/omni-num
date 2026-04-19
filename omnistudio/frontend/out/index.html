@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419v"></script>
+    <script src="js/theme-init.js?v=20260419w"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419v">
+    <link rel="stylesheet" href="css/app.css?v=20260419w">
 </head>
 <body>
     <!-- Skip links -->
@@ -920,57 +920,13 @@
                                     </div>
                                 </div>
 
-                                <!-- Palette marqueurs émotionnels (partagée avec #clean) -->
-                                <div class="fr-accordion fr-mb-2w">
-                                    <h3 class="fr-accordion__title">
-                                        <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-tag-palette-panel">
-                                            Marqueurs émotionnels (insèrent dans la description)
-                                        </button>
-                                    </h3>
-                                    <div class="fr-collapse" id="design-tag-palette-panel">
-                                        <p class="fr-hint-text fr-mb-1w">Cliquez un tag pour l'insérer dans la zone texte active.</p>
-                                        <div id="design-tag-palette" aria-label="Palette de marqueurs émotionnels design"></div>
-                                    </div>
-                                </div>
-
-                                <!-- Paramètres avancés OmniVoice /design (12 params, parité Gradio) -->
-                                <div class="fr-accordion fr-mb-2w">
-                                    <h3 class="fr-accordion__title">
-                                        <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-adv-panel">
-                                            Paramètres avancés OmniVoice (12)
-                                        </button>
-                                    </h3>
-                                    <div class="fr-collapse" id="design-adv-panel">
-                                        <p class="fr-hint-text fr-mb-2w">
-                                            Tous les paramètres exposés par l'API <code>/design</code>. Valeurs par défaut recommandées.
-                                        </p>
-                                        <div class="fr-grid-row fr-grid-row--gutters">
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-num-step" class="fr-label">num_step <span class="fr-hint-text">Itérations (4–64)</span></label><input class="fr-input" type="number" id="design-adv-num-step" min="4" max="64" step="1" value="32"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-speed" class="fr-label">speed <span class="fr-hint-text">Vitesse (0.5–2)</span></label><input class="fr-input" type="number" id="design-adv-speed" min="0.5" max="2" step="0.1" value="1.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-guidance" class="fr-label">guidance_scale <span class="fr-hint-text">Force guidage (0–4)</span></label><input class="fr-input" type="number" id="design-adv-guidance" min="0" max="4" step="0.5" value="2.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-duration" class="fr-label">duration <span class="fr-hint-text">Durée fixe (s, optionnel)</span></label><input class="fr-input" type="number" id="design-adv-duration" min="0" step="0.5" placeholder="auto"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-t-shift" class="fr-label">t_shift <span class="fr-hint-text">Décalage bruit (0–1)</span></label><input class="fr-input" type="number" id="design-adv-t-shift" min="0" max="1" step="0.05" value="0.1"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-pos-temp" class="fr-label">position_temperature</label><input class="fr-input" type="number" id="design-adv-pos-temp" min="0" max="20" step="0.5" value="5.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-class-temp" class="fr-label">class_temperature</label><input class="fr-input" type="number" id="design-adv-class-temp" min="0" max="20" step="0.1" value="0.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-layer-penalty" class="fr-label">layer_penalty_factor</label><input class="fr-input" type="number" id="design-adv-layer-penalty" min="0" max="20" step="0.5" value="5.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-chunk-dur" class="fr-label">audio_chunk_duration <span class="fr-hint-text">Cible (s)</span></label><input class="fr-input" type="number" id="design-adv-chunk-dur" min="1" max="60" step="1" value="15.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><label for="design-adv-chunk-thr" class="fr-label">audio_chunk_threshold <span class="fr-hint-text">Seuil (s)</span></label><input class="fr-input" type="number" id="design-adv-chunk-thr" min="5" max="120" step="5" value="30.0"></div>
-                                            <div class="fr-col-12 fr-col-md-4"><fieldset class="fr-fieldset"><legend class="fr-fieldset__legend fr-text--regular">denoise</legend><div class="fr-fieldset__element"><div class="fr-checkbox-group"><input type="checkbox" id="design-adv-denoise" checked><label class="fr-label" for="design-adv-denoise">Activé</label></div></div></fieldset></div>
-                                            <div class="fr-col-12 fr-col-md-4"><fieldset class="fr-fieldset"><legend class="fr-fieldset__legend fr-text--regular">postprocess_output</legend><div class="fr-fieldset__element"><div class="fr-checkbox-group"><input type="checkbox" id="design-adv-postprocess" checked><label class="fr-label" for="design-adv-postprocess">Activé</label></div></div></fieldset></div>
-                                        </div>
-                                        <div class="fr-mt-2w">
-                                            <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="design-adv-reset-btn" type="button">Réinitialiser</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Description de voix (résultat profil ou IA) -->
-                                <div class="fr-input-group fr-mb-3w" id="design-instruct-group" hidden>
+                                <!-- Prompt OmniVoice résultant (visible dès le départ comme aperçu) -->
+                                <div class="fr-input-group fr-mb-3w" id="design-instruct-group">
                                     <label class="fr-label" for="design-instruct">
-                                        Prompt vocal
-                                        <span class="fr-hint-text">Instructions envoyées au moteur OmniVoice. <strong>Le moteur n'accepte que 6 attributs anglais</strong> : genre (<code>male</code>/<code>female</code>), âge (<code>child</code>, <code>teenager</code>, <code>young adult</code>, <code>middle-aged</code>, <code>elderly</code>), timbre (<code>very low</code>/<code>low</code>/<code>moderate</code>/<code>high</code>/<code>very high pitch</code>), style (<code>whisper</code>), accent anglais (<code>british accent</code>, etc. — texte EN uniquement), dialecte chinois (texte ZH uniquement). Une prose en français sera scannée pour en extraire ces attributs ; le reste est ignoré. Pour un contrôle précis, utilisez le parcours guidé ci-dessous.</span>
+                                        Prompt OmniVoice résultant
+                                        <span class="fr-hint-text">Généré automatiquement à partir du parcours choisi. Format : items anglais whitelist séparés par virgule (ex. <code>female, middle-aged, low pitch</code>). Modifiable manuellement avant régénération.</span>
                                     </label>
-                                    <textarea class="fr-input" id="design-instruct" rows="3"></textarea>
+                                    <textarea class="fr-input" id="design-instruct" rows="3" placeholder="Le prompt apparaîtra ici une fois la voix générée."></textarea>
                                     <p class="fr-hint-text fr-mt-1v" id="design-instruct-normalized" hidden>
                                         <strong>Attributs retenus par OmniVoice :</strong> <span id="design-instruct-normalized-value"></span>
                                     </p>
@@ -1034,6 +990,49 @@
 
                                     <div class="fr-alert fr-alert--info fr-alert--sm fr-mb-2w" id="design-volatile-badge">
                                         <p>Chaque génération produit un timbre différent. Régénérez et comparez pour trouver la voix idéale.</p>
+                                    </div>
+
+                                    <!-- Options de retouche après écoute (marqueurs + paramètres avancés) -->
+                                    <div class="fr-accordion fr-mb-2w">
+                                        <h4 class="fr-accordion__title">
+                                            <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-tag-palette-panel">
+                                                Marqueurs émotionnels (insèrent dans le texte de test)
+                                            </button>
+                                        </h4>
+                                        <div class="fr-collapse" id="design-tag-palette-panel">
+                                            <p class="fr-hint-text fr-mb-1w">Cliquez un tag pour l'insérer dans le texte de test. La voix intercalera un rire, un soupir, etc. à cet endroit précis lors de la régénération.</p>
+                                            <div id="design-tag-palette" aria-label="Palette de marqueurs émotionnels design"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="fr-accordion fr-mb-2w">
+                                        <h4 class="fr-accordion__title">
+                                            <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-adv-panel">
+                                                Paramètres avancés OmniVoice (12)
+                                            </button>
+                                        </h4>
+                                        <div class="fr-collapse" id="design-adv-panel">
+                                            <p class="fr-hint-text fr-mb-2w">
+                                                Tous les paramètres exposés par l'API <code>/design</code>. Valeurs par défaut recommandées — ajustez si besoin, puis régénérez.
+                                            </p>
+                                            <div class="fr-grid-row fr-grid-row--gutters">
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-num-step" class="fr-label">num_step <span class="fr-hint-text">Itérations (4–64)</span></label><input class="fr-input" type="number" id="design-adv-num-step" min="4" max="64" step="1" value="32"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-speed" class="fr-label">speed <span class="fr-hint-text">Vitesse (0.5–2)</span></label><input class="fr-input" type="number" id="design-adv-speed" min="0.5" max="2" step="0.1" value="1.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-guidance" class="fr-label">guidance_scale <span class="fr-hint-text">Force guidage (0–4)</span></label><input class="fr-input" type="number" id="design-adv-guidance" min="0" max="4" step="0.5" value="2.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-duration" class="fr-label">duration <span class="fr-hint-text">Durée fixe (s, optionnel)</span></label><input class="fr-input" type="number" id="design-adv-duration" min="0" step="0.5" placeholder="auto"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-t-shift" class="fr-label">t_shift <span class="fr-hint-text">Décalage bruit (0–1)</span></label><input class="fr-input" type="number" id="design-adv-t-shift" min="0" max="1" step="0.05" value="0.1"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-pos-temp" class="fr-label">position_temperature</label><input class="fr-input" type="number" id="design-adv-pos-temp" min="0" max="20" step="0.5" value="5.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-class-temp" class="fr-label">class_temperature</label><input class="fr-input" type="number" id="design-adv-class-temp" min="0" max="20" step="0.1" value="0.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-layer-penalty" class="fr-label">layer_penalty_factor</label><input class="fr-input" type="number" id="design-adv-layer-penalty" min="0" max="20" step="0.5" value="5.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-chunk-dur" class="fr-label">audio_chunk_duration <span class="fr-hint-text">Cible (s)</span></label><input class="fr-input" type="number" id="design-adv-chunk-dur" min="1" max="60" step="1" value="15.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><label for="design-adv-chunk-thr" class="fr-label">audio_chunk_threshold <span class="fr-hint-text">Seuil (s)</span></label><input class="fr-input" type="number" id="design-adv-chunk-thr" min="5" max="120" step="5" value="30.0"></div>
+                                                <div class="fr-col-12 fr-col-md-4"><fieldset class="fr-fieldset"><legend class="fr-fieldset__legend fr-text--regular">denoise</legend><div class="fr-fieldset__element"><div class="fr-checkbox-group"><input type="checkbox" id="design-adv-denoise" checked><label class="fr-label" for="design-adv-denoise">Activé</label></div></div></fieldset></div>
+                                                <div class="fr-col-12 fr-col-md-4"><fieldset class="fr-fieldset"><legend class="fr-fieldset__legend fr-text--regular">postprocess_output</legend><div class="fr-fieldset__element"><div class="fr-checkbox-group"><input type="checkbox" id="design-adv-postprocess" checked><label class="fr-label" for="design-adv-postprocess">Activé</label></div></div></fieldset></div>
+                                            </div>
+                                            <div class="fr-mt-2w">
+                                                <button class="fr-btn fr-btn--tertiary fr-btn--sm" id="design-adv-reset-btn" type="button">Réinitialiser</button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                 </div>
@@ -2011,6 +2010,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419v"></script>
+    <script type="module" src="js/app.js?v=20260419w"></script>
 </body>
 </html>
