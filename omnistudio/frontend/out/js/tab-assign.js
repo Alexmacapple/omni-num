@@ -241,9 +241,9 @@ function renderTable(rows, voices) {
                     <button class="fr-btn fr-btn--secondary fr-btn--sm"
                             data-action="preview" data-step-id="${escapeAttr(r.step_id)}"
                             title="Écouter un aperçu de l'étape ${escapeAttr(r.step_id)}">Écouter</button>
-                    <button class="fr-btn fr-btn--secondary fr-btn--sm"
+                    <button class="fr-btn fr-btn--tertiary fr-btn--sm fr-btn--icon-left fr-icon-delete-line ov-btn-danger"
                             data-action="delete" data-step-id="${escapeAttr(r.step_id)}"
-                            title="Supprimer le segment ${escapeAttr(r.step_id)}">Supprimer le segment ${escapeHtml(String(r.step_id))}</button>
+                            title="Supprimer le segment ${escapeAttr(r.step_id)}">Supprimer</button>
                 </div>
                 <div class="ov-card-status" data-status-zone="${escapeAttr(r.step_id)}" aria-live="polite"></div>
                 <div class="ov-audio-container" data-audio-zone="${escapeAttr(r.step_id)}" hidden>

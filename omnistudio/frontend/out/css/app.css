@@ -669,3 +669,36 @@
     display: inline-flex;
     align-items: center;
 }
+
+/* Actions destructives : couleur rouge DSFR sur les boutons tertiaires */
+.ov-btn-danger {
+    color: var(--text-default-error) !important;
+}
+.ov-btn-danger::before,
+.ov-btn-danger::after {
+    color: var(--text-default-error) !important;
+}
+.ov-btn-danger:hover {
+    background-color: var(--background-action-low-error) !important;
+}
+
+/* Carte voix sélectionnée : bordure + icône visible (WCAG 1.4.1 : pas juste la couleur) */
+.fr-card[data-selected="true"] {
+    border: 2px solid var(--border-active-blue-france);
+    box-shadow: 0 0 0 1px var(--border-active-blue-france);
+}
+.fr-card[data-selected="true"]::after {
+    content: "\2713";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--background-active-blue-france);
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
