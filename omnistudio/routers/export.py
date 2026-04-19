@@ -52,6 +52,27 @@ class ExportRequest(BaseModel):
     make_unique: bool = False
     silence_duration: float = 1.0
     output_format: str = "wav"
+    # PRD v1.5 décision 16 — sous-titres SRT via faster-whisper (Phase 3ter)
+    include_subtitles: bool = False
+    subtitle_format: str = "standard"  # standard | word | shorts | multiline
+
+
+# Singleton SubtitleClient (lazy load du modèle ~800 Mo au premier usage)
+_subtitle_client = None
+
+
+def _get_subtitle_client():
+    """Instancie SubtitleClient au premier appel. Retourne None si import échoue."""
+    global _subtitle_client
+    if _subtitle_client is not None:
+        return _subtitle_client
+    try:
+        from core.subtitle_client import SubtitleClient
+        _subtitle_client = SubtitleClient()
+        return _subtitle_client
+    except ImportError:
+        logger.warning("SubtitleClient indisponible (faster-whisper non installé). Sous-titres désactivés.")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +198,34 @@ async def export_zip(
                     os.unlink(fpath)
                     fpath = mp3_path
             processed_files.append(fpath)
+
+            # Sous-titres SRT (PRD v1.5 décision 16) — opt-in via include_subtitles
+            if req.include_subtitles:
+                client = _get_subtitle_client()
+                if client is not None:
+                    lang = (step_info.get("language_override")
+                            or assignments.get(str(sid), {}).get("language") if isinstance(assignments.get(str(sid)), dict)
+                            else "fr") or "fr"
+                    try:
+                        segments = await asyncio.to_thread(client.transcribe, fpath, lang)
+                    except Exception as e:
+                        logger.warning(f"Transcription échouée étape {sid}: {e}")
+                        segments = None
+                    if segments:
+                        fmt = req.subtitle_format if req.subtitle_format in {"standard", "word", "shorts", "multiline"} else "standard"
+                        gen_method = {
+                            "standard": client.generate_srt,
+                            "word": client.generate_word_srt,
+                            "shorts": client.generate_shorts_srt,
+                            "multiline": client.generate_multiline_srt,
+                        }[fmt]
+                        srt_text = gen_method(segments)
+                        srt_path = fpath.rsplit(".", 1)[0] + ".srt"
+                        try:
+                            with open(srt_path, "w", encoding="utf-8") as srt_f:
+                                srt_f.write(srt_text)
+                        except OSError as e:
+                            logger.warning(f"Écriture SRT échouée étape {sid}: {e}")
 
             now = time.monotonic()
             if now - last_heartbeat > 15:

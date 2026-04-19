@@ -15,6 +15,9 @@ const DOM = {
     silenceGroup: () => document.getElementById('export-silence-group'),
     silence: () => document.getElementById('export-silence'),
     silenceValue: () => document.getElementById('export-silence-value'),
+    subtitles: () => document.getElementById('export-subtitles'),
+    subtitleFormatGroup: () => document.getElementById('export-subtitle-format-group'),
+    subtitleFormat: () => document.getElementById('export-subtitle-format'),
     exportBtn: () => document.getElementById('export-btn'),
     progress: () => document.getElementById('export-progress'),
     progressBar: () => document.getElementById('export-progress-bar'),
@@ -41,6 +44,9 @@ function init() {
     DOM.exportBtn().addEventListener('click', onExport);
     DOM.unique().addEventListener('change', () => {
         DOM.silenceGroup().hidden = !DOM.unique().checked;
+    });
+    DOM.subtitles().addEventListener('change', () => {
+        DOM.subtitleFormatGroup().hidden = !DOM.subtitles().checked;
     });
     DOM.silence().addEventListener('input', () => {
         const v = DOM.silence().value + 's';
@@ -89,7 +95,9 @@ async function onExport() {
         bit_depth: bitDepth,
         output_format: DOM.format().value,
         make_unique: DOM.unique().checked,
-        silence_duration: parseFloat(DOM.silence().value)
+        silence_duration: parseFloat(DOM.silence().value),
+        include_subtitles: DOM.subtitles().checked,
+        subtitle_format: DOM.subtitleFormat().value
     }, {
         onProgress(data) {
             DOM.progressBar().value = data.progress || 0;

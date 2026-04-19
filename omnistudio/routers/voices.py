@@ -125,6 +125,33 @@ def _read_voice_meta(voice_name: str) -> dict:
         return {}
 
 
+def _inject_owner_in_meta(voice_name: str, user_sub: str) -> bool:
+    """Patch meta.json post-création pour ajouter owner=<JWT.sub>, system=false.
+
+    PRD-032 : isolation ownership voix custom. Idempotent — si meta.json contient
+    déjà owner, on respecte la valeur existante (système ou ancien propriétaire).
+    Retourne True si patch appliqué, False si meta.json absent ou erreur I/O.
+    """
+    meta_path = Path(OMNIVOICE_VOICES_DIR) / "custom" / voice_name / "meta.json"
+    if not meta_path.exists():
+        return False
+    try:
+        with open(meta_path) as f:
+            meta = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        meta = {}
+    if meta.get("system") is True:
+        return False  # Ne jamais écraser une voix système
+    meta.setdefault("owner", user_sub)
+    meta["system"] = False
+    try:
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2, ensure_ascii=False)
+        return True
+    except OSError:
+        return False
+
+
 @router.get("/api/voices")
 async def list_voices(
     user=Depends(get_current_user),
@@ -330,6 +357,9 @@ async def voices_lock(
         return api_response(error={"code": "OMNIVOICE_ERROR",
             "message": result.get("detail", "Erreur OmniVoice")}, status_code=502)
 
+    # PRD-032 : injection automatique owner=<JWT.sub> dans meta.json
+    await asyncio.to_thread(_inject_owner_in_meta, req.name, user["user_id"])
+
     # Test immediat avec la voix verrouillee
     output_dir = f"data/voices/{thread_id}"
     os.makedirs(output_dir, exist_ok=True)
@@ -408,6 +438,9 @@ async def voices_clone(
         if not result.get("ok"):
             return api_response(error={"code": "OMNIVOICE_ERROR",
                 "message": result.get("detail", "Erreur de clonage")}, status_code=502)
+
+        # PRD-032 : injection automatique owner=<JWT.sub> dans meta.json
+        await asyncio.to_thread(_inject_owner_in_meta, name, user["user_id"])
 
         try:
             wav_path = await asyncio.to_thread(
