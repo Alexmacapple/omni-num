@@ -9,7 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419r"></script>
+    <script src="js/theme-init.js?v=20260419s"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419r">
+    <link rel="stylesheet" href="css/app.css?v=20260419s">
 </head>
 <body>
     <!-- Skip links -->
@@ -1048,45 +1048,69 @@
                             <!-- 3c. Cloner -->
                             <div id="sub-panel-clone" class="fr-tabs__panel" role="tabpanel" aria-labelledby="sub-tab-clone" tabindex="0">
                                 <h3 class="fr-sr-only">Cloner une voix</h3>
-                                <div class="fr-grid-row fr-grid-row--gutters fr-mb-3w">
-                                    <div class="fr-col-12">
-                                        <!-- Upload fichier -->
-                                        <div class="fr-upload-group fr-mb-2w" id="clone-audio-group">
-                                            <label class="fr-label" for="clone-audio"><span id="clone-audio-label">Fichier audio de référence pour le clonage</span>
-                                                <span class="fr-hint-text" id="clone-audio-hint">WAV, MP3, FLAC ou OGG — 1 à 30 secondes</span>
-                                            </label>
-                                            <input class="fr-upload" type="file" id="clone-audio"
-                                                   accept=".wav,.mp3,.flac,.ogg"
-                                                   aria-labelledby="clone-audio-label"
-                                                   aria-describedby="clone-audio-hint">
-                                            <p id="clone-audio-error" class="fr-error-text" style="display:none"></p>
+                                <fieldset class="fr-fieldset fr-mb-3w">
+                                    <legend class="fr-fieldset__legend fr-text--regular">
+                                        <strong>Source audio de référence</strong>
+                                        <span class="fr-hint-text">Choisissez UNE des deux options : téléverser un fichier OU enregistrer votre voix. Durée : 1 à 30 secondes.</span>
+                                    </legend>
+                                    <div class="fr-fieldset__content">
+                                        <div class="fr-grid-row fr-grid-row--gutters fr-mb-2w">
+                                            <!-- Option 1 : Upload fichier -->
+                                            <div class="fr-col-12 fr-col-md-6">
+                                                <div class="fr-card fr-card--no-arrow fr-enlarge-link" style="height:100%;padding:1rem;border:1px solid var(--border-default-grey);">
+                                                    <h4 class="fr-text--lead fr-mb-1w">
+                                                        <span class="fr-icon-upload-line fr-mr-1v" aria-hidden="true"></span>
+                                                        Téléverser un fichier
+                                                    </h4>
+                                                    <div class="fr-upload-group fr-mb-0" id="clone-audio-group">
+                                                        <label class="fr-label fr-sr-only" for="clone-audio"><span id="clone-audio-label">Fichier audio de référence pour le clonage</span>
+                                                            <span class="fr-hint-text" id="clone-audio-hint">WAV, MP3, FLAC ou OGG</span>
+                                                        </label>
+                                                        <input class="fr-upload" type="file" id="clone-audio"
+                                                               accept=".wav,.mp3,.flac,.ogg"
+                                                               aria-labelledby="clone-audio-label"
+                                                               aria-describedby="clone-audio-hint">
+                                                        <p class="fr-hint-text fr-mt-1v">Formats WAV, MP3, FLAC, OGG</p>
+                                                        <p id="clone-audio-error" class="fr-error-text" style="display:none"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Option 2 : Enregistrement micro -->
+                                            <div class="fr-col-12 fr-col-md-6">
+                                                <div id="clone-record-group" class="fr-card fr-card--no-arrow" style="height:100%;padding:1rem;border:1px solid var(--border-default-grey);">
+                                                    <h4 class="fr-text--lead fr-mb-1w">
+                                                        <span class="fr-icon-mic-fill fr-mr-1v" aria-hidden="true"></span>
+                                                        Enregistrer votre voix
+                                                    </h4>
+                                                    <p class="fr-hint-text fr-mb-1w" id="clone-record-label">Autorisez le micro puis lancez un enregistrement de 1 à 30 s.</p>
+                                                    <button class="fr-btn fr-btn--primary fr-btn--icon-left fr-icon-mic-fill"
+                                                            id="clone-record-btn" type="button"
+                                                            aria-pressed="false"
+                                                            aria-describedby="clone-record-label"
+                                                            data-label-start="Démarrer l'enregistrement"
+                                                            data-label-stop="Arrêter et valider">Démarrer l'enregistrement</button>
+                                                    <div id="clone-record-status" class="fr-text--sm fr-mt-2v" role="status" aria-live="polite"></div>
+                                                    <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-btn--icon-left fr-icon-delete-line fr-mt-1v"
+                                                            id="clone-record-delete" type="button" hidden>Supprimer et recommencer</button>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <p class="fr-text--sm fr-text--mention-grey fr-mb-2w ov-text-center">— ou —</p>
-
-                                        <!-- Enregistrement micro -->
-                                        <div id="clone-record-group" class="fr-mb-2w">
-                                            <p class="fr-text--sm fr-text--bold fr-mb-1w" id="clone-record-label">Enregistrer depuis le microphone</p>
-                                            <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-mic-fill"
-                                                    id="clone-record-btn" type="button"
-                                                    aria-pressed="false"
-                                                    aria-describedby="clone-record-label"
-                                                    data-label-start="Démarrer l'enregistrement vocal"
-                                                    data-label-stop="Arrêter l'enregistrement en cours">Démarrer l'enregistrement vocal</button>
-                                            <div id="clone-record-status" class="fr-text--sm fr-mt-1v" role="status" aria-live="polite"></div>
-                                            <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-btn--icon-left fr-icon-delete-line fr-mt-1v"
-                                                    id="clone-record-delete" type="button" hidden>Supprimer et recommencer</button>
-                                        </div>
-
-                                        <!-- Aperçu audio -->
-                                        <div id="clone-preview" class="fr-mb-2w" hidden>
-                                            <p class="fr-text--sm fr-text--bold fr-mb-1v">Aperçu audio</p>
+                                        <!-- Aperçu audio (affiché après upload ou enregistrement valide) -->
+                                        <div id="clone-preview" class="fr-mt-2w" hidden>
+                                            <p class="fr-text--sm fr-text--bold fr-mb-1v">
+                                                <span class="fr-icon-headphone-fill fr-mr-1v" aria-hidden="true"></span>
+                                                Aperçu audio
+                                            </p>
                                             <audio id="clone-preview-player" controls class="ov-audio-player"
                                                    aria-label="Aperçu audio de référence pour le clonage">
-                                                                                            </audio>
+                                            </audio>
                                             <p id="clone-audio-info" class="fr-text--xs fr-text--mention-grey fr-mt-1v"></p>
                                         </div>
                                     </div>
+                                </fieldset>
+                                <div class="fr-grid-row fr-grid-row--gutters fr-mb-3w">
                                     <div class="fr-col-12">
                                         <div class="fr-input-group">
                                             <label class="fr-label" for="clone-transcription">
@@ -1953,6 +1977,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419r"></script>
+    <script type="module" src="js/app.js?v=20260419s"></script>
 </body>
 </html>

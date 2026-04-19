@@ -68,15 +68,12 @@ const MAX_RECORD_SECONDS = 30;
 
 const rec = {
     stream: null,
-    context: null,
-    processor: null,
-    source: null,
-    silentGain: null,
-    chunks: [],
-    sampleRate: 0,
+    mediaRecorder: null,
+    chunks: [],   // Blob chunks émis par MediaRecorder (WebM/Opus typique)
+    mimeType: '',
     startTime: 0,
     timer: null,
-    blob: null,
+    blob: null,   // WAV final (reconverti depuis le blob MediaRecorder)
 };
 
 function writeWavString(view, offset, str) {
@@ -122,9 +119,35 @@ function formatFileSize(bytes) {
     return (bytes / 1048576).toFixed(1) + ' Mo';
 }
 
+/** Choisit le meilleur mimeType disponible pour MediaRecorder (codec audio).
+ *  Ordre de préférence : webm/opus (Chrome/Firefox/Edge), ogg/opus, mp4 (Safari),
+ *  fallback défaut navigateur.
+ */
+function _pickRecorderMime() {
+    const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+    ];
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
+    for (const m of candidates) {
+        try { if (MediaRecorder.isTypeSupported(m)) return m; } catch { /* ignore */ }
+    }
+    return '';
+}
+
 async function onStartRecording() {
     const recordBtn = DOM.recordBtn();
     const statusEl = DOM.recordStatus();
+
+    if (typeof MediaRecorder === 'undefined') {
+        if (statusEl) {
+            statusEl.className = 'fr-text--sm fr-mt-1v';
+            statusEl.textContent = 'Votre navigateur ne supporte pas l\'API MediaRecorder. Utilisez l\'upload d\'un fichier audio.';
+        }
+        return;
+    }
 
     try {
         rec.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -138,33 +161,35 @@ async function onStartRecording() {
         return;
     }
 
-    // Fallback pour navigateurs non-standards (Safari: webkitAudioContext)
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
+    const mimeType = _pickRecorderMime();
+    try {
+        rec.mediaRecorder = mimeType
+            ? new MediaRecorder(rec.stream, { mimeType })
+            : new MediaRecorder(rec.stream);
+    } catch (err) {
         if (statusEl) {
             statusEl.className = 'fr-text--sm fr-mt-1v';
-            statusEl.textContent = 'AudioContext non supporté par ce navigateur.';
+            statusEl.textContent = 'Impossible d\'initialiser l\'enregistrement : ' + (err.message || err.name);
         }
+        rec.stream.getTracks().forEach(t => t.stop());
+        rec.stream = null;
         return;
     }
-    rec.context = new AudioContextClass();
-    rec.sampleRate = rec.context.sampleRate;
-    rec.source = rec.context.createMediaStreamSource(rec.stream);
-    rec.processor = rec.context.createScriptProcessor(4096, 1, 1);
-    rec.silentGain = rec.context.createGain();
-    rec.silentGain.gain.value = 0;
+
+    rec.mimeType = rec.mediaRecorder.mimeType || mimeType || 'audio/webm';
     rec.chunks = [];
-
-    rec.processor.onaudioprocess = (e) => {
-        rec.chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-    };
-
-    rec.source.connect(rec.processor);
-    rec.processor.connect(rec.silentGain);
-    rec.silentGain.connect(rec.context.destination);
-
-    rec.startTime = Date.now();
     rec.blob = null;
+
+    rec.mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) rec.chunks.push(e.data);
+    };
+    rec.mediaRecorder.onerror = (e) => {
+        console.warn('MediaRecorder error:', e?.error);
+    };
+    // Démarre — timeslice 250 ms pour garantir des chunks partiels
+    // (utile si le navigateur plante avant le stop final).
+    rec.mediaRecorder.start(250);
+    rec.startTime = Date.now();
 
     // UI : basculer en état "enregistrement en cours"
     if (recordBtn) {
@@ -191,41 +216,44 @@ async function onStartRecording() {
     }, 250);
 }
 
-function onStopRecording() {
-    if (!rec.processor) return;
+async function _decodeAndEncodeWav(blob) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContextClass();
+    try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        const pcm = audioBuffer.getChannelData(0);
+        const wavBlob = encodeWav(pcm, audioBuffer.sampleRate);
+        return { wavBlob, duration: audioBuffer.duration };
+    } finally {
+        try { audioCtx.close(); } catch { /* ignore */ }
+    }
+}
+
+async function onStopRecording() {
+    if (!rec.mediaRecorder || rec.mediaRecorder.state === 'inactive') return;
 
     clearInterval(rec.timer);
     rec.timer = null;
 
-    // Deconnecter l'audio
-    rec.processor.disconnect();
-    rec.source.disconnect();
-    rec.silentGain.disconnect();
-    rec.stream.getTracks().forEach(t => t.stop());
-
-    // Fusionner les chunks PCM
-    const totalLength = rec.chunks.reduce((sum, c) => sum + c.length, 0);
-    const merged = new Float32Array(totalLength);
-    let offset = 0;
-    for (const chunk of rec.chunks) {
-        merged.set(chunk, offset);
-        offset += chunk.length;
-    }
-
-    const sampleRate = rec.sampleRate;
-    rec.blob = encodeWav(merged, sampleRate);
-
-    // Nettoyer
-    rec.context.close();
-    rec.processor = null;
-    rec.source = null;
-    rec.context = null;
-    rec.stream = null;
-    rec.chunks = [];
-
-    // UI : basculer en état "prêt à enregistrer"
     const recordBtn = DOM.recordBtn();
     const statusEl = DOM.recordStatus();
+
+    // Attente du dernier chunk via onstop
+    const sourceBlob = await new Promise((resolve) => {
+        rec.mediaRecorder.onstop = () => {
+            const type = rec.mimeType || rec.mediaRecorder.mimeType || 'audio/webm';
+            resolve(new Blob(rec.chunks, { type }));
+        };
+        try { rec.mediaRecorder.stop(); } catch { resolve(new Blob(rec.chunks, { type: rec.mimeType || 'audio/webm' })); }
+    });
+
+    // Libérer le micro
+    if (rec.stream) rec.stream.getTracks().forEach(t => t.stop());
+    rec.stream = null;
+    rec.mediaRecorder = null;
+
+    // UI : basculer en état "prêt à enregistrer"
     if (recordBtn) {
         recordBtn.setAttribute('aria-pressed', 'false');
         recordBtn.textContent = recordBtn.dataset.labelStart;
@@ -233,8 +261,8 @@ function onStopRecording() {
         recordBtn.classList.add('fr-icon-mic-fill', 'fr-btn--secondary');
     }
 
-    const duration = totalLength / sampleRate;
-    if (totalLength === 0) {
+    // Sécurité : si aucun chunk (micro muet, onglet background dès le start)
+    if (!sourceBlob || sourceBlob.size === 0) {
         if (statusEl) {
             statusEl.className = 'fr-text--sm fr-mt-1v';
             statusEl.textContent = 'Aucun son capté. Vérifiez que le micro est autorisé dans votre navigateur et que vous parlez assez fort, puis réessayez.';
@@ -243,6 +271,22 @@ function onStopRecording() {
         onCloneFormChange();
         return;
     }
+
+    // Décodage WebM/Opus → PCM → WAV (attendu par le backend /api/voices/clone)
+    let wavBlob, duration;
+    try {
+        ({ wavBlob, duration } = await _decodeAndEncodeWav(sourceBlob));
+    } catch (err) {
+        if (statusEl) {
+            statusEl.className = 'fr-text--sm fr-mt-1v';
+            statusEl.textContent = 'Impossible de décoder l\'enregistrement : ' + (err?.message || err?.name || 'erreur inconnue');
+        }
+        rec.blob = null;
+        onCloneFormChange();
+        return;
+    }
+    rec.blob = wavBlob;
+
     if (duration < 1) {
         if (statusEl) {
             statusEl.className = 'fr-text--sm fr-mt-1v';
