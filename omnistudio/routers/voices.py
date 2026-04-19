@@ -351,7 +351,7 @@ async def voices_lock(
     existing = await asyncio.to_thread(vox_client.get_custom_voice_details, req.name)
     if existing:
         return api_response(error={"code": "VOICE_EXISTS",
-            "message": f"La voix '{req.name}' existe déjà."}, status_code=409)
+            "message": f"La voix '{req.name}' existe déjà. Choisissez un nom différent ou supprimez l'existante dans la bibliothèque."}, status_code=409)
 
     # Fidélité sonore : cloner la voix depuis le DERNIER WAV d'exploration.
     # Sinon source=design produirait un nouveau tirage ≠ de celui écouté.

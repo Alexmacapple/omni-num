@@ -245,16 +245,11 @@ async function onTableAction(e) {
     const audioContainer = document.querySelector(`[data-audio-zone="${CSS.escape(stepId)}"]`);
     const audioEl = audioContainer?.querySelector('audio');
 
-    // Verifier si le moteur TTS est occupe
-    const tts = await checkTtsStatus();
-    if (tts?.busy) {
-        if (statusZone) {
-            statusZone.className = 'ov-card-status ov-card-status--warning';
-            statusZone.textContent =
-                'Une synthèse est déjà en cours. Réessayez dans quelques secondes.';
-        }
-        return;
-    }
+    // Note : pas de pre-check busy — OmniVoice a son propre semaphore et
+    // mettra la requête en attente jusqu'à queue_timeout (5s). Si saturé
+    // réellement, le backend renvoie 503 TTS_BUSY et le catch ci-dessous
+    // affiche l'erreur. Le pre-check bloquait trop souvent sur busy=true
+    // transitoire (preview d'un autre step encore en cours).
 
     // État chargement
     const originalLabel = btn.textContent;
