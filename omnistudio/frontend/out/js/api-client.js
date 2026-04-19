@@ -121,7 +121,9 @@ export async function apiDelete(url) {
 export function uploadFile(url, formData, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', url);
+        // Normaliser URL comme dans apiRequest() pour respecter <base href>
+        const normalizedUrl = _normalizeUrl(url);
+        xhr.open('POST', normalizedUrl);
 
         xhr.setRequestHeader('Authorization', `Bearer ${getAccessToken()}`);
         const threadId = localStorage.getItem('thread_id');

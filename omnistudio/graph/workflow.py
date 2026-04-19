@@ -45,12 +45,17 @@ def create_workflow(db_path: str = None):
     if db_path is None:
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "omnistudio_checkpoint.db")
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    # WAL mode for better concurrency (PRD-026)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA busy_timeout=5000")
-    checkpointer = SqliteSaver(conn)
+    try:
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        # WAL mode for better concurrency (PRD-026)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        checkpointer = SqliteSaver(conn)
+    except Exception as e:
+        import logging
+        logging.error(f"Impossible d'initialiser la base de données: {db_path}. Erreur: {e}")
+        raise
     
     workflow = StateGraph(WorkflowState)
     
@@ -98,4 +103,9 @@ def create_workflow(db_path: str = None):
         interrupt_before=["prepare_clean", "design", "assign", "generate", "export"]
     )
 
-app = create_workflow()
+try:
+    app = create_workflow()
+except Exception as e:
+    import logging
+    logging.critical(f"Impossível créer le workflow LangGraph: {e}")
+    app = None

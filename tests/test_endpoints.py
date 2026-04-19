@@ -297,6 +297,7 @@ class TestStatusRouter:
             resp = raw_client.get("/api/health")
             # 200 ou 503 (service down), mais jamais 401
             assert resp.status_code in (200, 503)
+            raw_client.close()
 
     def test_health_has_checks(self, client):
         """GET /api/health retourne les checks."""
@@ -331,6 +332,7 @@ class TestImportStepsRouter:
         with TestClient(server.app, raise_server_exceptions=False) as raw_client:
             resp = raw_client.get("/api/steps", headers={"X-Thread-Id": FAKE_THREAD_ID})
             assert resp.status_code == 401
+            raw_client.close()
 
     def test_import_select(self, client, auth_headers):
         """Filtrer les etapes selectionnees."""
@@ -945,8 +947,9 @@ class TestExportRouter:
             {"step_id": "1", "filename": "etape-01.wav", "voice_name": "Lea",
              "wav_path": fake_wav_file, "status": "done"},
         ]
-        # Reset rate limiter pour ce test
-        server.app.state.limiter.reset()
+        # Reset rate limiter pour ce test (si present)
+        if hasattr(server.app.state, 'limiter') and hasattr(server.app.state.limiter, 'reset'):
+            server.app.state.limiter.reset()
         with patch("routers.export.process_audio", side_effect=lambda src, dst, cfg: shutil.copy2(src, dst)):
             with patch("routers.export.concatenate_audio"):
                 resp = client.post(
@@ -1063,12 +1066,14 @@ class TestAuthSecurity:
         with TestClient(server.app, raise_server_exceptions=False) as raw_client:
             resp = raw_client.request(method, url, headers={"X-Thread-Id": FAKE_THREAD_ID})
             assert resp.status_code == 401, f"{method} {url} devrait retourner 401"
+            raw_client.close()
 
     def test_status_is_public(self):
         """GET /api/status ne requiert pas d'auth."""
         with TestClient(server.app, raise_server_exceptions=False) as raw_client:
             resp = raw_client.get("/api/status")
             assert resp.status_code == 200
+            raw_client.close()
 
 
 # ---------------------------------------------------------------------------

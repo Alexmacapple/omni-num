@@ -87,7 +87,15 @@ class SubtitleClient:
             logger.info("Langue '%s' non supportée par Whisper, skip.", language)
             return None
 
+        if not wav_path or not os.path.exists(wav_path):
+            logger.error("Fichier WAV non trouvé : %s", wav_path)
+            return None
+
         self._load_model()
+        if self._model is None:
+            logger.error("Impossible de charger le modèle faster-whisper.")
+            return None
+
         try:
             lang = None if language == "auto" else language
             segments_iter, info = self._model.transcribe(

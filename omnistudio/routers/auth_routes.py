@@ -9,7 +9,7 @@ import httpx
 from fastapi import APIRouter, Request
 
 from config import KEYCLOAK_CLIENT_ID, KEYCLOAK_REALM, KEYCLOAK_URL
-from dependencies import api_error, api_response, limiter
+from dependencies import api_error, api_response, limiter, logger
 
 router = APIRouter()
 
@@ -106,6 +106,6 @@ async def auth_logout(request: Request):
                 timeout=10.0,
             )
         except httpx.ConnectError:
-            pass  # Logout best-effort
+            logger.warning("Keycloak indisponible pour logout, best-effort OK")
 
     return api_response({"message": "Deconnecte"})

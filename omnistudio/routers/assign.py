@@ -198,7 +198,11 @@ async def apply_all(
         "steps": steps,
         "default_voice": req.voice,
     }
-    if "selected_voices" in req.model_fields_set:
+    # Pydantic v2 : utiliser model_fields_set pour verifier les champs explicitement fournis
+    if hasattr(req, 'model_fields_set') and "selected_voices" in req.model_fields_set:
+        update["selected_voices"] = req.selected_voices
+    elif req.selected_voices:
+        # Fallback : si non fourni explicitement mais non vide, inclure
         update["selected_voices"] = req.selected_voices
     await asyncio.to_thread(graph_app.update_state, config, update)
 

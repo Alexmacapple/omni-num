@@ -303,7 +303,10 @@ async def clean_delete(step_id: str, request: Request, user=Depends(get_current_
         if str(g.get("step_id")) == step_id:
             wav = g.get("wav_path", "")
             if wav and os.path.exists(wav):
-                os.remove(wav)
+                try:
+                    os.remove(wav)
+                except OSError as e:
+                    logger.warning(f"Impossible de supprimer {wav} : {e}, poursuivre")
 
     return api_response({"step_id": step_id, "deleted": True, "remaining": len(new_steps)})
 

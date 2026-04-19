@@ -18,13 +18,28 @@ KC_REALM="harmonia"
 KC_CLIENT_ID="omnistudio"
 KC_SERVER="http://localhost:8082"
 
+#!/usr/bin/env bash
+# setup-keycloak.sh — Crée le client omnistudio dans Keycloak (realm harmonia).
+#
+# Phase 0bis étape 4 : client idempotent (vérifie avant créer, update si existe).
+# Calque la config de voxstudio (ROPC : publicClient + directAccessGrants).
+#
+# Prérequis :
+# - Container Keycloak (keycloak-keycloak-1) en cours d'exécution
+# - ~/Claude/keycloak/.env contient KEYCLOAK_ADMIN_PASSWORD
+#
+# Usage :
+#   ./scripts/setup-keycloak.sh
+
+set -euo pipefail
+
 # Charger le password admin depuis le .env de Keycloak
 KC_ENV_FILE="${HOME}/Claude/keycloak/.env"
 if [ ! -f "$KC_ENV_FILE" ]; then
     echo "ERROR: $KC_ENV_FILE introuvable"
     exit 1
 fi
-KC_ADMIN_PASSWORD=$(grep KEYCLOAK_ADMIN_PASSWORD "$KC_ENV_FILE" | cut -d= -f2)
+KC_ADMIN_PASSWORD=$(grep "^KEYCLOAK_ADMIN_PASSWORD=" "$KC_ENV_FILE" | cut -d= -f2-)
 if [ -z "$KC_ADMIN_PASSWORD" ]; then
     echo "ERROR: KEYCLOAK_ADMIN_PASSWORD absent de $KC_ENV_FILE"
     exit 1

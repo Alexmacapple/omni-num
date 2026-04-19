@@ -69,14 +69,14 @@ def _clean_voice_instruct(raw: str) -> str:
 def generate_voice_instruct(state: DesignState, config: RunnableConfig):
     thread_id = config["configurable"].get("thread_id")
     api_key = get_api_key(thread_id)
-    
+
     llm = LLMClient(
         provider=state.get("llm_provider", "Albert Large 120B"),
         api_key=api_key,
         temperature=state.get("llm_temperature", 0.5),
         model_override=state.get("llm_model_override", "")
     )
-    brief = state["brief"]
+    brief = state.get("brief", {})
     system_prompt = META_PROMPT_SYSTEM
 
     gender = brief.get('genre', '')
@@ -124,8 +124,19 @@ def generate_voice_instruct(state: DesignState, config: RunnableConfig):
 
 def synthesize_design(state: DesignState):
     """Génère un audio exploratoire via /design."""
-    path = vox_client.design("Ceci est un test de timbre et de rythme pour notre nouvelle voix studio.", state["voice_instruct"])
-    return {"wav_paths": [path] if path else []}
+    voice_instruct = state.get("voice_instruct", "")
+    if not voice_instruct:
+        # Pas d'instruction vocale fournie → retour vide
+        return {"wav_paths": []}
+
+    try:
+        path = vox_client.design("Ceci est un test de timbre et de rythme pour notre nouvelle voix studio.", voice_instruct)
+        return {"wav_paths": [path] if path else []}
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erreur synthèse design: {e}", exc_info=True)
+        return {"wav_paths": []}
 
 def create_design_subgraph():
     workflow = StateGraph(DesignState)

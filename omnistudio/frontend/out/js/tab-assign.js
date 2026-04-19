@@ -32,9 +32,20 @@ let assignData = [];
 let voicesList = [];
 
 function init() {
-    DOM.applyAllBtn().addEventListener('click', onApplyAll);
-    DOM.nextBtn().addEventListener('click', onContinue);
-    DOM.speedRange().addEventListener('input', () => {
+    const applyAllBtn = DOM.applyAllBtn();
+    const nextBtn = DOM.nextBtn();
+    const speedRange = DOM.speedRange();
+    const voiceSelect = DOM.voiceSelect();
+    const tableBody = DOM.tableBody();
+
+    if (!applyAllBtn || !nextBtn || !speedRange || !voiceSelect || !tableBody) {
+        console.error('[tab-assign] DOM elements missing during init');
+        return;
+    }
+
+    applyAllBtn.addEventListener('click', onApplyAll);
+    nextBtn.addEventListener('click', onContinue);
+    speedRange.addEventListener('input', () => {
         const v = DOM.speedRange().value + 'x';
         DOM.speedValue().textContent = v;
         DOM.speedRange().setAttribute('aria-valuetext', v);

@@ -8,6 +8,7 @@ Endpoints :
 """
 import asyncio
 import os
+import re
 import shutil
 from typing import List
 
@@ -25,6 +26,7 @@ from dependencies import (
     get_thread_id,
     graph_app,
     limiter,
+    logger,
 )
 
 # Constantes (PRD-016)
@@ -37,6 +39,9 @@ MAGIC_BYTES = {
     ".pdf":  [b"%PDF"],
 }
 
+# Regex stricte pour noms de fichiers sûrs (alphanumériques, tirets, points, underscores)
+SAFE_FILENAME_RE = re.compile(r"^[a-zA-Z0-9._-]{1,255}$")
+
 
 def _validate_magic(content: bytes, ext: str) -> bool:
     """Vérifie que le contenu correspond au format déclaré."""
@@ -44,6 +49,36 @@ def _validate_magic(content: bytes, ext: str) -> bool:
     if not expected:
         return True
     return any(content.startswith(magic) for magic in expected)
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Nettoie et valide le nom de fichier contre les attaques path traversal.
+
+    Bloque :
+    - Chemins relatifs (../)
+    - Chemins absolus (/)
+    - Caractères nulls
+    - Noms réservés Windows
+    """
+    if not filename:
+        raise ValueError("Nom de fichier vide")
+
+    # Bloquer les chemins multiples composants
+    if "/" in filename or "\\" in filename:
+        raise ValueError("Chemins composés refusés")
+
+    # Bloquer les chemins réservés POSIX/Windows
+    if filename in {".", "..", "CON", "PRN", "AUX", "NUL"}:
+        raise ValueError("Nom de fichier réservé")
+
+    # Ne garder que le nom de base (au cas où un chemin passe)
+    safe_name = os.path.basename(filename)
+
+    # Valider avec regex stricte
+    if not SAFE_FILENAME_RE.match(safe_name):
+        raise ValueError("Caractères non autorisés dans le nom de fichier")
+
+    return safe_name
 
 router = APIRouter()
 
@@ -58,9 +93,9 @@ async def import_file(
     sheet: str = Form("PLAN"),
     mode: str = Form("replace"),
     user=Depends(get_current_user),
+    thread_id: str = Depends(get_thread_id),
 ):
     """Import d'un fichier (Excel, Markdown, CSV, TXT, DOCX)."""
-    thread_id = get_thread_id(request)
     _verify_session_owner(thread_id, user["user_id"])
     _touch_session(thread_id)
 
@@ -79,12 +114,23 @@ async def import_file(
         return api_error("INVALID_FILE", f"Le contenu du fichier ne correspond pas au format {ext}.", 400)
 
     # Sauvegarder le fichier (nom nettoyé — PRD-029)
-    upload_dir = f"data/uploads/{thread_id}"
+    upload_dir = os.path.abspath(f"data/uploads/{thread_id}")
     os.makedirs(upload_dir, exist_ok=True)
-    safe_name = os.path.basename(file.filename)
+
+    # Nettoyer et valider le nom de fichier
+    try:
+        safe_name = _sanitize_filename(file.filename)
+    except ValueError as e:
+        return api_error("INVALID_FILENAME", str(e), 400)
+
     name_part, ext_part = os.path.splitext(safe_name)
     safe_name = f"{slugify(name_part, lowercase=False)}{ext_part}"
+
     file_path = os.path.join(upload_dir, safe_name)
+    # Vérifier que le chemin résultant reste dans upload_dir (sécurité supplémentaire)
+    if not os.path.abspath(file_path).startswith(upload_dir):
+        return api_error("INVALID_PATH", "Le chemin de fichier dépasse le répertoire autorisé", 403)
+
     with open(file_path, "wb") as f:
         f.write(content)
 
@@ -107,11 +153,17 @@ async def import_file(
     }
 
     try:
-        from graph.nodes.import_node import import_scenario, ImportError as ImportNodeError
+        from graph.nodes.import_node import import_scenario
         result = await asyncio.to_thread(import_scenario, initial_state)
         await asyncio.to_thread(graph_app.update_state, config, result)
+    except ImportError as e:
+        return api_error("IMPORT_FAILED", f"Module import_node indisponible: {e}", 500)
+    except (ValueError, KeyError, TypeError) as e:
+        # Erreurs de validation ou parsing du fichier
+        return api_error("IMPORT_FAILED", f"Erreur lors du parsing du fichier: {e}", 400)
     except Exception as e:
-        return api_error("IMPORT_FAILED", str(e), 400)
+        logger.error(f"Erreur import_scenario pour {thread_id}: {e}", exc_info=True)
+        return api_error("IMPORT_FAILED", "Erreur interne lors de l'import", 500)
     finally:
         shutil.rmtree(upload_dir, ignore_errors=True)
 
@@ -131,9 +183,13 @@ class SelectRequest(BaseModel):
 
 
 @router.post("/api/import/select")
-async def import_select(req: SelectRequest, request: Request, user=Depends(get_current_user)):
+async def import_select(
+    req: SelectRequest,
+    request: Request,
+    user=Depends(get_current_user),
+    thread_id: str = Depends(get_thread_id),
+):
     """Filtrer les etapes selectionnees."""
-    thread_id = get_thread_id(request)
     _verify_session_owner(thread_id, user["user_id"])
     _touch_session(thread_id)
 
@@ -150,9 +206,12 @@ async def import_select(req: SelectRequest, request: Request, user=Depends(get_c
 
 
 @router.get("/api/steps")
-async def get_steps(request: Request, user=Depends(get_current_user)):
+async def get_steps(
+    request: Request,
+    user=Depends(get_current_user),
+    thread_id: str = Depends(get_thread_id),
+):
     """Lister les etapes de la session."""
-    thread_id = get_thread_id(request)
     _verify_session_owner(thread_id, user["user_id"])
     _touch_session(thread_id)
 
@@ -177,9 +236,13 @@ class AddStepRequest(BaseModel):
 
 
 @router.post("/api/steps/add")
-async def add_step(req: AddStepRequest, request: Request, user=Depends(get_current_user)):
+async def add_step(
+    req: AddStepRequest,
+    request: Request,
+    user=Depends(get_current_user),
+    thread_id: str = Depends(get_thread_id),
+):
     """Ajouter une etape manuellement."""
-    thread_id = get_thread_id(request)
     _verify_session_owner(thread_id, user["user_id"])
     _touch_session(thread_id)
 

@@ -190,6 +190,11 @@ async def export_zip(
             })}
 
             await asyncio.to_thread(process_audio, raw, fpath, audio_config)
+            # Vérifier que le fichier a été créé
+            if not os.path.exists(fpath):
+                logger.warning(f"Fichier audio non créé après process_audio: {fpath}")
+                skipped.append(sid)
+                continue
             # Conversion MP3 si demandee
             if req.output_format == "mp3":
                 mp3_path = fpath.rsplit(".", 1)[0] + ".mp3"
@@ -197,15 +202,21 @@ async def export_zip(
                 if ok and os.path.exists(mp3_path):
                     os.unlink(fpath)
                     fpath = mp3_path
+                elif not ok:
+                    logger.warning(f"Conversion MP3 échouée pour {fpath}, garde WAV")
             processed_files.append(fpath)
 
             # Sous-titres SRT (PRD v1.5 décision 16) — opt-in via include_subtitles
             if req.include_subtitles:
                 client = _get_subtitle_client()
                 if client is not None:
-                    lang = (step_info.get("language_override")
-                            or assignments.get(str(sid), {}).get("language") if isinstance(assignments.get(str(sid)), dict)
-                            else "fr") or "fr"
+                    # Déterminer la langue avec priorité: override > assignment > défaut "fr"
+                    lang = step_info.get("language_override")
+                    if not lang:
+                        assignment = assignments.get(str(sid), {})
+                        if isinstance(assignment, dict):
+                            lang = assignment.get("language")
+                    lang = lang or "fr"
                     try:
                         segments = await asyncio.to_thread(client.transcribe, fpath, lang)
                     except Exception as e:
@@ -372,7 +383,14 @@ async def download_export(
     if user and user.get("user_id"):
         _verify_session_owner(thread_id, user["user_id"])
 
-    zip_path = os.path.abspath(f"export/OmniStudio_Export_{thread_id[:8]}.zip")
+    # Construction sécurisée du chemin ZIP (thread_id validé par regex ci-dessus)
+    export_dir = os.path.abspath("export")
+    os.makedirs(export_dir, exist_ok=True)
+    zip_name = f"OmniStudio_Export_{thread_id[:8]}.zip"
+    zip_path = os.path.join(export_dir, zip_name)
+    # Vérifier que le chemin reste dans export/
+    if not os.path.abspath(zip_path).startswith(export_dir):
+        raise HTTPException(status_code=403, detail="Accès au répertoire refusé")
     if not os.path.exists(zip_path):
         return api_response(
             error={"code": "NOT_FOUND",

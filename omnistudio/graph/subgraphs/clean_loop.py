@@ -60,14 +60,15 @@ def propose_corrections(state: CleanState, config: RunnableConfig) -> Dict:
             new_steps.append(step)
             continue
 
-        # Rate limit proactif : Albert = 10 req/min → 1 req/7s
+        # Rate limit proactif : Albert = 10 req/min → 1 req/6s
         # Note : fonction sync executee par LangGraph via asyncio.to_thread()
         # time.sleep() bloque le worker thread, pas l'event loop (PRD-035 Bug 3)
+        # Pause tous les 9 appels (9 * 6s = 54s, puis 60s pause = 114s total = ~1 req/min)
         if llm_call_count > 0 and llm_call_count % 9 == 0:
             logger.info("Pause rate limit (9 requetes envoyees)... attente 60s")
             time.sleep(60)
         elif llm_call_count > 0:
-            time.sleep(1)
+            time.sleep(6)
 
         llm_call_count += 1
         logger.info("Nettoyage etape %s (%d/%d)", step['step_id'], llm_call_count, total)

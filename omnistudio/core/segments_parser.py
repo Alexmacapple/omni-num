@@ -85,7 +85,10 @@ def parse_segments(
     Returns:
         Liste de SegmentAssignment (au moins 1 segment).
     """
-    if not step_text or not step_text.strip():
+    if step_text is None or not isinstance(step_text, str):
+        return []
+
+    if not step_text.strip():
         return []
 
     parts = TAG_RE.split(step_text)

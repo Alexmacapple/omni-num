@@ -38,8 +38,9 @@ async def serve_audio(
         raise HTTPException(status_code=400, detail="Thread ID invalide")
 
     # PRD-UX-030 : verification BOLA — le thread_id appartient a l'utilisateur
-    if user and user.get("user_id"):
-        _verify_session_owner(thread_id, user["user_id"])
+    if not user or not user.get("user_id"):
+        raise HTTPException(status_code=401, detail="Token invalide ou expiré")
+    _verify_session_owner(thread_id, user["user_id"])
 
     base_dir = Path(f"data/voices/{thread_id}").resolve()
     file_path = (base_dir / filename).resolve()

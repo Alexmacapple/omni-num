@@ -36,8 +36,22 @@ def expand_step(state: Dict, step_id: str) -> List[SegmentAssignment]:
     Raises:
         HTTPException 422 si le texte référence une voix inaccessible.
     """
-    step = state["steps"][step_id]
-    assignment = state["assignments"][step_id]
+    steps = state.get("steps", {})
+    if step_id not in steps:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Étape '{step_id}' non trouvée dans le state.",
+        )
+
+    assignments = state.get("assignments", {})
+    if step_id not in assignments:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Assignation vocale manquante pour l'étape '{step_id}'.",
+        )
+
+    step = steps[step_id]
+    assignment = assignments[step_id]
     default_voice = assignment["voice"]
     language = assignment.get("language", "fr")
     speed = assignment.get("speed", 1.0)
@@ -79,7 +93,18 @@ def expand_all_steps(state: Dict) -> Dict:
         Un dict partial à merger dans le State (segment_assignments).
     """
     all_segments: List[SegmentAssignment] = []
-    for step_id in state["steps"]:
-        segments = expand_step(state, step_id)
-        all_segments.extend(segments)
+    steps = state.get("steps", {})
+
+    if not steps:
+        # Pas d'étapes à expanser
+        return {"segment_assignments": []}
+
+    for step_id in steps:
+        try:
+            segments = expand_step(state, step_id)
+            all_segments.extend(segments)
+        except HTTPException as e:
+            logger.error(f"Erreur expansion étape {step_id}: {e.detail}")
+            raise
+
     return {"segment_assignments": all_segments}

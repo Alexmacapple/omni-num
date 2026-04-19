@@ -126,13 +126,17 @@ class OmniVoiceClient:
     def estimate_duration(self, texts: List[str]) -> float:
         """Estime la durée totale via le tokenizer."""
         try:
+            if not texts:
+                return 0.0
             full_text = " ".join(texts)
+            if not full_text.strip():
+                return 0.0
             response = httpx.post(f"{self.base_url}/tokenizer/encode", json={"text": full_text}, timeout=self.timeout_admin)
             if response.status_code == 200:
                 tokens = response.json().get("tokens", [])
                 # Formule empirique : 1 token ≈ 0.05 seconde
-                return len(tokens) * 0.05
-            return len(full_text) * 0.01 # Fallback
+                return max(0.0, len(tokens) * 0.05)
+            return max(0.0, len(full_text) * 0.01) # Fallback
         except Exception:
             return 0.0
 
@@ -253,7 +257,7 @@ class OmniVoiceClient:
                 "voice_instruct": voice_instruct,
                 "language": language
             }
-            response = httpx.post(f"{self.base_url}/design", json=data, timeout=t)
+            response = httpx.post(f"{self.base_url}/design", data=data, timeout=t)
             self._check_tts_error(response)
             if response.status_code == 200:
                 filepath = os.path.join(output_dir, f"design_{hash(voice_instruct)%1000}.wav")
@@ -273,13 +277,15 @@ class OmniVoiceClient:
                           audio_path: str = "", transcription: str = "",
                           model: str = "1.7B", language: str = "fr") -> dict:
         """Sauvegarde une voix custom. Retourne {"ok": bool, "detail": str}."""
+        audio_file = None
         try:
             data = {"name": name, "source": source, "model": model, "language": language}
             files = {}
             if source == "design":
                 data["voice_description"] = voice_instruct
             elif source == "clone":
-                files["reference_audio"] = open(audio_path, "rb")
+                audio_file = open(audio_path, "rb")
+                files["reference_audio"] = audio_file
                 data["reference_text"] = transcription
 
             response = httpx.post(
@@ -293,6 +299,12 @@ class OmniVoiceClient:
             return {"ok": False, "detail": f"HTTP {response.status_code}: {response.text}"}
         except Exception as e:
             return {"ok": False, "detail": str(e)}
+        finally:
+            if audio_file:
+                try:
+                    audio_file.close()
+                except Exception:
+                    pass
 
     # =========================================================================
     # Méthodes spécifiques OmniVoice (nouveautés omni-num, PRD v1.5)

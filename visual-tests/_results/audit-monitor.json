@@ -1,0 +1,219 @@
+{
+  "mode": "standard",
+  "round_count": 1,
+  "agent_count": 10,
+  "scope_mode": "full",
+  "timestamp": "2026-04-19T12:00:00Z",
+  "zones": [
+    {
+      "zone_id": "z01",
+      "paths": [
+        "omnistudio/routers/assign.py",
+        "omnistudio/routers/audio.py",
+        "omnistudio/routers/auth_routes.py",
+        "omnistudio/routers/clean.py"
+      ],
+      "file_count": 4
+    },
+    {
+      "zone_id": "z02",
+      "paths": [
+        "omnistudio/routers/export.py",
+        "omnistudio/routers/generate.py",
+        "omnistudio/routers/import_steps.py"
+      ],
+      "file_count": 3
+    },
+    {
+      "zone_id": "z03",
+      "paths": [
+        "omnistudio/routers/sessions.py",
+        "omnistudio/routers/status.py",
+        "omnistudio/routers/voices.py"
+      ],
+      "file_count": 3
+    },
+    {
+      "zone_id": "z04",
+      "paths": [
+        "omnistudio/core/"
+      ],
+      "file_count": 10
+    },
+    {
+      "zone_id": "z05",
+      "paths": [
+        "omnistudio/auth.py",
+        "omnistudio/config.py",
+        "omnistudio/dependencies.py",
+        "omnistudio/server.py",
+        "omnistudio/stub_server.py"
+      ],
+      "file_count": 5
+    },
+    {
+      "zone_id": "z06",
+      "paths": [
+        "omnistudio/graph/"
+      ],
+      "file_count": 10
+    },
+    {
+      "zone_id": "z07",
+      "paths": [
+        "omnistudio/frontend/out/"
+      ],
+      "file_count": 15
+    },
+    {
+      "zone_id": "z08",
+      "paths": [
+        "tests/ (A-M)"
+      ],
+      "file_count": 21
+    },
+    {
+      "zone_id": "z09",
+      "paths": [
+        "tests/ (N-Z + e2e)"
+      ],
+      "file_count": 21
+    },
+    {
+      "zone_id": "z10",
+      "paths": [
+        "scripts/",
+        "requirements.txt",
+        ".claude/settings.json"
+      ],
+      "file_count": 8
+    }
+  ],
+  "agents": {
+    "r1:z01": {
+      "zone_id": "z01",
+      "status": "started",
+      "paths": [
+        "omnistudio/routers/assign.py",
+        "omnistudio/routers/audio.py",
+        "omnistudio/routers/auth_routes.py",
+        "omnistudio/routers/clean.py"
+      ],
+      "file_count": 4,
+      "agent_id": "r1:z01",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z02": {
+      "zone_id": "z02",
+      "status": "started",
+      "paths": [
+        "omnistudio/routers/export.py",
+        "omnistudio/routers/generate.py",
+        "omnistudio/routers/import_steps.py"
+      ],
+      "file_count": 3,
+      "agent_id": "r1:z02",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z03": {
+      "zone_id": "z03",
+      "status": "started",
+      "paths": [
+        "omnistudio/routers/sessions.py",
+        "omnistudio/routers/status.py",
+        "omnistudio/routers/voices.py"
+      ],
+      "file_count": 3,
+      "agent_id": "r1:z03",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z04": {
+      "zone_id": "z04",
+      "status": "started",
+      "paths": [
+        "omnistudio/core/"
+      ],
+      "file_count": 10,
+      "agent_id": "r1:z04",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z05": {
+      "zone_id": "z05",
+      "status": "started",
+      "paths": [
+        "omnistudio/auth.py",
+        "omnistudio/config.py",
+        "omnistudio/dependencies.py",
+        "omnistudio/server.py",
+        "omnistudio/stub_server.py"
+      ],
+      "file_count": 5,
+      "agent_id": "r1:z05",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z06": {
+      "zone_id": "z06",
+      "status": "started",
+      "paths": [
+        "omnistudio/graph/"
+      ],
+      "file_count": 10,
+      "agent_id": "r1:z06",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z07": {
+      "zone_id": "z07",
+      "status": "started",
+      "paths": [
+        "omnistudio/frontend/out/"
+      ],
+      "file_count": 15,
+      "agent_id": "r1:z07",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z08": {
+      "zone_id": "z08",
+      "status": "started",
+      "paths": [
+        "tests/ (A-M)"
+      ],
+      "file_count": 21,
+      "agent_id": "r1:z08",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z09": {
+      "zone_id": "z09",
+      "status": "started",
+      "paths": [
+        "tests/ (N-Z + e2e)"
+      ],
+      "file_count": 21,
+      "agent_id": "r1:z09",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    },
+    "r1:z10": {
+      "zone_id": "z10",
+      "status": "started",
+      "paths": [
+        "scripts/",
+        "requirements.txt",
+        ".claude/settings.json"
+      ],
+      "file_count": 8,
+      "agent_id": "r1:z10",
+      "round": 1,
+      "started_at": "2026-04-19T11:11:28Z"
+    }
+  },
+  "status": "running",
+  "started_at": "2026-04-19T12:00:00Z"
+}

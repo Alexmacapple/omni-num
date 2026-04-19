@@ -89,7 +89,12 @@ def import_scenario(state: WorkflowState) -> Dict:
         raise
     except Exception as e:
         fmt = ext.lstrip(".")
-        raise ImportError(FORMAT_ERRORS.get(fmt, f"Erreur lors du parsing ({e})."))
+        error_msg = FORMAT_ERRORS.get(fmt, f"Erreur lors du parsing ({e}).")
+        # Log l'exception originale pour debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Erreur parsing {fmt}: {e}", exc_info=True)
+        raise ImportError(error_msg)
 
     if not new_steps:
         fmt = ext.lstrip(".")
@@ -191,10 +196,12 @@ def _parse_docx(filepath: str) -> List[Dict]:
         text = para.text.strip()
         if not text:
             continue
-        if para.style.name.startswith("Heading"):
+        if para.style and para.style.name and para.style.name.startswith("Heading"):
             continue
         paragraphs.append(text)
     paragraphs = _split_long_paragraphs(paragraphs)
+    if not paragraphs:
+        return []
     return [_make_step(str(i + 1), text) for i, text in enumerate(paragraphs)]
 
 

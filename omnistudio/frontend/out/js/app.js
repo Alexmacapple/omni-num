@@ -402,6 +402,8 @@ async function checkStatus() {
         // Etat generation TTS (semaphore)
         let generationHtml = '';
         try {
+            // Normaliser URL: fetch() n'honore pas <base href> pour URLs avec paramètres
+            // Utiliser apiRequest() du api-client qui applique _normalizeUrl()
             const ttsResp = await fetch('api/tts/status', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('ov_access_token') || ''}` }
             });

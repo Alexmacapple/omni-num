@@ -32,7 +32,10 @@ def change_speed(input_path: str, speed: float) -> bool:
         except Exception as e:
             logger.error("Erreur change_speed fallback FFmpeg: %s", e)
             if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
             return False
 
 
@@ -66,7 +69,11 @@ def process_audio(input_path: str, output_path: str, config: dict):
             return True
         except Exception as e:
             logger.error("Erreur process_audio fallback copie: %s", e)
-            shutil.copy(input_path, output_path)
+            try:
+                if os.path.exists(input_path):
+                    shutil.copy(input_path, output_path)
+            except Exception as copy_err:
+                logger.error("Erreur lors de la copie de secours: %s", copy_err)
             return False
 
 def convert_to_mp3(input_path: str, output_path: str, bitrate: str = "192k") -> bool:
@@ -137,4 +144,9 @@ def concatenate_audio(file_paths: List[str], output_path: str, silence_duration:
                 return True
             except Exception as e:
                 logger.error("Erreur concatenate_audio fallback FFmpeg: %s", e)
+                try:
+                    if os.path.exists(list_path):
+                        os.unlink(list_path)
+                except Exception:
+                    pass
                 return False

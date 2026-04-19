@@ -42,5 +42,6 @@ def export_zip_node(state: WorkflowState) -> Dict:
     return {
         "generation_complete": all_generated and files_valid,
         "post_process_config": post_config,
-        "iteration_count": 1,
+        # Note: Ne pas retourner iteration_count ici pour permettre à l'Annotated[int, add]
+        # de s'accumuler correctement dans le state agrégé
     }

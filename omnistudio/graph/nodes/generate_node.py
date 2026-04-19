@@ -51,20 +51,14 @@ def generate_batch_node(state: WorkflowState) -> Dict:
 
     # Vérifier que des étapes existent
     if not steps:
-        return {
-            "generation_complete": False,
-            "iteration_count": 1,
-        }
+        return {"generation_complete": False}
 
     # Vérifier que toutes les étapes ont une assignation
     missing = _validate_assignments(steps, assignments)
     if missing:
         # Assignation incomplète — le graphe ne devrait pas arriver ici
         # mais on gère le cas défensif
-        return {
-            "generation_complete": False,
-            "iteration_count": 1,
-        }
+        return {"generation_complete": False}
 
     # Vérifier que les textes nettoyés sont disponibles
     steps_without_text = [
@@ -73,10 +67,7 @@ def generate_batch_node(state: WorkflowState) -> Dict:
         if not (s.get("text_tts") or s.get("text_original"))
     ]
     if steps_without_text:
-        return {
-            "generation_complete": False,
-            "iteration_count": 1,
-        }
+        return {"generation_complete": False}
 
     # Si des fichiers sont déjà générés, vérifier la complétude
     generated_ids = {str(g.get("step_id", "")) for g in generated}
@@ -85,5 +76,6 @@ def generate_batch_node(state: WorkflowState) -> Dict:
 
     return {
         "generation_complete": complete,
-        "iteration_count": 1,
+        # Note: Ne pas retourner iteration_count ici pour permettre à l'Annotated[int, add]
+        # de s'accumuler correctement dans le state agrégé
     }

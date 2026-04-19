@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_validator
 from typing import Any, List, Dict, Optional
+import re
 
 
 class ApiError(BaseModel):
@@ -76,6 +77,7 @@ class VoiceMeta(BaseModel):
     """Métadonnées d'une voix custom (PRD v1.5 décision 7, traite PRD-032).
 
     Règle : owner obligatoire sauf si system=True.
+    Regex validation XSS : ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$
     """
     name: str = Field(..., min_length=3, max_length=50)
     owner: Optional[str] = None
@@ -85,6 +87,14 @@ class VoiceMeta(BaseModel):
     instruct: Optional[str] = None
     language: str = "fr"
     created_at: Optional[str] = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_voice_name(cls, v):
+        """Validation XSS stricte du nom de voix."""
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]{2,49}$", v):
+            raise ValueError("Nom de voix doit commencer par une lettre, 3-50 caractères alphanumériques + tirets/underscores")
+        return v
 
     @model_validator(mode="after")
     def check_owner_required(self):
@@ -111,6 +121,14 @@ class GenerateRequest(BaseModel):
     voice: str
     language: str = "fr"
     speed: float = Field(1.0, ge=0.5, le=2.0)
+
+    @field_validator("voice")
+    @classmethod
+    def validate_voice_name(cls, v):
+        """Validation XSS stricte du nom de voix."""
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]{2,49}$", v):
+            raise ValueError("Nom de voix doit commencer par une lettre, 3-50 caractères alphanumériques + tirets/underscores")
+        return v
 
     # 11 paramètres avancés OmniVoice (annexe J)
     num_step: int = Field(32, ge=4, le=64)

@@ -68,7 +68,7 @@ async def generate_summary(
     assignments = state.get("assignments", {})
     instructions = state.get("instructions", {})
 
-    texts = [s.get("text_tts") or s["text_original"] for s in steps]
+    texts = [s.get("text_tts") or s.get("text_original", "") for s in steps]
     est_duration = await asyncio.to_thread(vox_client.estimate_duration, texts)
     unique_voices = sorted(set(assignments.values())) if assignments else []
 
@@ -277,7 +277,7 @@ async def generate_production(
                 })}
                 return
             except Exception as exc:
-                logger.error(f"Erreur preset_instruct {it['voice']}: {exc}")
+                logger.error(f"Erreur preset_instruct {it['voice']}: {exc}", exc_info=True)
                 wav_path = None
 
             audio_url = None
@@ -424,7 +424,7 @@ async def generate_random(req: RandomRequest, user=Depends(get_current_user)):
 
         filename = os.path.basename(filepath)
         return api_response({
-            "audio_url": f"api/audio/random/{filename}",
+            "audio_url": f"/api/audio/random/{filename}",
             "filename": filename,
             "message": "Voix aléatoire générée. Pour la conserver, cliquez sur « Ajouter à la bibliothèque ».",
         })
