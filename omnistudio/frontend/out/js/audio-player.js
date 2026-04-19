@@ -5,6 +5,11 @@ import { getAccessToken } from './auth.js';
 
 /**
  * Ajoute les tokens d'auth en query params pour les balises <audio src>.
+ *
+ * Strip le "/" initial pour que <base href="/omni/"> s'applique : sinon
+ * <audio src="/api/audio/..."> est absolu depuis la racine du domaine,
+ * et Tailscale Funnel route "/" vers voxstudio:7860 (404 au lieu de /omni).
+ * Même correctif que _normalizeUrl() dans api-client.js (Bug Codex #1).
  */
 export function authenticatedUrl(src) {
     if (!src) return '';
@@ -14,8 +19,9 @@ export function authenticatedUrl(src) {
         console.warn('[audio-player] thread_id absent de localStorage — URL audio invalide');
         return '';
     }
-    const sep = src.includes('?') ? '&' : '?';
-    return `${src}${sep}token=${encodeURIComponent(token)}&tid=${encodeURIComponent(tid)}`;
+    const normalized = src.startsWith('/') ? src.slice(1) : src;
+    const sep = normalized.includes('?') ? '&' : '?';
+    return `${normalized}${sep}token=${encodeURIComponent(token)}&tid=${encodeURIComponent(tid)}`;
 }
 
 /**
