@@ -353,10 +353,26 @@ async def voices_explore(
     from core.omnivoice_client import normalize_voice_instruct
     normalized_instruct = normalize_voice_instruct(voice_instruct)
 
+    # Génération SRT optionnelle si want_subtitles=true
+    srt_url = None
+    if req.want_subtitles and wav_path and os.path.exists(wav_path):
+        try:
+            from core.subtitle_client import SubtitleClient
+            sub_client = SubtitleClient()
+            segments = await asyncio.to_thread(sub_client.transcribe, wav_path, req.language)
+            srt_content = await asyncio.to_thread(sub_client.generate_srt, segments)
+            srt_path = os.path.splitext(wav_path)[0] + ".srt"
+            with open(srt_path, "w", encoding="utf-8") as f:
+                f.write(srt_content)
+            srt_url = f"/api/audio/{os.path.basename(srt_path)}"
+        except Exception as e:
+            logger.warning("Génération SRT explore échouée : %s", e)
+
     return api_response({
         "voice_instruct": voice_instruct,
         "normalized_instruct": normalized_instruct,
         "audio_url": audio_url,
+        "srt_url": srt_url,
         "iteration": state.get("iteration", 0),
         "history": history,
     })
@@ -459,6 +475,8 @@ async def voices_clone(
     description: str = Form(""),
     test_text: str = Form("Ceci est un test de la voix clonee."),
     language: str = Form("fr"),
+    preprocess_prompt: bool = Form(True),
+    want_subtitles: bool = Form(False),
     user=Depends(get_current_user),
     thread_id: str = Depends(get_thread_id),
 ):
@@ -491,6 +509,7 @@ async def voices_clone(
             vox_client.save_custom_voice,
             name=name, source="clone", audio_path=ref_path,
             transcription=transcription, model=model,
+            preprocess_prompt=preprocess_prompt,
         )
         if not result.get("ok"):
             return api_response(error={"code": "OMNIVOICE_ERROR",
@@ -516,12 +535,28 @@ async def voices_clone(
             )
         audio_url = f"/api/audio/{os.path.basename(wav_path)}" if wav_path else None
 
+        # Génération SRT optionnelle (parité Gradio Want Subtitles)
+        srt_url = None
+        if want_subtitles and wav_path and os.path.exists(wav_path):
+            try:
+                from core.subtitle_client import SubtitleClient
+                sub_client = SubtitleClient()
+                segments = await asyncio.to_thread(sub_client.transcribe, wav_path, language)
+                srt_content = await asyncio.to_thread(sub_client.generate_srt, segments)
+                srt_path = os.path.splitext(wav_path)[0] + ".srt"
+                with open(srt_path, "w", encoding="utf-8") as f:
+                    f.write(srt_content)
+                srt_url = f"/api/audio/{os.path.basename(srt_path)}"
+            except Exception as e:
+                logger.warning("Génération SRT clone échouée : %s", e)
+
         config = {"configurable": {"thread_id": thread_id}}
         await asyncio.to_thread(graph_app.update_state, config, {"locked_voices": [name]})
 
         return api_response({
             "name": name, "status": "locked",
             "audio_url": audio_url, "source": "clone", "model": model,
+            "srt_url": srt_url,
         })
     finally:
         if os.path.exists(ref_path):

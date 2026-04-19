@@ -1151,7 +1151,7 @@ async function onComposeAttrs() {
             advanced: getDesignAdvanced(),
         });
         if (result.error) throw new Error(result.error.message);
-        if (result.data.audio_url) showDesignAudio(result.data.audio_url);
+        if (result.data.audio_url) showDesignAudio(result.data.audio_url, result.data.srt_url);
         showNormalizedInstruct(result.data.normalized_instruct);
         const lockSection = DOM.designLockSection();
         if (lockSection) lockSection.hidden = false;
@@ -1227,7 +1227,7 @@ async function onUseDirectPrompt() {
         if (result.error) throw new Error(result.error.message);
 
         if (result.data.audio_url) {
-            showDesignAudio(result.data.audio_url);
+            showDesignAudio(result.data.audio_url, result.data.srt_url);
         }
         showNormalizedInstruct(result.data.normalized_instruct);
         if (status) status.innerHTML = '';
@@ -1267,7 +1267,7 @@ async function onGenerateBrief() {
         updateDesignStepper(2);
 
         if (result.data.audio_url) {
-            showDesignAudio(result.data.audio_url);
+            showDesignAudio(result.data.audio_url, result.data.srt_url);
         }
         showNormalizedInstruct(result.data.normalized_instruct);
 
@@ -1322,7 +1322,7 @@ async function onExplore(regenerateInstruct) {
             if (instruct) instruct.value = result.data.voice_instruct;
         }
         if (result.data.audio_url) {
-            showDesignAudio(result.data.audio_url);
+            showDesignAudio(result.data.audio_url, result.data.srt_url);
         }
         showNormalizedInstruct(result.data.normalized_instruct);
 
@@ -1338,7 +1338,7 @@ async function onExplore(regenerateInstruct) {
     }
 }
 
-function showDesignAudio(url) {
+function showDesignAudio(url, srtUrl) {
     const player = DOM.designAudioPlayer();
     const container = DOM.designCurrentAudio();
     const authUrl = authenticatedUrl(url);
@@ -1355,6 +1355,18 @@ function showDesignAudio(url) {
         // Nom de fichier suggéré depuis l'URL (ex: design_242.wav)
         const filename = (url || '').split('/').pop().split('?')[0] || 'voix-exploration.wav';
         dl.setAttribute('download', filename);
+    }
+    // Lien download SRT si want_subtitles était coché et que le backend l'a généré
+    const srtDl = document.getElementById('design-srt-download');
+    if (srtDl) {
+        if (srtUrl) {
+            srtDl.href = authenticatedUrl(srtUrl);
+            srtDl.hidden = false;
+            const srtFilename = (srtUrl || '').split('/').pop().split('?')[0] || 'voix-exploration.srt';
+            srtDl.setAttribute('download', srtFilename);
+        } else {
+            srtDl.hidden = true;
+        }
     }
     // Après la première génération, le bouton devient "Régénérer"
     const regenBtn = DOM.designRegenBtn();
@@ -1542,6 +1554,8 @@ async function onClone() {
     formData.append('description', document.getElementById('clone-desc')?.value || '');
     formData.append('test_text', DOM.testText()?.value || '');
     formData.append('language', document.getElementById('clone-language')?.value || getSessionLanguage());
+    formData.append('preprocess_prompt', document.getElementById('clone-preprocess-prompt')?.checked ? 'true' : 'false');
+    formData.append('want_subtitles', document.getElementById('clone-want-subtitles')?.checked ? 'true' : 'false');
 
     try {
         const result = await uploadFile('/api/voices/clone', formData);
@@ -1560,6 +1574,17 @@ async function onClone() {
             dl.href = authUrl;
             dl.hidden = false;
             dl.setAttribute('download', `${result.data.name || 'voix-clone'}.wav`);
+        }
+        // Lien download SRT si généré
+        const srtDl = document.getElementById('clone-srt-download');
+        if (srtDl) {
+            if (result.data.srt_url) {
+                srtDl.href = authenticatedUrl(result.data.srt_url);
+                srtDl.hidden = false;
+                srtDl.setAttribute('download', `${result.data.name || 'voix-clone'}.srt`);
+            } else {
+                srtDl.hidden = true;
+            }
         }
         if (status) status.innerHTML = '';
 

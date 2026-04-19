@@ -46,20 +46,20 @@ _CATEGORIES = {
 # qualifier autre chose que le pitch (moderate pace, high energy, etc.).
 _KEYWORD_TO_ITEM = {
     # genre
-    "male": "male", "man": "male", "masculine": "male", "masculin": "male", "masculine voice": "male", "male voice": "male",
-    "female": "female", "woman": "female", "feminine": "female", "féminin": "female", "feminin": "female", "féminine": "female", "feminine voice": "female", "female voice": "female",
+    "male": "male", "man": "male", "masculine": "male", "masculin": "male", "masculine voice": "male", "male voice": "male", "homme": "male", "voix masculine": "male", "voix d'homme": "male",
+    "female": "female", "woman": "female", "feminine": "female", "féminin": "female", "feminin": "female", "féminine": "female", "feminine voice": "female", "female voice": "female", "femme": "female", "voix féminine": "female", "voix feminine": "female", "voix de femme": "female",
     # âge
-    "child": "child", "kid": "child", "enfant": "child",
-    "teenager": "teenager", "teen": "teenager", "adolescent": "teenager",
-    "young adult": "young adult", "young": "young adult", "jeune": "young adult",
-    "middle-aged": "middle-aged", "middle aged": "middle-aged", "mature": "middle-aged", "adult": "middle-aged",
-    "elderly": "elderly", "senior": "elderly", "aged": "elderly", "âgé": "elderly", "old voice": "elderly",
+    "child": "child", "kid": "child", "enfant": "child", "fillette": "child", "gamin": "child", "gamine": "child", "petit": "child", "petite": "child",
+    "teenager": "teenager", "teen": "teenager", "adolescent": "teenager", "adolescente": "teenager", "ado": "teenager",
+    "young adult": "young adult", "young": "young adult", "jeune": "young adult", "jeune adulte": "young adult", "jeune femme": "young adult", "jeune homme": "young adult",
+    "middle-aged": "middle-aged", "middle aged": "middle-aged", "mature": "middle-aged", "adult": "middle-aged", "adulte": "middle-aged", "mûr": "middle-aged", "mûre": "middle-aged", "mur": "middle-aged", "femme mûre": "middle-aged", "homme mûr": "middle-aged",
+    "elderly": "elderly", "senior": "elderly", "aged": "elderly", "âgé": "elderly", "âgée": "elderly", "old voice": "elderly", "personne âgée": "elderly", "vieillard": "elderly", "vieille": "elderly", "ancien": "elderly", "ancienne": "elderly", "grand-mère": "elderly", "grand-père": "elderly",
     # pitch (phrases explicites + synonymes non ambigus)
-    "very low pitch": "very low pitch", "very deep": "very low pitch",
-    "low pitch": "low pitch", "deep voice": "low pitch", "deep": "low pitch", "grave": "low pitch", "bass": "low pitch", "cavernous": "low pitch",
-    "moderate pitch": "moderate pitch", "médium": "moderate pitch", "medium pitch": "moderate pitch",
-    "high pitch": "high pitch", "aigu": "high pitch", "high-pitched": "high pitch",
-    "very high pitch": "very high pitch",
+    "very low pitch": "very low pitch", "very deep": "very low pitch", "très grave": "very low pitch",
+    "low pitch": "low pitch", "deep voice": "low pitch", "deep": "low pitch", "grave": "low pitch", "bass": "low pitch", "cavernous": "low pitch", "profonde": "low pitch", "profond": "low pitch", "basse": "low pitch", "caverneux": "low pitch", "caverneuse": "low pitch", "baryton": "low pitch",
+    "moderate pitch": "moderate pitch", "médium": "moderate pitch", "medium pitch": "moderate pitch", "moyenne": "moderate pitch",
+    "high pitch": "high pitch", "aigu": "high pitch", "aiguë": "high pitch", "aigüe": "high pitch", "high-pitched": "high pitch", "aigus": "high pitch",
+    "very high pitch": "very high pitch", "très aigu": "very high pitch", "très aiguë": "very high pitch",
     # accent (on évite de matcher seulement "french" etc. qui qualifie souvent la langue)
     "american accent": "american accent",
     "british accent": "british accent",
@@ -72,7 +72,7 @@ _KEYWORD_TO_ITEM = {
     "portuguese accent": "portuguese accent",
     "russian accent": "russian accent",
     # special
-    "whisper": "whisper", "whispered": "whisper", "chuchoté": "whisper",
+    "whisper": "whisper", "whispered": "whisper", "chuchoté": "whisper", "chuchotée": "whisper", "chuchotement": "whisper", "susurré": "whisper", "susurre": "whisper", "murmure": "whisper", "murmuré": "whisper", "soufflé": "whisper",
 }
 
 
@@ -442,7 +442,8 @@ class OmniVoiceClient:
 
     def save_custom_voice(self, name: str, source: str, voice_instruct: str = "",
                           audio_path: str = "", transcription: str = "",
-                          model: str = "1.7B", language: str = "fr") -> dict:
+                          model: str = "1.7B", language: str = "fr",
+                          preprocess_prompt: bool = True) -> dict:
         """Sauvegarde une voix custom. Retourne {"ok": bool, "detail": str}."""
         audio_file = None
         try:
@@ -461,6 +462,7 @@ class OmniVoiceClient:
                 audio_file = open(audio_path, "rb")
                 files["reference_audio"] = audio_file
                 data["reference_text"] = transcription
+                data["preprocess_prompt"] = "true" if preprocess_prompt else "false"
 
             response = httpx.post(
                 f"{self.base_url}/voices/custom",
