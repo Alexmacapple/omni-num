@@ -250,6 +250,11 @@ async def voices_design_flow(
         "llm_provider": main_state.get("llm_provider", LLM_PROVIDER),
         "llm_model_override": main_state.get("llm_model_override", LLM_MODEL_OVERRIDE),
         "llm_temperature": req.temperature if req.temperature is not None else main_state.get("llm_temperature", LLM_TEMPERATURE),
+        # Propager test_text et language pour que synthesize_design les utilise
+        # au lieu du texte anglais hardcodé (bug : voix anglaise quand on
+        # demande FR via la route /design-flow).
+        "test_text": req.test_text,
+        "language": req.language,
     }
 
     # Lancer le subgraphe design (interrupt_before=human_review)

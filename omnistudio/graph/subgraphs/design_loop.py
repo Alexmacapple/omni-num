@@ -126,15 +126,23 @@ def generate_voice_instruct(state: DesignState, config: RunnableConfig):
     return {"voice_instruct": instruct, "iteration": state.get("iteration", 0) + 1}
 
 def synthesize_design(state: DesignState):
-    """Génère un audio exploratoire via /design."""
+    """Génère un audio exploratoire via /design.
+
+    Le voice_instruct est transmis en anglais (whitelist OmniVoice), mais
+    le texte synthétisé et la langue cible viennent du state — sinon la
+    voix lit toujours une phrase anglaise hardcodée, quel que soit le
+    réglage de l'utilisateur.
+    """
     voice_instruct = state.get("voice_instruct", "")
     if not voice_instruct:
         # Pas d'instruction vocale fournie → retour vide
         return {"wav_paths": []}
 
+    test_text = state.get("test_text") or "Ceci est un test de timbre et de rythme pour notre nouvelle voix studio."
+    language = state.get("language") or "fr"
+
     try:
-        # OmniVoice /design n'accepte que l'anglais (voir CLAUDE.md § À ne pas faire)
-        path = vox_client.design("This is a test of timbre and rhythm for our new studio voice.", voice_instruct)
+        path = vox_client.design(test_text, voice_instruct, language=language)
         return {"wav_paths": [path] if path else []}
     except Exception as e:
         logger.error("Erreur synthèse design: %s", e, exc_info=True)
