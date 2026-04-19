@@ -23,6 +23,7 @@ from dependencies import (
     _omnivoice_client,
     api_error,
     api_response,
+    logger,
     vox_client,
 )
 
@@ -43,7 +44,7 @@ async def system_status():
             if models_resp.status_code == 200:
                 models_status = models_resp.json()
     except Exception as e:
-        logger.debug(f"OmniVoice status check failed: {e}")
+        logger.debug("OmniVoice status check failed: %s", e)
 
     # Outils audio
     sox_ok = shutil.which("sox") is not None
@@ -66,7 +67,7 @@ async def system_status():
                     from config import LLM_PROVIDER
                     albert_model = LLM_PROVIDER
     except Exception as e:
-        logger.debug(f"Albert API status check failed: {e}")
+        logger.debug("Albert API status check failed: %s", e)
 
     return api_response({
         "omnivoice": omnivoice_ok,
@@ -97,12 +98,11 @@ async def tts_status(user=Depends(get_current_user)):
     # Etat generation (semaphore Phase 2)
     generation = None
     try:
-        async with _omnivoice_client as client:
-            resp = await client.get(f"/generation/status", timeout=5.0)
-            if resp.status_code == 200:
-                generation = resp.json()
+        resp = await _omnivoice_client.get("/generation/status", timeout=5.0)
+        if resp.status_code == 200:
+            generation = resp.json()
     except Exception as e:
-        logger.debug(f"Generation status check failed: {e}")
+        logger.debug("Generation status check failed: %s", e)
 
     return api_response({
         "healthy": healthy,
