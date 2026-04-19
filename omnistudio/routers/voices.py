@@ -81,12 +81,16 @@ class DesignFlowRequest(BaseModel):
     brief: Dict
     test_text: str = "Ceci est un test de timbre et de rythme pour notre nouvelle voix studio."
     temperature: Optional[float] = None
+    language: str = "auto"
+    want_subtitles: bool = False
 
 
 class ExploreRequest(BaseModel):
     voice_instruct: str
     test_text: str
     regenerate_instruct: bool = False
+    language: str = "auto"
+    want_subtitles: bool = False
 
 
 class LockRequest(BaseModel):
@@ -258,7 +262,7 @@ async def voices_design_flow(
         audio_url = f"/api/audio/{filename}"
     else:
         wav_path = await asyncio.to_thread(
-            vox_client.design, req.test_text, voice_instruct, "fr", output_dir
+            vox_client.design, req.test_text, voice_instruct, req.language, output_dir
         )
         if wav_path:
             audio_url = f"/api/audio/{os.path.basename(wav_path)}"
@@ -307,7 +311,7 @@ async def voices_explore(
         os.remove(old_wav)
 
     wav_path = await asyncio.to_thread(
-        vox_client.design, req.test_text, voice_instruct, "fr", output_dir
+        vox_client.design, req.test_text, voice_instruct, req.language, output_dir
     )
 
     audio_url = None

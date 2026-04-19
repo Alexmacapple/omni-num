@@ -931,6 +931,16 @@ function showQuickAdjust() {
     });
 }
 
+/** Langue cible de synthèse Design (défaut 'auto' = détection OmniVoice). */
+function getDesignLanguage() {
+    return document.getElementById('design-language')?.value || 'auto';
+}
+
+/** Génération SRT Whisper après synthèse. */
+function getDesignWantSubtitles() {
+    return !!document.getElementById('design-want-subtitles')?.checked;
+}
+
 function getBrief() {
     return {
         contexte: document.getElementById('design-context')?.value || '',
@@ -999,6 +1009,8 @@ async function onUseDirectPrompt() {
             voice_instruct: extra,
             test_text: testText,
             regenerate_instruct: false,
+            language: getDesignLanguage(),
+            want_subtitles: getDesignWantSubtitles(),
         });
         if (result.error) throw new Error(result.error.message);
 
@@ -1025,6 +1037,8 @@ async function onGenerateBrief() {
             brief: getBrief(),
             test_text: DOM.testText()?.value || '',
             temperature: tempSlider ? parseFloat(tempSlider.value) : 0.5,
+            language: getDesignLanguage(),
+            want_subtitles: getDesignWantSubtitles(),
         });
         if (result.error) throw new Error(result.error.message);
 
@@ -1082,6 +1096,8 @@ async function onExplore(regenerateInstruct) {
             voice_instruct: DOM.designInstruct()?.value || '',
             test_text: DOM.testText()?.value || '',
             regenerate_instruct: regenerateInstruct,
+            language: getDesignLanguage(),
+            want_subtitles: getDesignWantSubtitles(),
         });
         if (result.error) throw new Error(result.error.message);
 
