@@ -51,6 +51,20 @@ export function init() {
         tableBody.addEventListener('input', onTextareaEdit);
     }
 
+    // Pagination du tableau
+    const paginationList = document.getElementById('clean-pagination-list');
+    if (paginationList) {
+        paginationList.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-page]');
+            if (!btn || btn.disabled) return;
+            const page = parseInt(btn.dataset.page, 10);
+            if (!isNaN(page) && page > 0) {
+                _cleanCurrentPage = page;
+                renderTable(_cleanAllSteps);
+            }
+        });
+    }
+
     eventBus.on('tab-activated:tab-clean', loadSteps);
     eventBus.on('tab-deactivated:tab-clean', autoSaveEdits);
 
@@ -115,10 +129,43 @@ function statusOption(value, label, current) {
     return `<option value="${value}"${current === value ? ' selected' : ''}>${label}</option>`;
 }
 
+// Pagination du tableau : 25 lignes/page par défaut. Au-delà, on pagine pour
+// éviter un scroll infini quand un scénario dépasse ~100 segments.
+const CLEAN_ITEMS_PER_PAGE = 25;
+let _cleanCurrentPage = 1;
+let _cleanAllSteps = [];
+
+function renderCleanPagination(totalPages, totalItems, pageStart, pageEnd) {
+    const nav = document.getElementById('clean-pagination');
+    const list = document.getElementById('clean-pagination-list');
+    const summary = document.getElementById('clean-pagination-summary');
+    if (!nav || !list || !summary) return;
+    if (totalPages <= 1) { nav.hidden = true; return; }
+    nav.hidden = false;
+    summary.textContent = `Segments ${pageStart}-${pageEnd} sur ${totalItems}`;
+    const pages = [];
+    const current = _cleanCurrentPage;
+    pages.push(`<li><button class="fr-pagination__link fr-pagination__link--prev fr-pagination__link--lg-label" data-page="${current - 1}" ${current === 1 ? 'disabled' : ''}>Précédent</button></li>`);
+    for (let p = 1; p <= totalPages; p++) {
+        const active = p === current;
+        pages.push(`<li><button class="fr-pagination__link" data-page="${p}" aria-current="${active ? 'page' : 'false'}" ${active ? 'aria-disabled="true"' : ''}>${p}</button></li>`);
+    }
+    pages.push(`<li><button class="fr-pagination__link fr-pagination__link--next fr-pagination__link--lg-label" data-page="${current + 1}" ${current === totalPages ? 'disabled' : ''}>Suivant</button></li>`);
+    list.innerHTML = pages.join('');
+}
+
 function renderTable(steps) {
     const tbody = DOM.tableBody();
     if (!tbody) return;
-    tbody.innerHTML = steps.map(s => {
+    _cleanAllSteps = steps;
+    const total = steps.length;
+    const totalPages = Math.max(1, Math.ceil(total / CLEAN_ITEMS_PER_PAGE));
+    if (_cleanCurrentPage > totalPages) _cleanCurrentPage = totalPages;
+    const start = (_cleanCurrentPage - 1) * CLEAN_ITEMS_PER_PAGE;
+    const end = Math.min(start + CLEAN_ITEMS_PER_PAGE, total);
+    const pageSteps = steps.slice(start, end);
+    renderCleanPagination(totalPages, total, start + 1, end);
+    tbody.innerHTML = pageSteps.map(s => {
         const status = s.cleaning_status || 'pending';
 
         return `<tr data-step-id="${escapeHtml(String(s.step_id))}">

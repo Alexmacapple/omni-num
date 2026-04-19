@@ -147,7 +147,9 @@ async function onSample() {
     DOM.sampleResults().innerHTML = '';
     addLogEntry('Préparation des échantillons...');
 
-    const fidelity = document.querySelector('input[name="gen-fidelity"]:checked').value;
+    // OmniVoice n'a qu'un seul modèle ; le champ fidelity est conservé en hidden
+    // pour compat backend mais est toujours "quality" (valeur ignorée OmniVoice).
+    const fidelity = document.querySelector('input[name="gen-fidelity"]')?.value || 'quality';
 
     try {
         // Recuperer les assignations (contient voix, langue, vitesse, instruction, texte)
@@ -388,7 +390,9 @@ async function onGenerate(isResume = false) {
 
     addLogEntry(isResume ? 'Reprise de la génération...' : 'Démarrage de la génération...');
 
-    const fidelity = document.querySelector('input[name="gen-fidelity"]:checked').value;
+    // OmniVoice n'a qu'un seul modèle ; le champ fidelity est conservé en hidden
+    // pour compat backend mais est toujours "quality" (valeur ignorée OmniVoice).
+    const fidelity = document.querySelector('input[name="gen-fidelity"]')?.value || 'quality';
     const startTime = Date.now();
 
     let sseCompleted = false;

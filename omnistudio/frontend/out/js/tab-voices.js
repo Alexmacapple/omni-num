@@ -1670,6 +1670,32 @@ async function onStabilityTest() {
 
 // --- Clone ---
 
+/** Met à jour le stepper du parcours Clone (1 → 2 → 3) selon l'état rempli. */
+function updateCloneStepper(hasAudio, hasTranscription, hasName) {
+    const title = document.getElementById('clone-stepper-title');
+    const state = document.getElementById('clone-stepper-state');
+    const details = document.getElementById('clone-stepper-details');
+    const steps = document.getElementById('clone-stepper-steps');
+    if (!title || !state || !details || !steps) return;
+    let step = 1;
+    if (hasAudio && hasTranscription && hasName) step = 3;
+    else if (hasAudio) step = 2;
+    if (step === 1) {
+        title.textContent = '1. Fournir un audio de référence';
+        state.textContent = 'Étape 1 sur 3';
+        details.textContent = 'Téléversez un fichier audio ou enregistrez votre voix (1 à 30 s).';
+    } else if (step === 2) {
+        title.textContent = '2. Vérifier la transcription et nommer la voix';
+        state.textContent = 'Étape 2 sur 3';
+        details.textContent = 'Whisper a rempli la transcription automatiquement ; relisez-la et donnez un nom à la voix.';
+    } else {
+        title.textContent = '3. Lancer le clonage';
+        state.textContent = 'Étape 3 sur 3';
+        details.textContent = 'Tous les champs sont prêts. Cliquez « Créer le clone » pour lancer la synthèse.';
+    }
+    steps.setAttribute('data-fr-current-step', String(step));
+}
+
 function onCloneFormChange() {
     const hasFile = (DOM.cloneAudio()?.files?.length || 0) > 0;
     const hasRecording = rec.blob !== null;
@@ -1680,6 +1706,7 @@ function onCloneFormChange() {
     const ready = hasAudio && hasName && hasTranscription;
     const cloneBtn = DOM.cloneBtn();
     if (cloneBtn) cloneBtn.disabled = !ready;
+    updateCloneStepper(hasAudio, hasTranscription, hasName);
 
     // Feedback de validation
     const hint = document.getElementById('clone-validation-hint');
