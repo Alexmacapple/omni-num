@@ -20,10 +20,12 @@ KEYCLOAK_CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID", "omnistudio")
 SESSION_MAX_PER_USER = int(os.getenv("OMNISTUDIO_SESSION_MAX", "50"))
 SESSION_PURGE_DAYS = int(os.getenv("OMNISTUDIO_SESSION_PURGE_DAYS", "90"))
 
-# CORS (PRD-026) — éviter hardcode URL Tailscale en production
+# CORS (PRD-026) — inclut les origins Tailscale Funnel publics
 CORS_ORIGINS = os.getenv(
     "OMNISTUDIO_CORS_ORIGINS",
-    "http://localhost:7870,http://localhost:7443"
+    "http://localhost:7870,http://localhost:7443,"
+    "https://mac-studio-alex.tail0fc408.ts.net,"
+    "https://mac-studio-alex.tail0fc408.ts.net:7443"
 ).split(",")
 
 # Chemins

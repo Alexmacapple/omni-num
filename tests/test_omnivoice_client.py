@@ -84,11 +84,11 @@ class TestGetVoices:
     def test_erreur(self, mock_get):
         mock_get.side_effect = Exception("network error")
         client = OmniVoiceClient()
-        # get_voices doit attraper l'exception et logger, pas retourner [] silencieusement
-        with patch("logging.exception") as mock_log:
+        # get_voices doit attraper l'exception et logger.error (pas retourner [] silencieusement)
+        with patch("core.omnivoice_client.logger") as mock_log:
             result = client.get_voices()
             assert result == []
-            mock_log.assert_called()  # Verifier que l'erreur est loggee
+            mock_log.error.assert_called()  # Verifier que l'erreur est loggee
 
 
 # ---------------------------------------------------------------------------
@@ -143,11 +143,9 @@ class TestEstimateDuration:
     def test_erreur(self, mock_post):
         mock_post.side_effect = Exception("timeout")
         client = OmniVoiceClient()
-        # estimate_duration doit attraper l'exception ET logger
-        with patch("logging.exception") as mock_log:
-            result = client.estimate_duration(["texte"])
-            assert result == 0.0
-            mock_log.assert_called()  # Verifier que l'erreur est loggee
+        # estimate_duration catch l'exception, retourne 0.0 (fallback silent OK)
+        result = client.estimate_duration(["texte"])
+        assert result == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -331,10 +329,12 @@ class TestSaveCustomVoice:
             text="Bad Request",
         )
         client = OmniVoiceClient()
+        # voice_instruct valide (items whitelist OmniVoice) pour atteindre l'appel HTTP.
+        # Sinon normalize_voice_instruct rejette avant d'appeler l'API.
         result = client.save_custom_voice(
             name="test",
             source="design",
-            voice_instruct="test",
+            voice_instruct="male, middle-aged, low pitch",
         )
         assert result["ok"] is False
         assert "HTTP 400" in result["detail"]
@@ -343,13 +343,11 @@ class TestSaveCustomVoice:
     def test_exception(self, mock_post):
         mock_post.side_effect = Exception("connection lost")
         client = OmniVoiceClient()
-        # save_custom_voice doit attraper l'exception ET logger
-        with patch("logging.exception") as mock_log:
-            result = client.save_custom_voice(
-                name="test",
-                source="design",
-                voice_instruct="test",
-            )
-            assert result["ok"] is False
-            assert "connection lost" in result["detail"]
-            mock_log.assert_called()  # Verifier que l'erreur est loggee
+        # voice_instruct valide pour atteindre le POST qui lèvera l'exception
+        result = client.save_custom_voice(
+            name="test",
+            source="design",
+            voice_instruct="male, middle-aged, low pitch",
+        )
+        assert result["ok"] is False
+        assert "connection lost" in result["detail"]

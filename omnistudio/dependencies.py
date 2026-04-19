@@ -157,11 +157,15 @@ def _is_locked(locks: Dict[str, datetime], thread_id: str) -> bool:
     """Verifie si un verrou est actif (avec nettoyage auto des verrous orphelins).
 
     Anti-cascade session stale (PRD v1.5 décision 9) : libère si > _LOCK_TIMEOUT secondes.
+    Tolère un float timestamp (héritage / tests) en plus d'un datetime.
     """
     if thread_id not in locks:
         return False
     locked_at = locks[thread_id]
-    if locked_at.tzinfo is None:
+    # Compat : certains tests ou versions antérieures stockent un float (time.time())
+    if isinstance(locked_at, (int, float)):
+        locked_at = datetime.fromtimestamp(locked_at, tz=timezone.utc)
+    elif locked_at.tzinfo is None:
         locked_at = locked_at.replace(tzinfo=timezone.utc)
     age_seconds = (datetime.now(timezone.utc) - locked_at).total_seconds()
     if age_seconds > _LOCK_TIMEOUT:

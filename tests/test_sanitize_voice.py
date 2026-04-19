@@ -38,8 +38,9 @@ class TestSanitizeVoiceName:
     def test_spaces_to_hyphens(self):
         assert sanitize_voice_name("ma voix") == "ma-voix"
 
-    def test_underscores_to_hyphens(self):
-        assert sanitize_voice_name("ma_voix") == "ma-voix"
+    def test_underscores_preserved(self):
+        """Underscores préservés (regex PRD annexe M : ^[a-zA-Z][a-zA-Z0-9_-]{2,49}$)."""
+        assert sanitize_voice_name("ma_voix") == "ma_voix"
 
     def test_special_chars_removed(self):
         assert sanitize_voice_name("ma@voix!") == "mavoix"
@@ -83,7 +84,8 @@ class TestReservedVoiceNames:
         assert expected.issubset(RESERVED_VOICE_NAMES)
 
     def test_case_insensitive_detection(self):
-        assert "Lea".lower() in RESERVED_VOICE_NAMES
+        """Vérifie que les noms VoxQwen réservés matchent en lowercase."""
+        assert "Vivian".lower() in RESERVED_VOICE_NAMES
         assert "DYLAN".lower() in RESERVED_VOICE_NAMES
 
     def test_is_a_set(self):

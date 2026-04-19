@@ -81,7 +81,6 @@ class TestGenerateBatchNode:
         state = {"steps": [], "assignments": {}, "generated_files": []}
         result = generate_batch_node(state)
         assert result["generation_complete"] is False
-        assert result["iteration_count"] == 1
 
     def test_generate_batch_missing_assignments(self, steps_with_text):
         """Assignations incompletes -> generation_complete=False."""
@@ -119,7 +118,6 @@ class TestGenerateBatchNode:
         }
         result = generate_batch_node(state)
         assert result["generation_complete"] is True
-        assert result["iteration_count"] == 1
 
     def test_generate_batch_partial(
         self, steps_with_text, full_assignments

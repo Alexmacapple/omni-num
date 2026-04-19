@@ -207,7 +207,7 @@ class TestGenerateSSE:
 
     def test_generate_force_unlock_old(self, client, auth_headers, tmp_path):
         """force=True avec verrou > 30s -> libere et demarre."""
-        _deps._generating_locks[FAKE_THREAD_ID] = time.monotonic() - 60
+        _deps._generating_locks[FAKE_THREAD_ID] = time.time() - 60
         wav_path = str(tmp_path / "force.wav")
         Path(wav_path).write_bytes(b"RIFF" + b"\x00" * 40)
         _mock_vox_client.batch_preset.return_value = [wav_path, wav_path]
@@ -222,7 +222,7 @@ class TestGenerateSSE:
 
     def test_generate_force_ignore_recent(self, client, auth_headers):
         """force=True avec verrou < 30s -> verrou conserve, 409."""
-        _deps._generating_locks[FAKE_THREAD_ID] = time.monotonic() - 5
+        _deps._generating_locks[FAKE_THREAD_ID] = time.time() - 5
         resp = client.post(
             "/api/generate",
             json={"fidelity": "quality", "force": True},

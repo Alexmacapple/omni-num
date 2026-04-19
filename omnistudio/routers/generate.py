@@ -120,7 +120,10 @@ async def generate_production(
     if req.force and thread_id in _generating_locks:
         from datetime import datetime, timezone
         locked_at = _generating_locks[thread_id]
-        if locked_at.tzinfo is None:
+        # Tolère un float epoch (tests / héritage) en plus d'un datetime
+        if isinstance(locked_at, (int, float)):
+            locked_at = datetime.fromtimestamp(locked_at, tz=timezone.utc)
+        elif locked_at.tzinfo is None:
             locked_at = locked_at.replace(tzinfo=timezone.utc)
         lock_age = (datetime.now(timezone.utc) - locked_at).total_seconds()
         if lock_age > 30:

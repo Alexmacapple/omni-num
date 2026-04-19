@@ -463,7 +463,7 @@ class TestCleanRouter:
     def test_clean_sse_locked(self, client, auth_headers):
         """POST /api/clean avec verrou actif retourne CLEAN_IN_PROGRESS."""
         import time
-        _deps._cleaning_locks[FAKE_THREAD_ID] = time.monotonic()
+        _deps._cleaning_locks[FAKE_THREAD_ID] = time.time()
         resp = client.post(
             "/api/clean",
             json={"glossary": {}},
@@ -595,13 +595,17 @@ class TestVoicesRouter:
         body = resp.json()
         assert body["error"]["code"] == "INVALID_NAME"
 
-    def test_delete_voice_in_use(self, client, auth_headers):
-        """Supprimer une voix assignee retourne 409."""
-        # La voix "Lea" est assignee dans _DEFAULT_STATE_VALUES
+    def test_delete_voice_system_protected(self, client, auth_headers):
+        """Supprimer une voix système retourne 403 (PRD v1.5 décision 7).
+
+        Lea est une voix système, non-supprimable par design. L'ownership
+        check PRD-032 lève 403 VOICE_SYSTEM_PROTECTED en amont avant même
+        la vérification VOICE_IN_USE.
+        """
         resp = client.delete("/api/voices/Lea", headers=auth_headers)
-        assert resp.status_code == 409
+        assert resp.status_code == 403
         body = resp.json()
-        assert body["error"]["code"] == "VOICE_IN_USE"
+        assert body["error"]["code"] == "VOICE_SYSTEM_PROTECTED"
 
     def test_voices_export(self, client, auth_headers):
         """Export des voix custom retourne un ZIP."""
@@ -819,7 +823,7 @@ class TestGenerateRouter:
     def test_generate_sse_locked(self, client, auth_headers):
         """POST /api/generate avec verrou actif retourne GENERATE_IN_PROGRESS."""
         import time
-        _deps._generating_locks[FAKE_THREAD_ID] = time.monotonic()
+        _deps._generating_locks[FAKE_THREAD_ID] = time.time()
         resp = client.post(
             "/api/generate",
             json={"fidelity": "quality"},
@@ -928,7 +932,7 @@ class TestExportRouter:
     def test_export_sse_locked(self, client, auth_headers):
         """POST /api/export avec verrou actif retourne EXPORT_IN_PROGRESS."""
         import time
-        _deps._exporting_locks[FAKE_THREAD_ID] = time.monotonic()
+        _deps._exporting_locks[FAKE_THREAD_ID] = time.time()
         # Mettre des fichiers generes pour passer le check NO_FILES
         _mock_state.values["generated_files"] = [
             {"step_id": "1", "filename": "test.wav", "voice_name": "Lea",

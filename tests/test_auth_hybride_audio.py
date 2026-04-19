@@ -34,9 +34,7 @@ class TestAuthQueryToken:
 class TestCoherenceEntreChemins:
     def test_bearer_et_query_token_meme_ownership_check(self):
         """Les 2 chemins d'auth convergent vers la même fonction check_voice_ownership."""
-        from routers.audio import get_audio_user_sub
-        # Test unitaire : les deux branches extraient bien le sub JWT
-        pytest.skip("Refactor intermédiaire nécessaire — Phase 3")
+        pytest.skip("Refactor intermédiaire nécessaire — helper get_audio_user_sub à extraire en Phase 3")
 
 
 class TestAbsenceAuth:

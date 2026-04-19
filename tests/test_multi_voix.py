@@ -35,12 +35,18 @@ class TestSchemaSegmentAssignment:
 
 
 class TestExpansionNode:
+    # system_voices / user_voices requis depuis PRD-032 (ownership check).
+    # Marianne, Jean, Paul sont voix système accessibles à tous.
+    _SYSTEM_VOICES = ["Marianne", "Jean", "Paul", "Lea", "Sophie", "Thomas"]
+
     def test_etape_sans_tag_produit_1_segment(self):
         from graph.subgraphs.multi_voice_expansion import expand_step
         state = {
             "steps": {"s1": {"text": "Hello world"}},
             "assignments": {"s1": {"voice": "Marianne"}},
             "user_sub": "alex-sub",
+            "user_voices": [],
+            "system_voices": self._SYSTEM_VOICES,
         }
         segments = expand_step(state, "s1")
         assert len(segments) == 1
@@ -52,6 +58,8 @@ class TestExpansionNode:
             "steps": {"s1": {"text": "A [voice:Jean] B [voice:Paul] C [voice:Marianne] D"}},
             "assignments": {"s1": {"voice": "Marianne"}},
             "user_sub": "alex-sub",
+            "user_voices": [],
+            "system_voices": self._SYSTEM_VOICES,
         }
         segments = expand_step(state, "s1")
         assert len(segments) == 4

@@ -170,7 +170,7 @@ class TestRateLimiting:
 
     def test_concurrent_generate_locks(self, client, auth_headers):
         """2 POST /api/generate simultanement -> le 2e retourne 409."""
-        _deps._generating_locks[FAKE_THREAD_ID] = time.monotonic()
+        _deps._generating_locks[FAKE_THREAD_ID] = time.time()
         resp = client.post(
             "/api/generate",
             json={"fidelity": "quality"},

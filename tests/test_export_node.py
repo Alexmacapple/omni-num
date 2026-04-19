@@ -114,7 +114,6 @@ class TestExportZipNode:
         }
         result = export_zip_node(state)
         assert result["generation_complete"] is True
-        assert result["iteration_count"] == 1
 
     def test_export_default_post_config(
         self, export_steps, valid_generated_files, default_post_config

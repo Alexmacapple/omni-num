@@ -153,13 +153,15 @@ async def import_file(
     }
 
     try:
-        from graph.nodes.import_node import import_scenario
+        from graph.nodes.import_node import import_scenario, ImportError as ParsingImportError
         result = await asyncio.to_thread(import_scenario, initial_state)
         await asyncio.to_thread(graph_app.update_state, config, result)
-    except ImportError as e:
+    except ModuleNotFoundError as e:
         return api_error("IMPORT_FAILED", f"Module import_node indisponible: {e}", 500)
+    except ParsingImportError as e:
+        # Erreur de parsing du fichier (PDF invalide, format non supporté, etc.)
+        return api_error("IMPORT_FAILED", str(e), 400)
     except (ValueError, KeyError, TypeError) as e:
-        # Erreurs de validation ou parsing du fichier
         return api_error("IMPORT_FAILED", f"Erreur lors du parsing du fichier: {e}", 400)
     except Exception as e:
         logger.error(f"Erreur import_scenario pour {thread_id}: {e}", exc_info=True)

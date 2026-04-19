@@ -38,10 +38,11 @@ class TestParserBasique:
 
     def test_tags_consecutifs_B_ecrase_A(self):
         p = _parser()
-        # [voice:A][voice:B] : A est écrasé par B immédiatement (pas de segment A vide)
-        result = p("[voice:A][voice:B] Texte", default_voice="Marianne", step_id="s1")
+        # [voice:Alice][voice:Bob] : Alice est écrasée par Bob immédiatement
+        # (pas de segment Alice vide). Noms ≥ 3 chars pour respecter regex PRD annexe M.
+        result = p("[voice:Alice][voice:Bob] Texte", default_voice="Marianne", step_id="s1")
         assert len(result) == 1
-        assert result[0]["voice"] == "B"
+        assert result[0]["voice"] == "Bob"
 
 
 class TestCasLimites:

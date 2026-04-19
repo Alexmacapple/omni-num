@@ -63,14 +63,18 @@ class TestAssignVoicesNode:
             sid = str(step["step_id"])
             assert assignments[sid] == "narrateur-dynamique"
 
-    def test_iteration_count_is_one(self, sample_steps):
+    def test_returns_assignments_key(self, sample_steps):
+        """assign_voices_node retourne seulement les clés modifiées.
+        iteration_count n'est plus retourné (reducer Annotated[int, add]
+        accumulerait à chaque appel, cf commentaires nodes)."""
         state = {
             "steps": sample_steps,
             "assignments": {},
             "default_voice": "Lea",
         }
         result = assign_voices_node(state)
-        assert result["iteration_count"] == 1
+        assert "assignments" in result
+        # iteration_count absent par design — le reducer accumule ailleurs
 
     def test_empty_steps_list(self):
         state = {
@@ -80,4 +84,3 @@ class TestAssignVoicesNode:
         }
         result = assign_voices_node(state)
         assert result["assignments"] == {}
-        assert result["iteration_count"] == 1
