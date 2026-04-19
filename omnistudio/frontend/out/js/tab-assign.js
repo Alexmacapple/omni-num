@@ -131,17 +131,17 @@ function renderTable(rows, voices) {
         <tr data-step-id="${escapeAttr(r.step_id)}">
             <td data-label="ID">${escapeHtml(r.step_id)}</td>
             <td data-label="Texte">
-                <textarea class="fr-input fr-input--sm vx-tts-edit vx-assign-text" data-step-id="${escapeAttr(r.step_id)}" rows="2" title="Texte étape ${escapeAttr(r.step_id)}">${escapeHtml(r.text_full || r.text_preview)}</textarea>
+                <textarea class="fr-input fr-input--sm ov-tts-edit ov-assign-text" data-step-id="${escapeAttr(r.step_id)}" rows="2" title="Texte étape ${escapeAttr(r.step_id)}">${escapeHtml(r.text_full || r.text_preview)}</textarea>
             </td>
             <td data-label="Langue">
-                <select class="fr-select fr-select--sm vx-assign-lang" data-step-id="${escapeAttr(r.step_id)}" title="Langue étape ${escapeAttr(r.step_id)}">
+                <select class="fr-select fr-select--sm ov-assign-lang" data-step-id="${escapeAttr(r.step_id)}" title="Langue étape ${escapeAttr(r.step_id)}">
                     ${['fr','en','zh','jp','ko'].map(l =>
                         `<option value="${l}" ${l === r.language ? 'selected' : ''}>${l}</option>`
                     ).join('')}
                 </select>
             </td>
             <td data-label="Voix">
-                <select class="fr-select fr-select--sm vx-assign-voice" data-step-id="${escapeAttr(r.step_id)}" title="Voix étape ${escapeAttr(r.step_id)}">
+                <select class="fr-select fr-select--sm ov-assign-voice" data-step-id="${escapeAttr(r.step_id)}" title="Voix étape ${escapeAttr(r.step_id)}">
                     ${voices.map(v =>
                         `<option value="${escapeAttr(v.name)}" ${v.name === r.voice ? 'selected' : ''}>${escapeHtml(v.name)}</option>`
                     ).join('')}
@@ -150,7 +150,7 @@ function renderTable(rows, voices) {
             <td data-label="Vitesse">
                 <div class="fr-range" data-fr-js-range="true">
                     <span class="fr-range__output">${r.speed}x</span>
-                    <input type="range" class="vx-assign-speed" data-step-id="${escapeAttr(r.step_id)}"
+                    <input type="range" class="ov-assign-speed" data-step-id="${escapeAttr(r.step_id)}"
                            min="0.5" max="2.0" step="0.1" value="${r.speed}"
                            title="Vitesse étape ${escapeAttr(r.step_id)}"
                            aria-valuetext="${r.speed}x">
@@ -159,7 +159,7 @@ function renderTable(rows, voices) {
                 </div>
             </td>
             <td data-label="Instruction">
-                <input type="text" class="fr-input fr-input--sm vx-assign-instruct" data-step-id="${escapeAttr(r.step_id)}"
+                <input type="text" class="fr-input fr-input--sm ov-assign-instruct" data-step-id="${escapeAttr(r.step_id)}"
                        value="${escapeAttr(r.instruction || '')}"
                        title="Instruction étape ${escapeAttr(r.step_id)}"
                        placeholder="Instruction"
@@ -174,11 +174,11 @@ function renderTable(rows, voices) {
                             data-action="delete" data-step-id="${escapeAttr(r.step_id)}"
                             title="Supprimer le segment ${escapeAttr(r.step_id)}">Supprimer le segment ${escapeHtml(String(r.step_id))}</button>
                 </div>
-                <div class="vx-card-status" data-status-zone="${escapeAttr(r.step_id)}" aria-live="polite"></div>
-                <div class="vx-audio-container" data-audio-zone="${escapeAttr(r.step_id)}" hidden>
+                <div class="ov-card-status" data-status-zone="${escapeAttr(r.step_id)}" aria-live="polite"></div>
+                <div class="ov-audio-container" data-audio-zone="${escapeAttr(r.step_id)}" hidden>
                     <p class="fr-text--xs fr-mb-0">Audio étape ${escapeHtml(r.step_id)}</p>
-                    <audio class="vx-card-audio" controls title="Audio généré pour l'étape ${escapeAttr(r.step_id)}"></audio>
-                    <a class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-mt-1v vx-download-link"
+                    <audio class="ov-card-audio" controls title="Audio généré pour l'étape ${escapeAttr(r.step_id)}"></audio>
+                    <a class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-mt-1v ov-download-link"
                        data-action="download" data-step-id="${escapeAttr(r.step_id)}"
                        download="etape-${escapeAttr(r.step_id)}.wav"
                        title="Télécharger l'audio de l'étape ${escapeAttr(r.step_id)}">Télécharger</a>
@@ -211,13 +211,13 @@ async function onTableAction(e) {
     const row = document.querySelector(`tr[data-step-id="${stepId}"]`);
     if (!row) return;
 
-    const voiceEl = row.querySelector('.vx-assign-voice');
+    const voiceEl = row.querySelector('.ov-assign-voice');
     if (!voiceEl) return;
     const voice = voiceEl.value;
-    const lang = row.querySelector('.vx-assign-lang')?.value || 'fr';
-    const speed = parseFloat(row.querySelector('.vx-assign-speed')?.value || '1');
-    const instruction = row.querySelector('.vx-assign-instruct')?.value || '';
-    const text = row.querySelector('.vx-assign-text')?.value || '';
+    const lang = row.querySelector('.ov-assign-lang')?.value || 'fr';
+    const speed = parseFloat(row.querySelector('.ov-assign-speed')?.value || '1');
+    const instruction = row.querySelector('.ov-assign-instruct')?.value || '';
+    const text = row.querySelector('.ov-assign-text')?.value || '';
 
     const statusZone = document.querySelector(`[data-status-zone="${CSS.escape(stepId)}"]`);
     const audioContainer = document.querySelector(`[data-audio-zone="${CSS.escape(stepId)}"]`);
@@ -227,7 +227,7 @@ async function onTableAction(e) {
     const tts = await checkTtsStatus();
     if (tts?.busy) {
         if (statusZone) {
-            statusZone.className = 'vx-card-status vx-card-status--warning';
+            statusZone.className = 'ov-card-status ov-card-status--warning';
             statusZone.textContent =
                 'Une synthèse est déjà en cours. Réessayez dans quelques secondes.';
         }
@@ -236,11 +236,11 @@ async function onTableAction(e) {
 
     // État chargement
     const originalLabel = btn.textContent;
-    btn.classList.add('vx-preview-loading');
+    btn.classList.add('ov-preview-loading');
     btn.disabled = true;
     btn.textContent = 'Écoute…';
     if (statusZone) {
-        statusZone.className = 'vx-card-status vx-card-status--loading';
+        statusZone.className = 'ov-card-status ov-card-status--loading';
         const wordCount = text.split(/\s+/).filter(Boolean).length;
         const estimate = wordCount > 80 ? '30-60s' : wordCount > 30 ? '15-30s' : '5-15s';
         statusZone.textContent = `Synthèse en cours (${estimate})…`;
@@ -257,52 +257,52 @@ async function onTableAction(e) {
             const authUrl = authenticatedUrl(result.data.audio_url);
             if (!authUrl || authUrl === '') {
                 if (statusZone) {
-                    statusZone.className = 'vx-card-status vx-card-status--error';
+                    statusZone.className = 'ov-card-status ov-card-status--error';
                     statusZone.textContent = 'Session non initialisée. Rechargez la page.';
                 }
             } else if (audioEl) {
                 audioEl.addEventListener('error', () => {
                     if (statusZone) {
-                        statusZone.className = 'vx-card-status vx-card-status--error';
+                        statusZone.className = 'ov-card-status ov-card-status--error';
                         statusZone.textContent = 'Fichier audio introuvable ou session expirée.';
                     }
                 }, { once: true });
                 audioEl.src = authUrl;
                 if (audioContainer) {
                     audioContainer.hidden = false;
-                    const dlLink = audioContainer.querySelector('.vx-download-link');
+                    const dlLink = audioContainer.querySelector('.ov-download-link');
                     if (dlLink) dlLink.href = authUrl;
                 }
                 audioEl.play().then(() => {
                     if (statusZone) {
-                        statusZone.className = 'vx-card-status';
+                        statusZone.className = 'ov-card-status';
                         statusZone.textContent = '';
                     }
                 }).catch(() => {
                     if (statusZone) {
-                        statusZone.className = 'vx-card-status vx-card-status--warning';
+                        statusZone.className = 'ov-card-status ov-card-status--warning';
                         statusZone.textContent = 'Lecture automatique bloquée. Utilisez le player ci-dessous.';
                     }
                 });
             }
         } else if (statusZone) {
-            statusZone.className = 'vx-card-status';
+            statusZone.className = 'ov-card-status';
             statusZone.textContent = '';
         }
     } catch (err) {
         if (statusZone) {
-            statusZone.className = 'vx-card-status vx-card-status--error';
+            statusZone.className = 'ov-card-status ov-card-status--error';
             statusZone.textContent = err.message || 'Échec de la prévisualisation';
         }
     } finally {
-        btn.classList.remove('vx-preview-loading');
+        btn.classList.remove('ov-preview-loading');
         btn.disabled = false;
         btn.textContent = originalLabel;
     }
 }
 
 function onTableInput(e) {
-    if (e.target.classList.contains('vx-assign-speed')) {
+    if (e.target.classList.contains('ov-assign-speed')) {
         const v = e.target.value + 'x';
         e.target.setAttribute('aria-valuetext', v);
         e.target.setAttribute('title', v);
@@ -312,12 +312,12 @@ function onTableInput(e) {
 }
 
 function onTableChange(e) {
-    if (e.target.classList.contains('vx-assign-voice')) {
+    if (e.target.classList.contains('ov-assign-voice')) {
         const stepId = e.target.dataset.stepId;
         const voice = e.target.value;
         const isNative = NATIVE_VOICES.has(voice.toLowerCase());
         const row = document.querySelector(`tr[data-step-id="${stepId}"]`);
-        const instruct = row?.querySelector('.vx-assign-instruct');
+        const instruct = row?.querySelector('.ov-assign-instruct');
         if (instruct) {
             instruct.disabled = !isNative;
             if (!isNative) instruct.value = '';
@@ -372,10 +372,10 @@ function collectAssignments() {
 
     document.querySelectorAll('#assign-table tbody tr').forEach(row => {
         const stepId = row.dataset.stepId;
-        assignments[stepId] = row.querySelector('.vx-assign-voice').value;
-        languages[stepId] = row.querySelector('.vx-assign-lang').value;
-        speeds[stepId] = parseFloat(row.querySelector('.vx-assign-speed').value);
-        const inst = row.querySelector('.vx-assign-instruct').value;
+        assignments[stepId] = row.querySelector('.ov-assign-voice').value;
+        languages[stepId] = row.querySelector('.ov-assign-lang').value;
+        speeds[stepId] = parseFloat(row.querySelector('.ov-assign-speed').value);
+        const inst = row.querySelector('.ov-assign-instruct').value;
         if (inst) instructions[stepId] = inst;
     });
 

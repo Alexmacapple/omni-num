@@ -156,6 +156,6 @@ export function forceLogout(message) {
     notifyAuthChange(false);
     // Le message sera affiche par app.js via le callback onAuthStateChange
     if (message) {
-        window.dispatchEvent(new CustomEvent('vx-force-logout', { detail: { message } }));
+        window.dispatchEvent(new CustomEvent('ov-force-logout', { detail: { message } }));
     }
 }

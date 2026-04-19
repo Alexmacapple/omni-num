@@ -35,7 +35,7 @@ let isGenerating = false;
 
 function setGenerating(value) {
     isGenerating = value;
-    window.__vxGenerating = value;
+    window.__ovGenerating = value;
 }
 
 function init() {
@@ -84,10 +84,10 @@ function logTime() {
 function addLogEntry(message, type = '') {
     const log = DOM.log();
     if (!log) return;
-    const cls = type ? ` vx-gen-log__entry--${type}` : '';
+    const cls = type ? ` ov-gen-log__entry--${type}` : '';
     const entry = document.createElement('div');
-    entry.className = `vx-gen-log__entry${cls}`;
-    entry.innerHTML = `<span class="vx-gen-log__time">${logTime()}</span>${escapeHtml(message)}`;
+    entry.className = `ov-gen-log__entry${cls}`;
+    entry.innerHTML = `<span class="ov-gen-log__time">${logTime()}</span>${escapeHtml(message)}`;
     log.appendChild(entry);
     log.scrollTop = log.scrollHeight;
 }
@@ -134,7 +134,7 @@ async function onSample() {
 
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
-    btn.innerHTML = '<span class="vx-spin" aria-hidden="true">&#9696;</span> Échantillons en cours\u2026';
+    btn.innerHTML = '<span class="ov-spin" aria-hidden="true">&#9696;</span> Échantillons en cours\u2026';
 
     // Recuperer les etapes pour appeler les previews une par une
     clearLog();
@@ -185,7 +185,7 @@ async function onSample() {
                     col.className = 'fr-col-4';
                     col.innerHTML = `
                         <p class="fr-text--sm fr-text--bold">Étape ${escapeHtml(sid)}</p>
-                        <audio src="${authenticatedUrl(result.data.audio_url)}" controls class="vx-audio-player" title="Échantillon étape ${escapeHtml(sid)}"></audio>`;
+                        <audio src="${authenticatedUrl(result.data.audio_url)}" controls class="ov-audio-player" title="Échantillon étape ${escapeHtml(sid)}"></audio>`;
                     DOM.sampleResults().appendChild(col);
                 }
             } catch (err) {
@@ -213,7 +213,7 @@ async function onRandom() {
 
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
-    btn.innerHTML = '<span class="vx-spin" aria-hidden="true">&#9696;</span> Tirage en cours\u2026';
+    btn.innerHTML = '<span class="ov-spin" aria-hidden="true">&#9696;</span> Tirage en cours\u2026';
     result.hidden = false;
     result.innerHTML = '<p class="fr-text--sm fr-text--mention-grey">Génération d\'un échantillon avec voix aléatoire…</p>';
 
@@ -227,25 +227,25 @@ async function onRandom() {
         if (!audioUrl) throw new Error('Aucun audio retourné');
         result.innerHTML = `
             <p class="fr-text--sm"><strong>Échantillon :</strong> ${escapeHtml(voice)}</p>
-            <audio src="${authenticatedUrl(audioUrl)}" controls class="vx-audio-player" title="Échantillon voix aléatoire ${escapeHtml(voice)}"></audio>
-            <div class="fr-mt-2w" id="vx-random-save-box">
-                <label for="vx-random-save-name" class="fr-label fr-text--sm">Nom pour conserver cette voix</label>
+            <audio src="${authenticatedUrl(audioUrl)}" controls class="ov-audio-player" title="Échantillon voix aléatoire ${escapeHtml(voice)}"></audio>
+            <div class="fr-mt-2w" id="ov-random-save-box">
+                <label for="ov-random-save-name" class="fr-label fr-text--sm">Nom pour conserver cette voix</label>
                 <div class="fr-input-group">
-                    <input class="fr-input" type="text" id="vx-random-save-name"
+                    <input class="fr-input" type="text" id="ov-random-save-name"
                         placeholder="ex. voix-aleatoire-1" maxlength="50"
                         pattern="^[a-zA-Z][a-zA-Z0-9_-]{2,49}$"
-                        aria-describedby="vx-random-save-hint">
+                        aria-describedby="ov-random-save-hint">
                 </div>
-                <p class="fr-hint-text" id="vx-random-save-hint">
+                <p class="fr-hint-text" id="ov-random-save-hint">
                     Lettre + 2 à 49 caractères alphanumériques, _ ou -.
                 </p>
-                <button class="fr-btn fr-btn--secondary" type="button" id="vx-random-save-btn"
+                <button class="fr-btn fr-btn--secondary" type="button" id="ov-random-save-btn"
                     data-filename="${escapeAttr(filename)}" data-text="${escapeAttr(text)}">
                     Ajouter à la bibliothèque
                 </button>
-                <p class="fr-mt-1w" id="vx-random-save-status" role="status" aria-live="polite"></p>
+                <p class="fr-mt-1w" id="ov-random-save-status" role="status" aria-live="polite"></p>
             </div>`;
-        const saveBtn = document.getElementById('vx-random-save-btn');
+        const saveBtn = document.getElementById('ov-random-save-btn');
         if (saveBtn) saveBtn.addEventListener('click', onSaveRandom);
     } catch (err) {
         result.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
@@ -320,8 +320,8 @@ function resetAdvancedParams() {
 
 async function onSaveRandom(e) {
     const btn = e.currentTarget;
-    const nameInput = document.getElementById('vx-random-save-name');
-    const status = document.getElementById('vx-random-save-status');
+    const nameInput = document.getElementById('ov-random-save-name');
+    const status = document.getElementById('ov-random-save-status');
     const name = (nameInput?.value || '').trim();
     const filename = btn.dataset.filename || '';
     const text = btn.dataset.text || '';
@@ -358,7 +358,7 @@ function setStartBtnLoading(loading) {
         btn._originalText = btn.textContent;
         btn.disabled = true;
         btn.setAttribute('aria-busy', 'true');
-        btn.innerHTML = '<span class="vx-spin" aria-hidden="true">&#9696;</span> Production en cours\u2026';
+        btn.innerHTML = '<span class="ov-spin" aria-hidden="true">&#9696;</span> Production en cours\u2026';
     } else {
         btn.disabled = false;
         btn.removeAttribute('aria-busy');
@@ -505,7 +505,7 @@ function renderResultsPage(page) {
                 <span class="fr-text--sm fr-text--mention-grey"> — ${escapeHtml(item.voice)}</span>
             </div>
             <div class="fr-col">
-                <audio src="${authenticatedUrl(item.audio_url)}" controls class="vx-audio-player" title="Audio étape ${escapeHtml(item.step_id)} — ${escapeHtml(item.voice)}">
+                <audio src="${authenticatedUrl(item.audio_url)}" controls class="ov-audio-player" title="Audio étape ${escapeHtml(item.step_id)} — ${escapeHtml(item.voice)}">
                 </audio>
             </div>
         </div>

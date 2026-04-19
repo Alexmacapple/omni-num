@@ -17,7 +17,7 @@ const DOM = {
     selectionBar: () => document.getElementById('import-selection-bar'),
     selectionCount: () => document.getElementById('import-selection-count'),
     nextBtn: () => document.getElementById('import-next-btn'),
-    progressBar: () => document.querySelector('.vx-upload-progress'),
+    progressBar: () => document.querySelector('.ov-upload-progress'),
 };
 
 let steps = [];
@@ -87,7 +87,7 @@ async function onImport() {
             if (bar) {
                 bar.hidden = false;
                 bar.querySelector('progress').value = pct;
-                bar.querySelector('.vx-upload-progress__text').textContent = pct + '%';
+                bar.querySelector('.ov-upload-progress__text').textContent = pct + '%';
             }
         });
 
@@ -132,7 +132,7 @@ function renderTable(stepsData) {
             <td>
                 <div class="fr-checkbox-group fr-checkbox-group--sm">
                     <input type="checkbox" id="step-cb-${s.step_id}"
-                           data-step-id="${s.step_id}" checked class="vx-step-checkbox">
+                           data-step-id="${s.step_id}" checked class="ov-step-checkbox">
                     <label class="fr-label" for="step-cb-${s.step_id}">
                         <span class="fr-sr-only">Sélectionner étape ${s.step_id}</span>
                     </label>
@@ -145,13 +145,13 @@ function renderTable(stepsData) {
 }
 
 function onCheckboxChange(e) {
-    if (e.target.classList.contains('vx-step-checkbox')) {
+    if (e.target.classList.contains('ov-step-checkbox')) {
         updateSelectionCount();
     }
 }
 
 function getSelectedIds() {
-    return Array.from(document.querySelectorAll('.vx-step-checkbox:checked'))
+    return Array.from(document.querySelectorAll('.ov-step-checkbox:checked'))
         .map(cb => cb.dataset.stepId);
 }
 
@@ -171,7 +171,7 @@ function updateSelectionCount() {
 
 function onSelectAllToggle(e) {
     const checked = e.target.checked;
-    document.querySelectorAll('.vx-step-checkbox').forEach(cb => { cb.checked = checked; });
+    document.querySelectorAll('.ov-step-checkbox').forEach(cb => { cb.checked = checked; });
     updateSelectionCount();
 }
 

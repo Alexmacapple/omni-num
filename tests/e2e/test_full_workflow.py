@@ -36,11 +36,11 @@ pytestmark = pytest.mark.skipif(
 class TestLogin:
     def test_app_visible_after_login(self, page: Page):
         """L'ecran principal est visible apres login."""
-        expect(page.locator("#vx-app-screen")).to_be_visible()
+        expect(page.locator("#ov-app-screen")).to_be_visible()
 
     def test_username_displayed(self, page: Page):
         """Le nom d'utilisateur est affiche dans le header."""
-        expect(page.locator("#vx-username")).not_to_be_empty()
+        expect(page.locator("#ov-username")).not_to_be_empty()
 
     def test_import_tab_active(self, page: Page):
         """L'onglet Import est actif par defaut."""
@@ -193,7 +193,7 @@ class TestAssignation:
         self._import_select_go_to_assign(page)
         page.wait_for_selector("#assign-table-container:not([hidden])", timeout=15_000)
 
-        selects = page.locator(".vx-assign-voice")
+        selects = page.locator(".ov-assign-voice")
         expect(selects).to_have_count(3, timeout=5000)
 
     def test_assign_speed_sliders_present(self, page: Page):
@@ -201,7 +201,7 @@ class TestAssignation:
         self._import_select_go_to_assign(page)
         page.wait_for_selector("#assign-table-container:not([hidden])", timeout=15_000)
 
-        sliders = page.locator(".vx-assign-speed")
+        sliders = page.locator(".ov-assign-speed")
         expect(sliders).to_have_count(3, timeout=5000)
 
 
@@ -233,11 +233,11 @@ class TestExport:
 class TestSession:
     def test_new_session_button_visible(self, page: Page):
         """Le bouton Nouvelle session est visible."""
-        expect(page.locator("#vx-new-session-btn")).to_be_visible()
+        expect(page.locator("#ov-new-session-btn")).to_be_visible()
 
     def test_logout_button_visible(self, page: Page):
         """Le bouton Deconnexion est visible."""
-        expect(page.locator("#vx-logout-btn")).to_be_visible()
+        expect(page.locator("#ov-logout-btn")).to_be_visible()
 
 
 # ===========================================================================
@@ -248,9 +248,9 @@ class TestResponsive:
         """Le stepper mobile est visible en viewport etroit."""
         page.set_viewport_size({"width": 375, "height": 812})
         page.reload()
-        page.wait_for_selector("#vx-app-screen", state="visible", timeout=10_000)
+        page.wait_for_selector("#ov-app-screen", state="visible", timeout=10_000)
 
-        stepper = page.locator("#vx-stepper")
+        stepper = page.locator("#ov-stepper")
         expect(stepper).to_be_visible()
 
     def test_mobile_cards_layout(self, page: Page):
@@ -295,7 +295,7 @@ class TestAccessibilite:
         """Les inputs du formulaire de login ont des labels."""
         # Retourner au login pour ce test
         page.goto("/#import")
-        page.wait_for_selector("#vx-app-screen", state="visible", timeout=10_000)
+        page.wait_for_selector("#ov-app-screen", state="visible", timeout=10_000)
 
         # Verifier que le champ fichier a un label
         label = page.locator("label[for='import-file']")

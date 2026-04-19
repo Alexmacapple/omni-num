@@ -1,4 +1,4 @@
-/* app.css — Styles custom OmniStudio (prefixe vx-*) */
+/* app.css — Styles custom OmniStudio (prefixe ov-*) */
 /* Tokens DSFR uniquement, zero couleur en dur */
 
 /* --- Fix DSFR : onglets derriere login gate --- */
@@ -6,7 +6,7 @@
    (left:-100%, margin-right:-100%, transform:translate(100%)) pour les panels.
    Ce mecanisme ne fonctionne pas quand les tabs sont masquees au chargement
    (derriere le login gate). On desactive le flex et on gere les panels
-   avec display:none/block + des attributs data-vx-active/data-vx-hidden. */
+   avec display:none/block + des attributs data-ov-active/data-ov-hidden. */
 #main-tabs.fr-tabs {
     display: block !important;
     height: auto !important;
@@ -24,18 +24,18 @@
 }
 
 /* Panel actif : visible */
-.fr-tabs__panel[data-vx-active] {
+.fr-tabs__panel[data-ov-active] {
     display: block !important;
     visibility: visible !important;
 }
 
 /* Panels masques */
-.fr-tabs__panel[data-vx-hidden] {
+.fr-tabs__panel[data-ov-hidden] {
     display: none !important;
 }
 
 /* --- Header tools : alignement vertical spans / boutons --- */
-.vx-header-separator {
+.ov-header-separator {
     border-left: 1px solid var(--border-default-grey);
     padding-left: 1rem;
 }
@@ -63,7 +63,7 @@
 }
 
 /* --- Toast container --- */
-#vx-toast-container {
+#ov-toast-container {
     position: fixed;
     top: 1rem;
     right: 1rem;
@@ -76,55 +76,55 @@
     pointer-events: none;
 }
 
-#vx-toast-container > * {
+#ov-toast-container > * {
     pointer-events: auto;
 }
 
 /* --- Login screen --- */
-#vx-login-screen {
+#ov-login-screen {
     min-height: 80vh;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-#vx-login-screen[hidden] {
+#ov-login-screen[hidden] {
     display: none;
 }
 
-#vx-app-screen[hidden] {
+#ov-app-screen[hidden] {
     display: none;
 }
 
 /* --- Card login --- */
-.vx-login-card {
+.ov-login-card {
     max-width: 400px;
     width: 100%;
 }
 
-.vx-login__btn {
+.ov-login__btn {
     width: 100%;
     justify-content: center;
 }
 
 /* --- Audio player --- */
-.vx-audio-player {
+.ov-audio-player {
     margin: var(--spacing-2w) 0;
 }
 
-.vx-audio-player audio {
+.ov-audio-player audio {
     width: 100%;
     max-width: 500px;
 }
 
 /* --- Header username --- */
-#vx-username:not(:empty) {
+#ov-username:not(:empty) {
     color: var(--text-default-grey);
     font-weight: 700;
 }
 
 /* --- Barre de progression upload --- */
-.vx-upload-progress__bar {
+.ov-upload-progress__bar {
     width: 100%;
     height: 0.5rem;
     appearance: none;
@@ -132,13 +132,13 @@
     background: var(--background-contrast-grey);
     border-radius: 0.25rem;
 }
-.vx-upload-progress__bar::-webkit-progress-value {
+.ov-upload-progress__bar::-webkit-progress-value {
     background: var(--background-action-high-blue-france);
     border-radius: 0.25rem;
 }
 
 /* --- Barre de progression nettoyage --- */
-.vx-progress {
+.ov-progress {
     width: 100%;
     height: 0.5rem;
     appearance: none;
@@ -146,7 +146,7 @@
     background: var(--background-contrast-grey);
     border-radius: 0.25rem;
 }
-.vx-progress::-webkit-progress-value {
+.ov-progress::-webkit-progress-value {
     background: var(--background-action-high-blue-france);
     border-radius: 0.25rem;
 }
@@ -164,7 +164,7 @@
 }
 
 /* --- Cellules texte dans le tableau de preparation --- */
-.vx-text-cell {
+.ov-text-cell {
     white-space: pre-wrap;
     word-break: break-word;
     font-size: 0.875rem;
@@ -172,7 +172,7 @@
     padding: 0.5rem;
 }
 
-.vx-tts-edit {
+.ov-tts-edit {
     min-height: 3rem;
     max-height: 6rem;
     font-size: 0.875rem;
@@ -230,7 +230,7 @@
     }
 
     /* Textarea TTS : pleine largeur */
-    #clean-table .vx-tts-edit {
+    #clean-table .ov-tts-edit {
         width: 100%;
         max-height: 8rem;
     }
@@ -320,13 +320,13 @@
     }
 
     /* Textarea texte : pleine largeur */
-    #assign-table .vx-assign-text {
+    #assign-table .ov-assign-text {
         width: 100%;
         max-height: 8rem;
     }
 
     /* Slider vitesse : pleine largeur */
-    #assign-table .vx-assign-speed {
+    #assign-table .ov-assign-speed {
         width: 100%;
     }
 
@@ -350,13 +350,13 @@
     }
 
     /* Conteneur audio en pleine largeur */
-    #assign-table .vx-audio-container {
+    #assign-table .ov-audio-container {
         width: 100%;
     }
 }
 
 /* --- Select statut dans le tableau --- */
-.vx-status-select {
+.ov-status-select {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
     border: 1px solid var(--border-default-grey);
@@ -366,22 +366,22 @@
 }
 
 /* --- Diff : tokens DSFR --- */
-.vx-diff-del {
+.ov-diff-del {
     background: var(--background-contrast-error);
     text-decoration: line-through;
 }
-.vx-diff-ins {
+.ov-diff-ins {
     background: var(--background-contrast-success);
 }
 
 /* --- Spinner chargement --- */
-@keyframes vx-spin {
+@keyframes ov-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
-.vx-spin {
+.ov-spin {
     display: inline-block;
-    animation: vx-spin 1s linear infinite;
+    animation: ov-spin 1s linear infinite;
 }
 
 /* Bouton en etat de chargement (aria-busy) */
@@ -391,7 +391,7 @@
 }
 
 /* --- Audio player compact --- */
-.vx-audio-player--sm {
+.ov-audio-player--sm {
     height: 2rem;
 }
 
@@ -406,16 +406,16 @@
     outline-offset: -2px;
 }
 
-.fr-card[data-selected="true"] .vx-card-check {
+.fr-card[data-selected="true"] .ov-card-check {
     color: var(--background-action-high-blue-france);
 }
 
-.vx-card-check {
+.ov-card-check {
     color: var(--text-disabled-grey);
     transition: color 0.15s;
 }
 
-.vx-card-audio {
+.ov-card-audio {
     width: 100%;
     max-width: 300px;
     margin-top: 0.5rem;
@@ -423,12 +423,12 @@
 }
 
 /* --- État chargement bouton écouter --- */
-.vx-preview-loading {
+.ov-preview-loading {
     pointer-events: none;
     opacity: 0.6;
 }
 
-.vx-preview-loading::before {
+.ov-preview-loading::before {
     content: "";
     display: inline-block;
     width: 1rem;
@@ -436,40 +436,40 @@
     border: 2px solid var(--text-default-grey);
     border-top-color: transparent;
     border-radius: 50%;
-    animation: vx-spin 0.8s linear infinite;
+    animation: ov-spin 0.8s linear infinite;
     margin-right: 0.25rem;
     vertical-align: middle;
 }
 
 /* --- Message d'état sous la carte --- */
-.vx-card-status {
+.ov-card-status {
     font-size: 0.75rem;
     margin-top: 0.5rem;
     min-height: 1.25rem;
 }
 
-.vx-card-status--loading {
+.ov-card-status--loading {
     color: var(--text-mention-grey);
 }
 
-.vx-card-status--error {
+.ov-card-status--error {
     color: var(--text-default-error);
 }
 
 /* --- Slider vitesse dans le tableau d'assignation --- */
-.vx-assign-speed {
+.ov-assign-speed {
     width: 5rem;
     accent-color: var(--background-action-high-blue-france);
 }
 
 /* --- Scroll horizontal pour le tableau 7 colonnes sur ecrans etroits --- */
-.vx-table-scroll {
+.ov-table-scroll {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
 
 /* --- Journal de generation --- */
-.vx-gen-log {
+.ov-gen-log {
     max-height: 12rem;
     overflow-y: auto;
     font-size: 0.8125rem;
@@ -480,25 +480,25 @@
     font-family: monospace;
 }
 
-.vx-gen-log__entry {
+.ov-gen-log__entry {
     padding: 0.125rem 0;
     border-bottom: 1px solid var(--border-default-grey);
 }
 
-.vx-gen-log__entry:last-child {
+.ov-gen-log__entry:last-child {
     border-bottom: none;
 }
 
-.vx-gen-log__time {
+.ov-gen-log__time {
     color: var(--text-mention-grey);
     margin-right: 0.5rem;
 }
 
-.vx-gen-log__entry--error {
+.ov-gen-log__entry--error {
     color: var(--text-default-error);
 }
 
-.vx-gen-log__entry--success {
+.ov-gen-log__entry--success {
     color: var(--text-default-success);
 }
 
@@ -508,12 +508,12 @@
 }
 
 /* --- Indicateur enregistrement micro --- */
-.vx-recording {
+.ov-recording {
     color: var(--text-default-error);
     font-weight: 700;
 }
 
-.vx-recording::before {
+.ov-recording::before {
     content: "";
     display: inline-block;
     width: 0.5rem;
@@ -522,72 +522,72 @@
     border-radius: 50%;
     margin-right: 0.5rem;
     vertical-align: middle;
-    animation: vx-blink 1s ease-in-out infinite;
+    animation: ov-blink 1s ease-in-out infinite;
 }
 
-@keyframes vx-blink {
+@keyframes ov-blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
 }
 
 /* --- Utilitaire alignement texte --- */
-.vx-text-center {
+.ov-text-center {
     text-align: center;
 }
 
 /* --- Focus visible : elements custom --- */
-.vx-status-select:focus-visible,
-.vx-assign-speed:focus-visible,
-.vx-tts-edit:focus-visible {
+.ov-status-select:focus-visible,
+.ov-assign-speed:focus-visible,
+.ov-tts-edit:focus-visible {
     outline: 2px solid var(--border-active-blue-france);
     outline-offset: 2px;
 }
 
 /* --- Reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
-    .vx-upload-progress__bar,
-    .vx-progress {
+    .ov-upload-progress__bar,
+    .ov-progress {
         transition: none;
     }
-    .vx-spin {
+    .ov-spin {
         animation: none;
     }
-    .vx-preview-loading::before,
-    .vx-recording::before {
+    .ov-preview-loading::before,
+    .ov-recording::before {
         animation: none;
     }
-    .vx-card-check {
+    .ov-card-check {
         transition: none;
     }
 }
 
 /* --- Stepper mobile / Onglets desktop --- */
-.vx-mobile-only {
+.ov-mobile-only {
     display: none;
 }
 
 @media (max-width: 47.999em) {
-    .vx-mobile-only {
+    .ov-mobile-only {
         display: block;
     }
-    .vx-desktop-only {
+    .ov-desktop-only {
         display: none;
     }
     /* Bouton "Nouvelle session" : icone seule sur mobile */
-    #vx-new-session-btn .vx-btn-label {
+    #ov-new-session-btn .ov-btn-label {
         display: none;
     }
 }
 
 /* --- Navigation stepper : boutons pleine largeur --- */
-.vx-btn--full {
+.ov-btn--full {
     width: 100%;
     justify-content: center;
 }
 
 /* --- Responsive --- */
 @media (max-width: 48em) {
-    #vx-toast-container {
+    #ov-toast-container {
         left: 0.5rem;
         right: 0.5rem;
         max-width: none;
@@ -600,7 +600,7 @@
 }
 
 /* --- Dialog native (modale statut) --- */
-.vx-dialog {
+.ov-dialog {
     border: none;
     border-radius: 0.5rem;
     padding: 0;
@@ -611,28 +611,28 @@
     color: var(--text-default-grey);
 }
 
-.vx-dialog::backdrop {
+.ov-dialog::backdrop {
     background: rgba(0, 0, 0, 0.5);
 }
 
-.vx-status-table {
+.ov-status-table {
     width: 100%;
     font-size: 0.875rem;
 }
 
-.vx-status-table th,
-.vx-status-table td {
+.ov-status-table th,
+.ov-status-table td {
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--border-default-grey);
     font-size: 0.875rem;
     text-align: left;
 }
 
-.vx-status-table th[scope="row"] {
+.ov-status-table th[scope="row"] {
     font-weight: 700;
 }
 
-.vx-status-table td:last-child {
+.ov-status-table td:last-child {
     text-align: right;
 }
 

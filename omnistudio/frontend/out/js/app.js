@@ -45,12 +45,12 @@ class EventBus {
 export const eventBus = new EventBus();
 
 // --- Elements DOM ---
-const loginScreen = document.getElementById('vx-login-screen');
-const appScreen = document.getElementById('vx-app-screen');
-const loginForm = document.getElementById('vx-login-form');
-const loginError = document.getElementById('vx-login-error');
-const logoutBtn = document.getElementById('vx-logout-btn');
-const usernameDisplay = document.getElementById('vx-username');
+const loginScreen = document.getElementById('ov-login-screen');
+const appScreen = document.getElementById('ov-app-screen');
+const loginForm = document.getElementById('ov-login-form');
+const loginError = document.getElementById('ov-login-error');
+const logoutBtn = document.getElementById('ov-logout-btn');
+const usernameDisplay = document.getElementById('ov-username');
 
 // --- Tab tracking ---
 let currentActiveTab = null;
@@ -81,7 +81,7 @@ function switchTab(tabId) {
     if (prev && prev !== tabId) {
         eventBus.emit(`tab-deactivated:${prev}`);
     }
-    // Gestion directe des panels via data-vx-active / data-vx-hidden.
+    // Gestion directe des panels via data-ov-active / data-ov-hidden.
     // Ces attributs CSS ecrasent les classes DSFR (fr-tabs__panel--selected)
     // que le DSFR JS peut remettre sur le mauvais panel.
     TAB_IDS.forEach(tid => {
@@ -93,12 +93,12 @@ function switchTab(tabId) {
         const panel = panelId ? document.getElementById(panelId) : null;
         if (panel) {
             if (tid === tabId) {
-                panel.setAttribute('data-vx-active', '');
-                panel.removeAttribute('data-vx-hidden');
+                panel.setAttribute('data-ov-active', '');
+                panel.removeAttribute('data-ov-hidden');
                 panel.classList.add('fr-tabs__panel--selected');
             } else {
-                panel.removeAttribute('data-vx-active');
-                panel.setAttribute('data-vx-hidden', '');
+                panel.removeAttribute('data-ov-active');
+                panel.setAttribute('data-ov-hidden', '');
                 panel.classList.remove('fr-tabs__panel--selected');
             }
         }
@@ -113,7 +113,7 @@ function switchTab(tabId) {
         mainTabs.style.removeProperty('--tabs-height');
         // Laisser le navigateur recalculer, puis demander au DSFR de re-mesurer
         requestAnimationFrame(() => {
-            const activePanel = mainTabs.querySelector('[data-vx-active]');
+            const activePanel = mainTabs.querySelector('[data-ov-active]');
             if (activePanel) {
                 mainTabs.style.setProperty('--tabs-height', activePanel.scrollHeight + 'px');
             }
@@ -125,7 +125,7 @@ function switchTab(tabId) {
 }
 
 function updateStepper(tabId) {
-    const stepperEl = document.getElementById('vx-stepper');
+    const stepperEl = document.getElementById('ov-stepper');
     if (!stepperEl) return;
 
     const index = TAB_IDS.indexOf(tabId);
@@ -154,8 +154,8 @@ function updateStepper(tabId) {
     if (stepsEl) stepsEl.setAttribute('data-fr-current-step', String(step));
 
     // Boutons prev/next
-    const prevBtn = document.getElementById('vx-stepper-prev');
-    const nextBtn = document.getElementById('vx-stepper-next');
+    const prevBtn = document.getElementById('ov-stepper-prev');
+    const nextBtn = document.getElementById('ov-stepper-next');
     if (prevBtn) prevBtn.disabled = (step === 1);
     if (nextBtn) nextBtn.disabled = (step === total);
 }
@@ -181,7 +181,7 @@ function observeTabChanges() {
                 // Ignorer les sous-onglets (geres par url-state.js)
                 if (!mainTabSet.has(tabId)) continue;
                 if (tabId !== currentActiveTab) {
-                    // Deleguer a switchTab pour gerer data-vx-hidden
+                    // Deleguer a switchTab pour gerer data-ov-hidden
                     switchTab(tabId);
                 }
             }
@@ -246,8 +246,8 @@ function showApp() {
         setTimeout(observeTabChanges, 200);
 
         // Stepper mobile
-        const stepperPrev = document.getElementById('vx-stepper-prev');
-        const stepperNext = document.getElementById('vx-stepper-next');
+        const stepperPrev = document.getElementById('ov-stepper-prev');
+        const stepperNext = document.getElementById('ov-stepper-next');
 
         if (stepperPrev) {
             stepperPrev.addEventListener('click', () => {
@@ -275,8 +275,8 @@ function showApp() {
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = loginForm.querySelector('#vx-username-input').value.trim();
-        const password = loginForm.querySelector('#vx-password-input').value;
+        const username = loginForm.querySelector('#ov-username-input').value.trim();
+        const password = loginForm.querySelector('#ov-password-input').value;
 
         if (loginError) {
             loginError.style.display = 'none';
@@ -317,14 +317,14 @@ if (logoutBtn) {
 
 // --- Nouvelle session ---
 
-const newSessionBtn = document.getElementById('vx-new-session-btn');
-const newSessionDialog = document.getElementById('vx-new-session-dialog');
-const newSessionCancel = document.getElementById('vx-new-session-cancel');
-const newSessionConfirm = document.getElementById('vx-new-session-confirm');
+const newSessionBtn = document.getElementById('ov-new-session-btn');
+const newSessionDialog = document.getElementById('ov-new-session-dialog');
+const newSessionCancel = document.getElementById('ov-new-session-cancel');
+const newSessionConfirm = document.getElementById('ov-new-session-confirm');
 
 if (newSessionBtn && newSessionDialog) {
     newSessionBtn.addEventListener('click', () => {
-        if (window.__vxGenerating) {
+        if (window.__ovGenerating) {
             showWarning('Génération en cours. Attendez la fin avant de changer de session.');
             return;
         }
@@ -366,7 +366,7 @@ onAuthStateChange((authenticated) => {
 
 // --- Force logout event ---
 
-window.addEventListener('vx-force-logout', (e) => {
+window.addEventListener('ov-force-logout', (e) => {
     showWarning(e.detail?.message || 'Session expirée');
     showLogin();
 });
@@ -374,9 +374,9 @@ window.addEventListener('vx-force-logout', (e) => {
 // --- État des services ---
 
 function initStatusDialog() {
-    const btn = document.getElementById('vx-status-btn');
-    const dialog = document.getElementById('vx-status-dialog');
-    const closeBtn = document.getElementById('vx-status-close');
+    const btn = document.getElementById('ov-status-btn');
+    const dialog = document.getElementById('ov-status-dialog');
+    const closeBtn = document.getElementById('ov-status-close');
     if (!btn || !dialog) return;
 
     btn.addEventListener('click', async () => {
@@ -393,11 +393,11 @@ function initStatusDialog() {
 }
 
 async function checkStatus() {
-    const content = document.getElementById('vx-status-content');
+    const content = document.getElementById('ov-status-content');
     if (!content) return;
 
     content.setAttribute('aria-busy', 'true');
-    content.innerHTML = '<p class="fr-text--sm"><span class="fr-icon-refresh-line vx-spin" aria-hidden="true"></span> Vérification en cours…</p>';
+    content.innerHTML = '<p class="fr-text--sm"><span class="fr-icon-refresh-line ov-spin" aria-hidden="true"></span> Vérification en cours…</p>';
 
     try {
         const resp = await fetch('api/status');
@@ -449,7 +449,7 @@ async function checkStatus() {
         }
 
         content.innerHTML = `
-            <table class="vx-status-table">
+            <table class="ov-status-table">
                 <caption class="fr-sr-only">État des services OmniStudio</caption>
                 <thead class="fr-sr-only"><tr><th scope="col">Service</th><th scope="col">État</th></tr></thead>
                 <tbody>

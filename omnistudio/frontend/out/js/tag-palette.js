@@ -3,12 +3,12 @@
  *
  * Charge les tags via GET /api/voices/tags, rend une palette de boutons DSFR,
  * et insère le tag choisi à la position du curseur dans le dernier textarea/input
- * (sélecteur `.vx-tag-target`) qui a eu le focus.
+ * (sélecteur `.ov-tag-target`) qui a eu le focus.
  */
 import { apiGet } from './api-client.js';
 import { escapeHtml } from './dom-utils.js';
 
-const TARGET_SELECTOR = '.vx-tag-target, textarea.vx-tts-edit, input.vx-tag-target';
+const TARGET_SELECTOR = '.ov-tag-target, textarea.ov-tts-edit, input.ov-tag-target';
 
 let cachedTags = null;
 let lastFocused = null;
@@ -46,7 +46,7 @@ function renderPalette(container, tags) {
         const label = typeof t === 'string' ? t : (t.label || t.tag || t.name);
         const safeTag = escapeHtml(tag);
         const safeLabel = escapeHtml(label);
-        return `<button type="button" class="fr-btn fr-btn--secondary fr-btn--sm vx-tag-btn"
+        return `<button type="button" class="fr-btn fr-btn--secondary fr-btn--sm ov-tag-btn"
                         data-tag="${safeTag}"
                         title="Insérer ${safeTag} à la position du curseur">
                     ${safeLabel}
@@ -58,7 +58,7 @@ function renderPalette(container, tags) {
         <div class="fr-btns-group fr-btns-group--inline-sm fr-btns-group--sm" role="group" aria-label="Palette de marqueurs émotionnels">
             ${buttons}
         </div>`;
-    container.querySelectorAll('.vx-tag-btn').forEach((btn) => {
+    container.querySelectorAll('.ov-tag-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
             const tag = btn.getAttribute('data-tag');
             if (!lastFocused || !document.body.contains(lastFocused)) {

@@ -8,10 +8,10 @@ let toastCounter = 0;
 
 function getContainer() {
     if (!toastContainer) {
-        toastContainer = document.getElementById('vx-toast-container');
+        toastContainer = document.getElementById('ov-toast-container');
         if (!toastContainer) {
             toastContainer = document.createElement('div');
-            toastContainer.id = 'vx-toast-container';
+            toastContainer.id = 'ov-toast-container';
             toastContainer.setAttribute('role', 'status');
             toastContainer.setAttribute('aria-live', 'polite');
             document.body.appendChild(toastContainer);
@@ -22,7 +22,7 @@ function getContainer() {
 
 function createToast(message, type, autoDismiss = 0) {
     const container = getContainer();
-    const id = `vx-toast-${++toastCounter}`;
+    const id = `ov-toast-${++toastCounter}`;
 
     const alert = document.createElement('div');
     alert.id = id;

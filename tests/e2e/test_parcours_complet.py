@@ -62,11 +62,11 @@ class TestParcoursComplet:
         self.page = page
 
         # Créer une nouvelle session pour isoler le test
-        new_session_btn = page.locator("#vx-new-session-btn")
+        new_session_btn = page.locator("#ov-new-session-btn")
         if new_session_btn.is_visible():
             new_session_btn.click()
             # Confirmer la modale nouvelle session
-            confirm_btn = page.locator("#vx-new-session-dialog button.fr-btn:not(.fr-btn--secondary)")
+            confirm_btn = page.locator("#ov-new-session-dialog button.fr-btn:not(.fr-btn--secondary)")
             if confirm_btn.is_visible(timeout=3000):
                 confirm_btn.click()
             page.wait_for_timeout(2000)
@@ -163,7 +163,7 @@ class TestParcoursComplet:
         assert count == 3, f"Attendu 3 étapes en assignation, trouvé {count}"
 
         # Vérifier que les selects voix sont présents
-        selects = page.locator(".vx-assign-voice")
+        selects = page.locator(".ov-assign-voice")
         expect(selects).to_have_count(3, timeout=5000)
 
     # ------------------------------------------------------------------
@@ -187,7 +187,7 @@ class TestParcoursComplet:
         # Attendre la fin de la génération (SSE)
         # Le journal affiche "Terminé" ou les résultats apparaissent
         page.wait_for_selector(
-            ".vx-gen-log__entry--success, button:has-text('Exporter')",
+            ".ov-gen-log__entry--success, button:has-text('Exporter')",
             timeout=600_000,  # 10 min max (GPU)
         )
 
@@ -231,10 +231,10 @@ class TestParcoursCompletSequentiel:
         _check_services_up()
 
         # --- 1. Nouvelle session ---
-        new_btn = page.locator("#vx-new-session-btn")
+        new_btn = page.locator("#ov-new-session-btn")
         if new_btn.is_visible():
             new_btn.click()
-            confirm = page.locator("#vx-new-session-dialog button.fr-btn:not(.fr-btn--secondary)")
+            confirm = page.locator("#ov-new-session-dialog button.fr-btn:not(.fr-btn--secondary)")
             if confirm.is_visible(timeout=3000):
                 confirm.click()
             page.wait_for_timeout(2000)
@@ -282,12 +282,12 @@ class TestParcoursCompletSequentiel:
         # Attendre la fin : entrées success dans le DOM
         # (state="attached" car le DSFR peut cacher le panel avec visibility:hidden)
         page.wait_for_selector(
-            ".vx-gen-log__entry--success",
+            ".ov-gen-log__entry--success",
             state="attached",
             timeout=600_000,
         )
         # Vérifier qu'on a bien des fichiers générés
-        success_count = page.locator(".vx-gen-log__entry--success").count()
+        success_count = page.locator(".ov-gen-log__entry--success").count()
         assert success_count >= 1, f"Attendu au moins 1 entrée success, trouvé {success_count}"
 
         # --- 7. Export ---

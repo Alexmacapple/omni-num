@@ -199,7 +199,7 @@ function observeSubTabs() {
  * Met a jour le fil d'Ariane DSFR en fonction de l'onglet actif.
  */
 function updateBreadcrumb(tabId, subTabId) {
-    const list = document.getElementById('vx-breadcrumb-list');
+    const list = document.getElementById('ov-breadcrumb-list');
     if (!list) return;
 
     const tabLabel = TAB_LABELS[tabId] || 'Import';

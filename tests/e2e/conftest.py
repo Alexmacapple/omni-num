@@ -54,13 +54,13 @@ def auth_context(browser: Browser) -> BrowserContext:
 
     # Login
     page.goto("/")
-    page.wait_for_selector("#vx-login-form", state="visible")
-    page.fill("#vx-username-input", USERNAME)
-    page.fill("#vx-password-input", PASSWORD)
-    page.click("#vx-login-form button[type='submit']")
+    page.wait_for_selector("#ov-login-form", state="visible")
+    page.fill("#ov-username-input", USERNAME)
+    page.fill("#ov-password-input", PASSWORD)
+    page.click("#ov-login-form button[type='submit']")
 
     # Attendre que l'app s'affiche
-    page.wait_for_selector("#vx-app-screen", state="visible", timeout=15_000)
+    page.wait_for_selector("#ov-app-screen", state="visible", timeout=15_000)
     page.close()
 
     yield context
@@ -72,6 +72,6 @@ def page(auth_context: BrowserContext) -> Page:
     """Page authentifiee pour chaque test."""
     p = auth_context.new_page()
     p.goto("/")
-    p.wait_for_selector("#vx-app-screen", state="visible", timeout=10_000)
+    p.wait_for_selector("#ov-app-screen", state="visible", timeout=10_000)
     yield p
     p.close()

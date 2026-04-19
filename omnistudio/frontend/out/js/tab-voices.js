@@ -174,7 +174,7 @@ async function onStartRecording() {
         recordBtn.classList.add('fr-icon-stop-fill', 'fr-btn--primary');
     }
     if (statusEl) {
-        statusEl.className = 'fr-text--sm fr-mt-1v vx-recording';
+        statusEl.className = 'fr-text--sm fr-mt-1v ov-recording';
         statusEl.textContent = '0:00 / 0:30';
     }
 
@@ -520,10 +520,10 @@ function toggleVoiceSelection(voiceName) {
             }
         }
         // NC-2 RGAA 7.1 : feedback accessible pour les lecteurs d'ecran
-        let liveRegion = document.getElementById('vx-voice-selection-live');
+        let liveRegion = document.getElementById('ov-voice-selection-live');
         if (!liveRegion) {
             liveRegion = document.createElement('div');
-            liveRegion.id = 'vx-voice-selection-live';
+            liveRegion.id = 'ov-voice-selection-live';
             liveRegion.setAttribute('role', 'status');
             liveRegion.setAttribute('aria-live', 'polite');
             liveRegion.className = 'fr-sr-only';
@@ -603,7 +603,7 @@ function renderVoiceCard(voice) {
                     <ul class="fr-btns-group fr-btns-group--inline fr-btns-group--sm">
                         ${actionItems}
                     </ul>
-                    <div class="vx-card-status" data-status-zone></div>
+                    <div class="ov-card-status" data-status-zone></div>
                 </div>
             </div>
         </div>
@@ -635,14 +635,14 @@ async function previewVoice(voiceName, btn) {
     const statusZone = footer?.querySelector('[data-status-zone]');
 
     // Retirer un player precedent s'il existe
-    const oldAudio = footer?.querySelector('.vx-card-audio');
+    const oldAudio = footer?.querySelector('.ov-card-audio');
     if (oldAudio) { oldAudio.pause(); oldAudio.remove(); }
 
     // Verifier si le moteur TTS est occupe
     const tts = await checkTtsStatus();
     if (tts?.busy) {
         if (statusZone) {
-            statusZone.className = 'vx-card-status vx-card-status--warning';
+            statusZone.className = 'ov-card-status ov-card-status--warning';
             statusZone.textContent =
                 `Moteur TTS occupé (${tts.elapsed_seconds}s). Patientez…`;
         }
@@ -651,11 +651,11 @@ async function previewVoice(voiceName, btn) {
 
     // État chargement
     const originalLabel = btn.textContent;
-    btn.classList.add('vx-preview-loading');
+    btn.classList.add('ov-preview-loading');
     btn.disabled = true;
     btn.textContent = 'Génération…';
     if (statusZone) {
-        statusZone.className = 'vx-card-status vx-card-status--loading';
+        statusZone.className = 'ov-card-status ov-card-status--loading';
         statusZone.textContent = 'Synthèse en cours (5-15s)…';
     }
 
@@ -667,12 +667,12 @@ async function previewVoice(voiceName, btn) {
 
         if (footer && result.data?.audio_url) {
             const audio = document.createElement('audio');
-            audio.className = 'vx-card-audio';
+            audio.className = 'ov-card-audio';
             audio.controls = true;
             audio.title = `Aperçu voix ${voiceName}`;
             audio.addEventListener('error', () => {
                 if (statusZone) {
-                    statusZone.className = 'vx-card-status vx-card-status--error';
+                    statusZone.className = 'ov-card-status ov-card-status--error';
                     statusZone.textContent = 'Fichier audio introuvable ou session expirée.';
                 }
             }, { once: true });
@@ -680,22 +680,22 @@ async function previewVoice(voiceName, btn) {
             footer.appendChild(audio);
             audio.play().catch(() => {
                 if (statusZone) {
-                    statusZone.className = 'vx-card-status vx-card-status--warning';
+                    statusZone.className = 'ov-card-status ov-card-status--warning';
                     statusZone.textContent = 'Lecture automatique bloquée. Utilisez le player ci-dessous.';
                 }
             });
         }
         if (statusZone) {
-            statusZone.className = 'vx-card-status';
+            statusZone.className = 'ov-card-status';
             statusZone.textContent = '';
         }
     } catch (err) {
         if (statusZone) {
-            statusZone.className = 'vx-card-status vx-card-status--error';
+            statusZone.className = 'ov-card-status ov-card-status--error';
             statusZone.textContent = err.message || 'Échec de la prévisualisation';
         }
     } finally {
-        btn.classList.remove('vx-preview-loading');
+        btn.classList.remove('ov-preview-loading');
         btn.disabled = false;
         btn.textContent = originalLabel;
     }
@@ -1194,7 +1194,7 @@ async function onStabilityTest() {
             results.innerHTML = urls.map((u, i) => `
                 <div class="fr-col-4">
                     <p class="fr-text--sm fr-text--bold">Génération ${i + 1}</p>
-                    <audio src="${authenticatedUrl(u)}" controls class="vx-audio-player" title="Test de stabilité ${i + 1}">
+                    <audio src="${authenticatedUrl(u)}" controls class="ov-audio-player" title="Test de stabilité ${i + 1}">
                                             </audio>
                 </div>
             `).join('');
@@ -1287,7 +1287,7 @@ async function onClone() {
 function showLoading(container, message) {
     if (!container) return;
     container.innerHTML = `<div class="fr-callout fr-callout--sm fr-icon-time-line">
-        <p class="fr-callout__text"><span class="fr-icon-refresh-line vx-spin fr-mr-1w" aria-hidden="true"></span>${escapeHtml(message)}</p>
+        <p class="fr-callout__text"><span class="fr-icon-refresh-line ov-spin fr-mr-1w" aria-hidden="true"></span>${escapeHtml(message)}</p>
     </div>`;
 }
 

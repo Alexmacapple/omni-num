@@ -44,7 +44,7 @@ export function cleanupAudioPlayers(container) {
  */
 export function createAudioPlayer(src, label) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'vx-audio-player';
+    wrapper.className = 'ov-audio-player';
     wrapper.setAttribute('role', 'group');
     wrapper.setAttribute('aria-label', label);
 

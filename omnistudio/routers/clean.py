@@ -68,12 +68,12 @@ def _make_diff_html(orig: str, new: str) -> str:
         if tag == "equal":
             parts.append(_escape_html_diff(" ".join(orig_words[i1:i2])))
         elif tag == "delete":
-            parts.append(f'<span class="vx-diff-del">{_escape_html_diff(" ".join(orig_words[i1:i2]))}</span>')
+            parts.append(f'<span class="ov-diff-del">{_escape_html_diff(" ".join(orig_words[i1:i2]))}</span>')
         elif tag == "insert":
-            parts.append(f'<span class="vx-diff-ins">{_escape_html_diff(" ".join(new_words[j1:j2]))}</span>')
+            parts.append(f'<span class="ov-diff-ins">{_escape_html_diff(" ".join(new_words[j1:j2]))}</span>')
         elif tag == "replace":
-            parts.append(f'<span class="vx-diff-del">{_escape_html_diff(" ".join(orig_words[i1:i2]))}</span>')
-            parts.append(f'<span class="vx-diff-ins">{_escape_html_diff(" ".join(new_words[j1:j2]))}</span>')
+            parts.append(f'<span class="ov-diff-del">{_escape_html_diff(" ".join(orig_words[i1:i2]))}</span>')
+            parts.append(f'<span class="ov-diff-ins">{_escape_html_diff(" ".join(new_words[j1:j2]))}</span>')
     return " ".join(p for p in parts if p).strip()
 
 

@@ -123,15 +123,15 @@ function renderTable(steps) {
 
         return `<tr data-step-id="${escapeHtml(String(s.step_id))}">
             <td data-label="ID">${escapeHtml(String(s.step_id))}</td>
-            <td data-label="Texte original"><div class="vx-text-cell">${escapeHtml(s.text_original)}</div></td>
+            <td data-label="Texte original"><div class="ov-text-cell">${escapeHtml(s.text_original)}</div></td>
             <td data-label="Texte TTS">
-                <textarea class="fr-input fr-input--sm vx-tts-edit"
+                <textarea class="fr-input fr-input--sm ov-tts-edit"
                           data-step-id="${escapeHtml(String(s.step_id))}"
                           title="Texte TTS étape ${escapeHtml(String(s.step_id))}"
                           rows="2">${escapeHtml(s.text_tts || '')}</textarea>
             </td>
             <td data-label="Statut">
-                <select class="fr-select fr-select--sm vx-status-select" data-action="status" data-step-id="${escapeHtml(String(s.step_id))}" title="Statut étape ${escapeHtml(String(s.step_id))}">
+                <select class="fr-select fr-select--sm ov-status-select" data-action="status" data-step-id="${escapeHtml(String(s.step_id))}" title="Statut étape ${escapeHtml(String(s.step_id))}">
                     ${statusOption('pending', 'En attente', status)}
                     ${statusOption('cleaned', 'Nettoyé', status)}
                     ${statusOption('validated', 'Validé', status)}
@@ -188,7 +188,7 @@ async function onTableChange(e) {
 }
 
 function onTextareaEdit(e) {
-    const textarea = e.target.closest('.vx-tts-edit');
+    const textarea = e.target.closest('.ov-tts-edit');
     if (!textarea) return;
     const stepId = textarea.dataset.stepId;
     const select = document.querySelector(`select[data-step-id="${stepId}"]`);
@@ -245,12 +245,12 @@ async function onDeleteAll() {
 
 async function cleanSingle(stepId, btn) {
     btn.disabled = true;
-    btn.classList.add('vx-spin');
+    btn.classList.add('ov-spin');
     try {
         const result = await apiPost(`/api/clean/single/${stepId}`, {});
         if (result.error) throw new Error(result.error.message || 'Erreur nettoyage');
         const d = result.data;
-        const textarea = document.querySelector(`.vx-tts-edit[data-step-id="${stepId}"]`);
+        const textarea = document.querySelector(`.ov-tts-edit[data-step-id="${stepId}"]`);
         if (textarea) textarea.value = d.text_tts;
         const select = document.querySelector(`select[data-step-id="${stepId}"]`);
         if (select) select.value = 'cleaned';
@@ -267,7 +267,7 @@ async function cleanSingle(stepId, btn) {
         if (status) status.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
     } finally {
         btn.disabled = false;
-        btn.classList.remove('vx-spin');
+        btn.classList.remove('ov-spin');
     }
 }
 
@@ -317,7 +317,7 @@ async function showDiff(stepId) {
 }
 
 async function acceptStep(stepId) {
-    const textarea = document.querySelector(`.vx-tts-edit[data-step-id="${stepId}"]`);
+    const textarea = document.querySelector(`.ov-tts-edit[data-step-id="${stepId}"]`);
     const textTts = textarea?.value || '';
 
     try {
@@ -382,7 +382,7 @@ async function onClean() {
             if (progressText) progressText.textContent = data.message || '';
 
             if (data.step_id && data.text_tts) {
-                const textarea = document.querySelector(`.vx-tts-edit[data-step-id="${data.step_id}"]`);
+                const textarea = document.querySelector(`.ov-tts-edit[data-step-id="${data.step_id}"]`);
                 if (textarea && document.activeElement !== textarea) {
                     textarea.value = data.text_tts;
                 }
@@ -428,7 +428,7 @@ async function onClean() {
 
 function collectEdits() {
     const edits = {};
-    document.querySelectorAll('.vx-tts-edit').forEach(textarea => {
+    document.querySelectorAll('.ov-tts-edit').forEach(textarea => {
         const stepId = textarea.dataset.stepId;
         const step = stepsData.find(s => String(s.step_id) === String(stepId));
         if (step && textarea.value !== (step.text_tts || '')) {
@@ -447,7 +447,7 @@ async function onValidateAll() {
         const nextBtn = DOM.nextBtn();
         if (nextBtn) nextBtn.disabled = false;
 
-        document.querySelectorAll('#clean-table select.vx-status-select').forEach(select => {
+        document.querySelectorAll('#clean-table select.ov-status-select').forEach(select => {
             select.value = 'validated';
         });
     } catch (err) {

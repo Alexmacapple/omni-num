@@ -144,21 +144,21 @@ test_prd_002() {
         || fail "index.html manque clean-resume"
 
     # Verifier les classes CSS PRD-002
-    grep -q "vx-diff-del" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
-        && ok "app.css contient vx-diff-del" \
-        || fail "app.css manque vx-diff-del"
+    grep -q "ov-diff-del" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
+        && ok "app.css contient ov-diff-del" \
+        || fail "app.css manque ov-diff-del"
 
-    grep -q "vx-diff-ins" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
-        && ok "app.css contient vx-diff-ins" \
-        || fail "app.css manque vx-diff-ins"
+    grep -q "ov-diff-ins" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
+        && ok "app.css contient ov-diff-ins" \
+        || fail "app.css manque ov-diff-ins"
 
-    grep -q "vx-progress" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
-        && ok "app.css contient vx-progress" \
-        || fail "app.css manque vx-progress"
+    grep -q "ov-progress" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
+        && ok "app.css contient ov-progress" \
+        || fail "app.css manque ov-progress"
 
-    grep -q "vx-tts-edit" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
-        && ok "app.css contient vx-tts-edit" \
-        || fail "app.css manque vx-tts-edit"
+    grep -q "ov-tts-edit" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
+        && ok "app.css contient ov-tts-edit" \
+        || fail "app.css manque ov-tts-edit"
 
     # Verifier syntaxe Python server.py
     python3 -c "import ast; ast.parse(open('$SCRIPT_DIR/voxstudio/server.py').read())" 2>/dev/null \
@@ -277,9 +277,9 @@ test_prd_003() {
         || fail "api-client.js manque apiDelete"
 
     # Verifier CSS spinner
-    grep -q "vx-spin" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
-        && ok "app.css contient vx-spin" \
-        || fail "app.css manque vx-spin"
+    grep -q "ov-spin" "$SCRIPT_DIR/voxstudio/frontend/out/css/app.css" 2>/dev/null \
+        && ok "app.css contient ov-spin" \
+        || fail "app.css manque ov-spin"
 
     # VoxQwen accessible
     curl -sf http://localhost:8060/voices >/dev/null 2>&1 \
@@ -477,9 +477,9 @@ test_prd_004() {
     # --- CSS : styles onglets 4-5-6 ---
     CSS="$SCRIPT_DIR/voxstudio/frontend/out/css/app.css"
 
-    grep -q "vx-assign-speed" "$CSS" \
-        && ok "CSS : vx-assign-speed present" \
-        || fail "CSS : vx-assign-speed absent"
+    grep -q "ov-assign-speed" "$CSS" \
+        && ok "CSS : ov-assign-speed present" \
+        || fail "CSS : ov-assign-speed absent"
 
     grep -q "#assign-table-container" "$CSS" \
         && ok "CSS : #assign-table-container present" \
