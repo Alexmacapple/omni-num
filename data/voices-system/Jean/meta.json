@@ -1,7 +1,7 @@
 {
   "name": "Jean",
   "source": "design",
-  "instruct": "male, middle-aged, low pitch, calm",
+  "instruct": "male, middle-aged, low pitch",
   "description": "Voix masculine posée, grave et rassurante",
   "language": "fr",
   "created_at": "2026-04-18T22:58:36.093692",

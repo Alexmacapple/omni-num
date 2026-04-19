@@ -1,9 +1,12 @@
 import csv
+import logging
 import openpyxl
 import os
 import re
 from typing import Dict, List
 from graph.state import WorkflowState
+
+logger = logging.getLogger("omnistudio")
 
 
 class ImportError(Exception):
@@ -90,10 +93,7 @@ def import_scenario(state: WorkflowState) -> Dict:
     except Exception as e:
         fmt = ext.lstrip(".")
         error_msg = FORMAT_ERRORS.get(fmt, f"Erreur lors du parsing ({e}).")
-        # Log l'exception originale pour debugging
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Erreur parsing {fmt}: {e}", exc_info=True)
+        logger.error("Erreur parsing %s: %s", fmt, e, exc_info=True)
         raise ImportError(error_msg)
 
     if not new_steps:

@@ -1,7 +1,7 @@
 {
   "name": "Sophie",
   "source": "design",
-  "instruct": "female, elderly, low pitch, assertive",
+  "instruct": "female, elderly, low pitch",
   "description": "Voix féminine mature, grave et affirmée",
   "language": "fr",
   "created_at": "2026-04-18T22:58:35.089690",

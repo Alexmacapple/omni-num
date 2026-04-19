@@ -1,7 +1,10 @@
+import logging
 from langgraph.graph import StateGraph, START, END
 from graph.state import DesignState
 from core.llm_client import LLMClient
 from core.omnivoice_client import OmniVoiceClient
+
+logger = logging.getLogger("omnistudio")
 vox_client = OmniVoiceClient()
 
 META_PROMPT_SYSTEM = """Tu es un expert en Design Vocal pour k2-fsa OmniVoice.
@@ -130,12 +133,11 @@ def synthesize_design(state: DesignState):
         return {"wav_paths": []}
 
     try:
-        path = vox_client.design("Ceci est un test de timbre et de rythme pour notre nouvelle voix studio.", voice_instruct)
+        # OmniVoice /design n'accepte que l'anglais (voir CLAUDE.md § À ne pas faire)
+        path = vox_client.design("This is a test of timbre and rhythm for our new studio voice.", voice_instruct)
         return {"wav_paths": [path] if path else []}
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Erreur synthèse design: {e}", exc_info=True)
+        logger.error("Erreur synthèse design: %s", e, exc_info=True)
         return {"wav_paths": []}
 
 def create_design_subgraph():

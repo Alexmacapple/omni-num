@@ -7,6 +7,7 @@ Dépendance : faster-whisper (~500 Mo) + modèle `large-v3-turbo-ct2` (~800 Mo).
 import json
 import logging
 import os
+import threading
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -49,28 +50,37 @@ class SubtitleClient:
     def __init__(self, model_name: str = "deepdml/faster-whisper-large-v3-turbo-ct2"):
         self.model_name = model_name
         self._model = None  # Lazy load au premier appel
+        self._load_lock = threading.Lock()
         self._cache_dir = os.getenv(
             "OMNISTUDIO_WHISPER_CACHE",
             os.path.join(os.path.dirname(__file__), "..", "..", "data", "models"),
         )
 
     def _load_model(self):
-        """Charge le modèle faster-whisper (~800 Mo) en mémoire au premier usage."""
+        """Charge le modèle faster-whisper (~800 Mo) en mémoire au premier usage.
+
+        Double-checked locking : évite qu'un deuxième thread charge le modèle une
+        seconde fois pendant que le premier est en train de le télécharger/instancier
+        (sinon ~1,6 Go de VRAM au lieu de 800 Mo et risque OOM).
+        """
         if self._model is not None:
             return
-        try:
-            from faster_whisper import WhisperModel
-            logger.info("Chargement faster-whisper model %s (premier usage)...", self.model_name)
-            self._model = WhisperModel(
-                self.model_name,
-                device="auto",
-                compute_type="default",
-                download_root=self._cache_dir,
-            )
-            logger.info("faster-whisper chargé.")
-        except ImportError:
-            logger.error("faster-whisper non installé : pip install faster-whisper pysrt")
-            raise
+        with self._load_lock:
+            if self._model is not None:
+                return
+            try:
+                from faster_whisper import WhisperModel
+                logger.info("Chargement faster-whisper model %s (premier usage)...", self.model_name)
+                self._model = WhisperModel(
+                    self.model_name,
+                    device="auto",
+                    compute_type="default",
+                    download_root=self._cache_dir,
+                )
+                logger.info("faster-whisper chargé.")
+            except ImportError:
+                logger.error("faster-whisper non installé : pip install faster-whisper pysrt")
+                raise
 
     def is_language_supported(self, language: str) -> bool:
         """Whisper supporte ~99 langues (sous-ensemble des 646 OmniVoice)."""

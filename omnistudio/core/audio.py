@@ -136,8 +136,8 @@ def concatenate_audio(file_paths: List[str], output_path: str, silence_duration:
         except Exception as e:
             logger.error("Erreur concat: %s", e)
             # Fallback FFmpeg concat simple
+            list_path = os.path.join(tmpdir, "list.txt")
             try:
-                list_path = os.path.join(tmpdir, "list.txt")
                 with open(list_path, "w") as f:
                     for p in file_paths: f.write(f"file '{os.path.abspath(p)}'\n")
                 subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_path, "-c", "copy", output_path], check=True, capture_output=True)
