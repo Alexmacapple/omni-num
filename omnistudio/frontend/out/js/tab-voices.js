@@ -574,6 +574,9 @@ export function init() {
         });
     }
 
+    // Bascule entre les 3 parcours (Attributs / IA / Profil)
+    initDesignModeRadios();
+
     // Navigation
     if (nextBtn) nextBtn.addEventListener('click', onContinueToAssign);
 
@@ -956,16 +959,43 @@ function updateDesignStepper(step) {
     const state = document.getElementById('design-stepper-state');
     const details = document.getElementById('design-stepper-details');
     const steps = document.querySelector('#design-stepper .fr-stepper__steps');
-    if (step === 1) {
-        if (title) title.firstChild.textContent = 'Décrire la voix ';
-        if (state) state.textContent = 'Étape 1 sur 2';
-        if (details) details.textContent = 'Choisissez un profil prédéfini ou composez votre propre description.';
+    // 3 étapes : Choisir un parcours · Décrire la voix · Écouter et enregistrer.
+    // Le step 2 (rétrocompat : ancien nom) pointe désormais sur « Écouter ».
+    const normalized = step >= 2 ? 3 : step;
+    if (normalized === 1) {
+        if (title) title.firstChild.textContent = 'Choisir un parcours ';
+        if (state) state.textContent = 'Étape 1 sur 3';
+        if (details) details.textContent = 'Trois parcours disponibles. Une seule option suffit ; vous pourrez réessayer avec un autre parcours.';
         if (steps) steps.setAttribute('data-fr-current-step', '1');
-    } else if (step === 2) {
-        if (title) title.firstChild.textContent = 'Écouter et enregistrer ';
-        if (state) state.textContent = 'Étape 2 sur 2';
-        if (details) details.textContent = 'Régénérez l\'audio si besoin, puis enregistrez la voix.';
+    } else if (normalized === 2) {
+        if (title) title.firstChild.textContent = 'Décrire la voix ';
+        if (state) state.textContent = 'Étape 2 sur 3';
+        if (details) details.textContent = 'Renseignez les attributs ou la description correspondant au parcours sélectionné, puis générez.';
         if (steps) steps.setAttribute('data-fr-current-step', '2');
+    } else {
+        if (title) title.firstChild.textContent = 'Écouter et enregistrer ';
+        if (state) state.textContent = 'Étape 3 sur 3';
+        if (details) details.textContent = 'Régénérez l\'audio si besoin, puis enregistrez la voix dans votre bibliothèque.';
+        if (steps) steps.setAttribute('data-fr-current-step', '3');
+    }
+}
+
+/** Bascule l'affichage des 3 parcours (Attributs / IA / Profil) selon le radio sélectionné. */
+function initDesignModeRadios() {
+    const radios = document.querySelectorAll('input[name="design-mode"]');
+    const contents = document.querySelectorAll('.design-mode-content');
+    const apply = (mode) => {
+        contents.forEach((el) => { el.hidden = (el.dataset.mode !== mode); });
+        // Le choix d'un parcours fait passer au step 2 (décrire).
+        updateDesignStepper(2);
+    };
+    radios.forEach((r) => {
+        r.addEventListener('change', () => { if (r.checked) apply(r.value); });
+    });
+    // État initial (aligné sur le radio checked par défaut : attrs)
+    const checked = document.querySelector('input[name="design-mode"]:checked');
+    if (checked) {
+        contents.forEach((el) => { el.hidden = (el.dataset.mode !== checked.value); });
     }
 }
 
