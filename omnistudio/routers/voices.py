@@ -458,6 +458,7 @@ async def voices_clone(
     model: str = Form("1.7B"),
     description: str = Form(""),
     test_text: str = Form("Ceci est un test de la voix clonee."),
+    language: str = Form("fr"),
     user=Depends(get_current_user),
     thread_id: str = Depends(get_thread_id),
 ):
@@ -500,7 +501,7 @@ async def voices_clone(
 
         try:
             wav_path = await asyncio.to_thread(
-                vox_client.preset, test_text, name, "fr", model, upload_dir,
+                vox_client.preset, test_text, name, language, model, upload_dir,
                 timeout=vox_client.timeout_preview
             )
         except OmniVoiceBusyError:

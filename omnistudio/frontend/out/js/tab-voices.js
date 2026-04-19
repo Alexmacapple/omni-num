@@ -268,6 +268,8 @@ function onStopRecording() {
 
     showAudioPreview(URL.createObjectURL(rec.blob), `Enregistrement micro — ${formatDuration(duration)} — ${formatFileSize(rec.blob.size)}`);
     onCloneFormChange();
+    // Auto-transcribe Whisper sur l'enregistrement micro (parité avec upload fichier)
+    autoTranscribeClone(new File([rec.blob], 'recording.wav', { type: 'audio/wav' }));
 }
 
 function onDeleteRecording() {
@@ -287,6 +289,7 @@ function onDeleteRecording() {
 
 async function autoTranscribeClone(file) {
     const transcriptionEl = DOM.cloneTranscription();
+    const hintEl = document.getElementById('clone-transcription-hint');
     if (!transcriptionEl) return;
     // Ne pas écraser une transcription déjà saisie manuellement
     if (transcriptionEl.value.trim()) return;
@@ -294,10 +297,11 @@ async function autoTranscribeClone(file) {
     const originalPlaceholder = transcriptionEl.placeholder;
     transcriptionEl.placeholder = 'Transcription automatique Whisper en cours…';
     transcriptionEl.disabled = true;
+    if (hintEl) hintEl.textContent = 'Transcription Whisper en cours… (5-15 s au 1er usage)';
     try {
         const form = new FormData();
         form.append('audio', file);
-        form.append('language', 'auto');
+        form.append('language', getSessionLanguage());
         const token = localStorage.getItem('ov_access_token') || '';
         const resp = await fetch('api/voices/transcribe', {
             method: 'POST',
@@ -310,10 +314,15 @@ async function autoTranscribeClone(file) {
             if (text && !transcriptionEl.value.trim()) {
                 transcriptionEl.value = text;
                 transcriptionEl.dispatchEvent(new Event('input', { bubbles: true }));
+                if (hintEl) hintEl.textContent = 'Transcription Whisper effectuée — relisez et corrigez si nécessaire avant de cloner.';
+            } else if (hintEl) {
+                hintEl.textContent = 'Whisper n\'a pas réussi à transcrire. Saisissez manuellement le texte.';
             }
+        } else if (hintEl) {
+            hintEl.textContent = 'Transcription automatique indisponible. Saisissez manuellement le texte.';
         }
     } catch {
-        // Silencieux : user peut saisir manuellement
+        if (hintEl) hintEl.textContent = 'Transcription automatique indisponible. Saisissez manuellement le texte.';
     } finally {
         transcriptionEl.placeholder = originalPlaceholder;
         transcriptionEl.disabled = false;
@@ -426,6 +435,8 @@ export function init() {
     if (designGenerateBtn) designGenerateBtn.addEventListener('click', onGenerateBrief);
     const designUseDirectBtn = DOM.designUseDirectBtn();
     if (designUseDirectBtn) designUseDirectBtn.addEventListener('click', onUseDirectPrompt);
+    const designComposeAttrsBtn = document.getElementById('design-compose-attrs-btn');
+    if (designComposeAttrsBtn) designComposeAttrsBtn.addEventListener('click', onComposeAttrs);
     const tempSlider = document.getElementById('design-temperature');
     const tempOutput = document.getElementById('design-temperature-output');
     if (tempSlider && tempOutput) {
@@ -463,6 +474,31 @@ export function init() {
 
     // Afficher les hints de validation au chargement
     onCloneFormChange();
+
+    // Persistance langue de session : sélecteur Design → localStorage
+    const designLangSel = document.getElementById('design-language');
+    if (designLangSel) {
+        // Initialise la valeur depuis la session si elle existe et que 'fr' est encore par défaut
+        const stored = getSessionLanguage();
+        if (stored && designLangSel.value && !designLangSel.dataset.userSet) {
+            designLangSel.value = stored;
+        }
+        designLangSel.addEventListener('change', () => {
+            setSessionLanguage(designLangSel.value);
+            designLangSel.dataset.userSet = '1';
+            // Si un sélecteur Clone existe, le synchroniser
+            const cloneLang = document.getElementById('clone-language');
+            if (cloneLang) cloneLang.value = designLangSel.value;
+        });
+    }
+    const cloneLangSel = document.getElementById('clone-language');
+    if (cloneLangSel) {
+        cloneLangSel.value = getSessionLanguage();
+        cloneLangSel.addEventListener('change', () => {
+            setSessionLanguage(cloneLangSel.value);
+            if (designLangSel) designLangSel.value = cloneLangSel.value;
+        });
+    }
 
     // Navigation
     if (nextBtn) nextBtn.addEventListener('click', onContinueToAssign);
@@ -615,7 +651,7 @@ async function onContinueToAssign() {
         const voice = voiceList[0];
         try {
             await apiPost('/api/assign/apply-all', {
-                voice, language: 'fr', speed: 1.0, instruction: '',
+                voice, language: getSessionLanguage(), speed: 1.0, instruction: '',
                 selected_voices: voiceList,
             });
         } catch {
@@ -718,7 +754,7 @@ async function previewVoice(voiceName, btn) {
 
     try {
         const result = await apiPost('/api/voices/preview', {
-            voice: voiceName, text: testText.value, language: 'fr',
+            voice: voiceName, text: testText.value, language: getSessionLanguage(),
         });
         if (result.error) throw new Error(result.error.message || 'Erreur de synthèse');
 
@@ -951,9 +987,26 @@ function showQuickAdjust() {
     });
 }
 
-/** Langue cible de synthèse Design (défaut 'fr' — évite la bascule EN d'OmniVoice quand l'instruct est normalisé en items anglais). */
+/** Langue de session lue depuis localStorage (défaut 'fr'). Partagée entre Clone, Assign, Generate. */
+export function getSessionLanguage() {
+    try {
+        return localStorage.getItem('ov_language') || 'fr';
+    } catch {
+        return 'fr';
+    }
+}
+
+/** Persiste la langue de session. */
+function setSessionLanguage(lang) {
+    try {
+        if (lang) localStorage.setItem('ov_language', lang);
+    } catch { /* quota / private mode : on ignore */ }
+}
+
+/** Langue cible de synthèse Design. Lit le dropdown, fallback session. */
 function getDesignLanguage() {
-    return document.getElementById('design-language')?.value || 'fr';
+    const val = document.getElementById('design-language')?.value;
+    return val || getSessionLanguage();
 }
 
 /** Affiche les attributs effectivement retenus par la whitelist OmniVoice. */
@@ -1042,6 +1095,76 @@ function getBrief() {
         chinese_dialect: document.getElementById('design-chinese-dialect')?.value || '',
         extra: document.getElementById('design-extra')?.value || '',
     };
+}
+
+/** Compose un voice_instruct whitelist OmniVoice à partir des 6 dropdowns (sans IA).
+ *  Ordre : gender, age, pitch, style, accent/dialect. 1 item max par catégorie.
+ *  Les valeurs vides sont ignorées. Retourne une string « female, middle-aged, … ».
+ */
+function composeInstructFromAttrs() {
+    const genderRaw = document.querySelector('input[name="design-gender"]:checked')?.value || '';
+    const ageRaw = document.querySelector('input[name="design-age"]:checked')?.value || '';
+    const pitchRaw = document.getElementById('design-pitch')?.value || '';
+    const styleRaw = document.querySelector('input[name="design-style"]:checked')?.value || '';
+    const accent = document.getElementById('design-english-accent')?.value || '';
+    const dialect = document.getElementById('design-chinese-dialect')?.value || '';
+
+    const GENDER = { 'masculin': 'male', 'feminin': 'female' };
+    const AGE = { 'jeune': 'young adult', 'mature': 'middle-aged', 'age': 'elderly' };
+    const PITCH = {
+        'very low': 'very low pitch', 'low': 'low pitch',
+        'moderate': 'moderate pitch', 'high': 'high pitch', 'very high': 'very high pitch'
+    };
+
+    const items = [];
+    if (GENDER[genderRaw]) items.push(GENDER[genderRaw]);
+    if (AGE[ageRaw]) items.push(AGE[ageRaw]);
+    if (PITCH[pitchRaw]) items.push(PITCH[pitchRaw]);
+    if (styleRaw === 'whisper') items.push('whisper');
+    // Accent et dialecte sont exclusifs (l'un ou l'autre selon la langue cible)
+    if (accent) items.push(accent.toLowerCase());
+    else if (dialect) items.push(dialect.toLowerCase());
+    return items.join(', ');
+}
+
+async function onComposeAttrs() {
+    const btn = document.getElementById('design-compose-attrs-btn');
+    const status = DOM.designStatus();
+    const composed = composeInstructFromAttrs();
+    if (!composed) {
+        if (status) status.innerHTML = `<p class="fr-alert fr-alert--warning fr-alert--sm"><span class="fr-alert__title">Sélectionnez au moins un attribut (Genre, Âge, Hauteur, Style, Accent ou Dialecte).</span></p>`;
+        return;
+    }
+    const instruct = DOM.designInstruct();
+    if (instruct) instruct.value = composed;
+    const group = DOM.designInstructGroup();
+    if (group) group.hidden = false;
+    if (btn) btn.disabled = true;
+    showLoading(status, 'Génération audio en cours (5-15s)...');
+    try {
+        const result = await apiPost('/api/voices/explore', {
+            voice_instruct: composed,
+            test_text: DOM.testText()?.value || '',
+            regenerate_instruct: false,
+            language: getDesignLanguage(),
+            want_subtitles: getDesignWantSubtitles(),
+            advanced: getDesignAdvanced(),
+        });
+        if (result.error) throw new Error(result.error.message);
+        if (result.data.audio_url) showDesignAudio(result.data.audio_url);
+        showNormalizedInstruct(result.data.normalized_instruct);
+        const lockSection = DOM.designLockSection();
+        if (lockSection) lockSection.hidden = false;
+        const listen = DOM.designListenSection();
+        if (listen) listen.hidden = false;
+        updateDesignStepper(2);
+        if (status) status.innerHTML = '';
+        await loadVoices();
+    } catch (err) {
+        if (status) status.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
+    } finally {
+        if (btn) btn.disabled = false;
+    }
 }
 
 async function onUseDirectPrompt() {
@@ -1339,7 +1462,7 @@ async function onStabilityTest() {
         const urls = [];
         for (let i = 0; i < 3; i++) {
             const result = await apiPost('/api/voices/preview', {
-                voice: name, text, language: 'fr',
+                voice: name, text, language: getSessionLanguage(),
             });
             if (result.error) throw new Error(result.error.message);
             urls.push(result.data.audio_url);
@@ -1418,6 +1541,7 @@ async function onClone() {
     formData.append('model', document.querySelector('input[name="clone-model"]:checked')?.value || '1.7B');
     formData.append('description', document.getElementById('clone-desc')?.value || '');
     formData.append('test_text', DOM.testText()?.value || '');
+    formData.append('language', document.getElementById('clone-language')?.value || getSessionLanguage());
 
     try {
         const result = await uploadFile('/api/voices/clone', formData);

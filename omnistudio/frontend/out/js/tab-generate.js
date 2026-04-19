@@ -5,6 +5,7 @@ import { apiGet, apiPost, fetchSSE } from './api-client.js';
 import { eventBus } from './app.js';
 import { escapeHtml, escapeAttr } from './dom-utils.js';
 import { authenticatedUrl } from './audio-player.js';
+import { getSessionLanguage } from './tab-voices.js';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -219,7 +220,7 @@ async function onRandom() {
 
     try {
         const text = "Bonjour, ceci est un test rapide avec une voix tirée au hasard.";
-        const response = await apiPost('/api/generate/random', { text, language: 'fr' });
+        const response = await apiPost('/api/generate/random', { text, language: getSessionLanguage() });
         if (response.error) throw new Error(response.error.message || 'Erreur');
         const voice = response.data?.voice || response.data?.filename || 'voix tirée au hasard';
         const audioUrl = response.data?.audio_url;
