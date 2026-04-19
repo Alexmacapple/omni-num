@@ -44,6 +44,8 @@ function init() {
     DOM.startBtn().addEventListener('click', () => onGenerate(false));
     DOM.resumeBtn().addEventListener('click', () => onGenerate(true));
     DOM.nextBtn().addEventListener('click', () => eventBus.emit('navigate', 'tab-export'));
+    const advResetBtn = document.getElementById('adv-reset-btn');
+    if (advResetBtn) advResetBtn.addEventListener('click', resetAdvancedParams);
 
     // Pagination par delegation
     DOM.paginationList().addEventListener('click', onPageClick);
@@ -254,6 +256,68 @@ async function onRandom() {
     }
 }
 
+// --- Paramètres avancés OmniVoice (PRD v1.5 décision 14) ---
+
+const ADV_DEFAULTS = {
+    'adv-num-step': '32',
+    'adv-speed': '1.0',
+    'adv-guidance-scale': '2.0',
+    't-shift': '0.1', 'adv-t-shift': '0.1',
+    'adv-position-temp': '5.0',
+    'adv-class-temp': '0.0',
+    'adv-layer-penalty': '5.0',
+    'adv-chunk-duration': '15.0',
+    'adv-chunk-threshold': '30.0',
+};
+
+function getAdvancedParams() {
+    const num = (id) => {
+        const el = document.getElementById(id);
+        if (!el || el.value === '' || el.value == null) return null;
+        const v = parseFloat(el.value);
+        return isNaN(v) ? null : v;
+    };
+    const bool = (id) => {
+        const el = document.getElementById(id);
+        return el ? !!el.checked : null;
+    };
+    const out = {
+        num_step: num('adv-num-step'),
+        speed: num('adv-speed'),
+        guidance_scale: num('adv-guidance-scale'),
+        t_shift: num('adv-t-shift'),
+        position_temperature: num('adv-position-temp'),
+        class_temperature: num('adv-class-temp'),
+        layer_penalty_factor: num('adv-layer-penalty'),
+        audio_chunk_duration: num('adv-chunk-duration'),
+        audio_chunk_threshold: num('adv-chunk-threshold'),
+        denoise: bool('adv-denoise'),
+        postprocess_output: bool('adv-postprocess'),
+    };
+    // Si toutes les valeurs sont égales aux défauts, retourner null (évite l'envoi inutile)
+    const allDefault =
+        out.num_step === 32 && out.speed === 1.0 && out.guidance_scale === 2.0 &&
+        out.t_shift === 0.1 && out.position_temperature === 5.0 &&
+        out.class_temperature === 0.0 && out.layer_penalty_factor === 5.0 &&
+        out.audio_chunk_duration === 15.0 && out.audio_chunk_threshold === 30.0 &&
+        out.denoise === true && out.postprocess_output === true;
+    return allDefault ? null : out;
+}
+
+function resetAdvancedParams() {
+    const defaults = {
+        'adv-num-step': '32', 'adv-speed': '1.0', 'adv-guidance-scale': '2.0',
+        'adv-t-shift': '0.1', 'adv-position-temp': '5.0', 'adv-class-temp': '0.0',
+        'adv-layer-penalty': '5.0', 'adv-chunk-duration': '15.0', 'adv-chunk-threshold': '30.0',
+    };
+    for (const [id, v] of Object.entries(defaults)) {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+    }
+    const d = document.getElementById('adv-denoise'); if (d) d.checked = true;
+    const p = document.getElementById('adv-postprocess'); if (p) p.checked = true;
+}
+
 async function onSaveRandom(e) {
     const btn = e.currentTarget;
     const nameInput = document.getElementById('vx-random-save-name');
@@ -325,7 +389,10 @@ async function onGenerate(isResume = false) {
     let sseCompleted = false;
 
     try {
-    await fetchSSE('/api/generate', { fidelity, resume: isResume, force: true }, {
+    const advanced = getAdvancedParams();
+    const payload = { fidelity, resume: isResume, force: true };
+    if (advanced) payload.advanced = advanced;
+    await fetchSSE('/api/generate', payload, {
         onProgress(data) {
             const progress = data.progress || 0;
             const message = data.message || '';

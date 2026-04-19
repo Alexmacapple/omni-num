@@ -40,14 +40,34 @@ from dependencies import (
 # ---------------------------------------------------------------------------
 
 
+class AdvancedParams(BaseModel):
+    """Paramètres avancés OmniVoice (PRD-MIGRATION-001 v1.5 décision 14).
+
+    Tous optionnels : si None, OmniVoice applique ses valeurs par défaut.
+    """
+    num_step: int | None = None           # 4-64, default 32
+    speed: float | None = None            # 0.5-2.0, default 1.0
+    guidance_scale: float | None = None   # 0-4, default 2.0 (design uniquement)
+    t_shift: float | None = None          # 0-1, default 0.1
+    position_temperature: float | None = None  # default 5.0
+    class_temperature: float | None = None     # default 0.0
+    layer_penalty_factor: float | None = None  # default 5.0
+    audio_chunk_duration: float | None = None  # default 15.0
+    audio_chunk_threshold: float | None = None # default 30.0
+    denoise: bool | None = None                # default True
+    postprocess_output: bool | None = None     # default True
+
+
 class GenerateRequest(BaseModel):
     fidelity: str = "quality"
     resume: bool = False
     force: bool = False
+    advanced: AdvancedParams | None = None
 
 
 class SampleRequest(BaseModel):
     fidelity: str = "quality"
+    advanced: AdvancedParams | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -189,7 +209,8 @@ async def generate_production(
                     batch_task = asyncio.ensure_future(asyncio.to_thread(
                         vox_client.batch_preset, texts, voice,
                         language=lang, model=model, output_dir=output_dir,
-                        prefix=prefix, speed=spd
+                        prefix=prefix, speed=spd,
+                        advanced=req.advanced.model_dump(exclude_none=True) if req.advanced else None,
                     ))
                     while not batch_task.done():
                         await asyncio.sleep(10)

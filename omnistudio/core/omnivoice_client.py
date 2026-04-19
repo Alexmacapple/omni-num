@@ -330,8 +330,16 @@ class OmniVoiceClient:
 
     def batch_preset(self, texts: List[str], voice: str, language: str = "fr",
                      model: str = "1.7B", output_dir: str = "temp", prefix: str = "batch",
-                     speed: Optional[float] = None) -> List[str]:
-        """Génère un lot via l'API batch et extrait les WAV (ordre du ZIP)."""
+                     speed: Optional[float] = None,
+                     advanced: Optional[Dict] = None) -> List[str]:
+        """Génère un lot via l'API batch et extrait les WAV (ordre du ZIP).
+
+        `advanced` : dict optionnel de paramètres OmniVoice avancés (PRD v1.5
+        décision 14). Clés acceptées : num_step, speed, t_shift,
+        position_temperature, class_temperature, layer_penalty_factor,
+        audio_chunk_duration, audio_chunk_threshold, denoise, postprocess_output.
+        Les valeurs None sont ignorées (OmniVoice applique ses défauts).
+        """
         os.makedirs(output_dir, exist_ok=True)
         try:
             data = {
@@ -342,6 +350,15 @@ class OmniVoiceClient:
             }
             if speed and speed != 1.0:
                 data["speed"] = speed
+            if advanced:
+                # Whitelist des clés OmniVoice acceptées par /batch/preset (pas de guidance_scale ici)
+                allowed = {"num_step", "speed", "t_shift", "position_temperature",
+                           "class_temperature", "layer_penalty_factor",
+                           "audio_chunk_duration", "audio_chunk_threshold",
+                           "denoise", "postprocess_output"}
+                for k, v in advanced.items():
+                    if v is not None and k in allowed:
+                        data[k] = v
             response = httpx.post(f"{self.base_url}/batch/preset", json=data, timeout=self.timeout_batch)
             self._check_tts_error(response)
             if response.status_code != 200:
