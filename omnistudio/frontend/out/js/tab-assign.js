@@ -46,18 +46,19 @@ function init() {
     applyAllBtn.addEventListener('click', onApplyAll);
     nextBtn.addEventListener('click', onContinue);
     speedRange.addEventListener('input', () => {
-        const v = DOM.speedRange().value + 'x';
-        DOM.speedValue().textContent = v;
-        DOM.speedRange().setAttribute('aria-valuetext', v);
+        const v = speedRange.value + 'x';
+        const speedValue = DOM.speedValue();
+        if (speedValue) speedValue.textContent = v;
+        speedRange.setAttribute('aria-valuetext', v);
         const output = document.querySelector('#assign-speed').closest('.fr-range')?.querySelector('.fr-range__output');
         if (output) output.textContent = v;
     });
-    DOM.voiceSelect().addEventListener('change', onVoiceChange);
+    voiceSelect.addEventListener('change', onVoiceChange);
 
     // Delegation sur le tableau
-    DOM.tableBody().addEventListener('click', onTableAction);
-    DOM.tableBody().addEventListener('change', onTableChange);
-    DOM.tableBody().addEventListener('input', onTableInput);
+    tableBody.addEventListener('click', onTableAction);
+    tableBody.addEventListener('change', onTableChange);
+    tableBody.addEventListener('input', onTableInput);
 
     // Ajout de segment
     const addBtn = DOM.addBtn();

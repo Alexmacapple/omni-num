@@ -71,6 +71,7 @@ export function getCurrentActiveTab() {
 }
 
 function activateDsfrTab(tabId) {
+    if (!tabId) return;
     const btn = document.getElementById(tabId);
     if (btn) btn.click();
 }
@@ -160,7 +161,13 @@ function updateStepper(tabId) {
 }
 
 // Observer les changements d'onglet DSFR (niveau 1 uniquement)
+let tabObservers = []; // Stocker les observers pour cleanup
+
 function observeTabChanges() {
+    // Nettoyer les anciens observers avant d'en créer de nouveaux
+    tabObservers.forEach(obs => obs.disconnect());
+    tabObservers = [];
+
     // Ne cibler que les onglets principaux, pas les sous-onglets (sub-tab-*)
     const mainTabSet = new Set(TAB_IDS);
     const tabs = document.querySelectorAll('.fr-tabs__tab');
@@ -182,6 +189,7 @@ function observeTabChanges() {
     });
 
     tabs.forEach(t => observer.observe(t, { attributes: true, attributeFilter: ['aria-selected'] }));
+    tabObservers.push(observer);
 
     // Fix DSFR tabindex : tous les onglets (principaux + sous-onglets) restent
     // atteignables au clavier (Tab). Le DSFR pose tabindex="-1" sur les onglets
@@ -198,6 +206,7 @@ function observeTabChanges() {
         }
     });
     tabs.forEach(t => tabIndexObserver.observe(t, { attributes: true, attributeFilter: ['tabindex'] }));
+    tabObservers.push(tabIndexObserver);
 }
 
 // Ecouter les demandes de navigation

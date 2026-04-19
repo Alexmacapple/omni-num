@@ -138,7 +138,16 @@ async function onStartRecording() {
         return;
     }
 
-    rec.context = new AudioContext();
+    // Fallback pour navigateurs non-standards (Safari: webkitAudioContext)
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+        if (statusEl) {
+            statusEl.className = 'fr-text--sm fr-mt-1v';
+            statusEl.textContent = 'AudioContext non supporté par ce navigateur.';
+        }
+        return;
+    }
+    rec.context = new AudioContextClass();
     rec.sampleRate = rec.context.sampleRate;
     rec.source = rec.context.createMediaStreamSource(rec.stream);
     rec.processor = rec.context.createScriptProcessor(4096, 1, 1);
