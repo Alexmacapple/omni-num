@@ -1,6 +1,7 @@
 import logging
 import httpx
 import os
+import re
 import zipfile
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -15,6 +16,128 @@ class OmniVoiceBusyError(Exception):
 class OmniVoiceTimeoutError(Exception):
     """La génération a dépassé le timeout (504 ou httpx.ReadTimeout)."""
     pass
+
+
+# OmniVoice k2-fsa : items valides par catégorie (1 item max par catégorie).
+# Cf. erreur 500 de /design qui liste les items non supportés.
+_OMNIVOICE_VALID_ITEMS = {
+    "american accent", "australian accent", "british accent", "canadian accent",
+    "chinese accent", "indian accent", "japanese accent", "korean accent",
+    "portuguese accent", "russian accent",
+    "child", "teenager", "young adult", "middle-aged", "elderly",
+    "female", "male",
+    "very low pitch", "low pitch", "moderate pitch", "high pitch", "very high pitch",
+    "whisper",
+}
+
+# Catégories exclusives (1 item par catégorie sinon 500 "Conflicting")
+_CATEGORIES = {
+    "gender": {"male", "female"},
+    "age": {"child", "teenager", "young adult", "middle-aged", "elderly"},
+    "pitch": {"very low pitch", "low pitch", "moderate pitch", "high pitch", "very high pitch"},
+    "accent": {"american accent", "australian accent", "british accent", "canadian accent",
+               "chinese accent", "indian accent", "japanese accent", "korean accent",
+               "portuguese accent", "russian accent"},
+    "special": {"whisper"},
+}
+
+# Mapping keyword → item whitelist (permet d'accepter un prompt prose).
+# Mots NON ambigus uniquement : "moderate"/"high"/"low" seul exclus car peut
+# qualifier autre chose que le pitch (moderate pace, high energy, etc.).
+_KEYWORD_TO_ITEM = {
+    # genre
+    "male": "male", "man": "male", "masculine": "male", "masculin": "male", "masculine voice": "male", "male voice": "male",
+    "female": "female", "woman": "female", "feminine": "female", "féminin": "female", "feminin": "female", "féminine": "female", "feminine voice": "female", "female voice": "female",
+    # âge
+    "child": "child", "kid": "child", "enfant": "child",
+    "teenager": "teenager", "teen": "teenager", "adolescent": "teenager",
+    "young adult": "young adult", "young": "young adult", "jeune": "young adult",
+    "middle-aged": "middle-aged", "middle aged": "middle-aged", "mature": "middle-aged", "adult": "middle-aged",
+    "elderly": "elderly", "senior": "elderly", "aged": "elderly", "âgé": "elderly", "old voice": "elderly",
+    # pitch (phrases explicites + synonymes non ambigus)
+    "very low pitch": "very low pitch", "very deep": "very low pitch",
+    "low pitch": "low pitch", "deep voice": "low pitch", "deep": "low pitch", "grave": "low pitch", "bass": "low pitch", "cavernous": "low pitch",
+    "moderate pitch": "moderate pitch", "médium": "moderate pitch", "medium pitch": "moderate pitch",
+    "high pitch": "high pitch", "aigu": "high pitch", "high-pitched": "high pitch",
+    "very high pitch": "very high pitch",
+    # accent (on évite de matcher seulement "french" etc. qui qualifie souvent la langue)
+    "american accent": "american accent",
+    "british accent": "british accent",
+    "australian accent": "australian accent",
+    "canadian accent": "canadian accent",
+    "chinese accent": "chinese accent",
+    "indian accent": "indian accent",
+    "japanese accent": "japanese accent",
+    "korean accent": "korean accent",
+    "portuguese accent": "portuguese accent",
+    "russian accent": "russian accent",
+    # special
+    "whisper": "whisper", "whispered": "whisper", "chuchoté": "whisper",
+}
+
+
+def normalize_voice_instruct(raw: str) -> str:
+    """Convertit un voice_instruct libre en items whitelist OmniVoice.
+
+    Accepte :
+    - Format déjà valide : "male, middle-aged, low pitch" → retourné tel quel
+    - Prompt prose EN/FR : "Deep mature French male voice, calm authority" →
+      "male, middle-aged, low pitch"
+
+    Règle : 1 item max par catégorie (gender, age, pitch, accent, special).
+    Le premier match par catégorie gagne (ordre de lecture).
+    """
+    if not raw:
+        return ""
+    lowered = raw.lower().strip()
+
+    # Court-circuit : si tous les items sont déjà valides, on garde
+    raw_items = [it.strip() for it in lowered.split(",") if it.strip()]
+    if raw_items and all(it in _OMNIVOICE_VALID_ITEMS for it in raw_items):
+        # Dédup + 1 par catégorie
+        return _dedupe_by_category(raw_items)
+
+    # Extraction keyword : balayage des mappings, 1 par catégorie
+    seen_categories: Dict[str, str] = {}
+    # Tri par longueur décroissante pour matcher "young adult" avant "young"
+    sorted_keys = sorted(_KEYWORD_TO_ITEM.keys(), key=len, reverse=True)
+    for kw in sorted_keys:
+        if not _word_match(lowered, kw):
+            continue
+        item = _KEYWORD_TO_ITEM[kw]
+        cat = _category_of(item)
+        if cat and cat not in seen_categories:
+            seen_categories[cat] = item
+
+    result = list(seen_categories.values())
+    if not result:
+        # Fallback minimal : gender neutral non supporté → on met rien
+        logger.warning("normalize_voice_instruct: aucun keyword reconnu dans '%s'", raw[:80])
+        return ""
+    return ", ".join(result)
+
+
+def _word_match(text: str, keyword: str) -> bool:
+    """Match mot entier ou sous-expression (pas de substring à l'intérieur d'un mot)."""
+    pattern = r"\b" + re.escape(keyword) + r"\b"
+    return re.search(pattern, text) is not None
+
+
+def _category_of(item: str) -> Optional[str]:
+    for cat, items in _CATEGORIES.items():
+        if item in items:
+            return cat
+    return None
+
+
+def _dedupe_by_category(items: List[str]) -> str:
+    """Garde le premier item de chaque catégorie."""
+    seen: Dict[str, str] = {}
+    for it in items:
+        cat = _category_of(it)
+        if cat and cat not in seen:
+            seen[cat] = it
+    return ", ".join(seen.values())
 
 
 class OmniVoiceClient:
@@ -251,10 +374,19 @@ class OmniVoiceClient:
                output_dir: str = "temp", timeout: Optional[float] = None) -> Optional[str]:
         os.makedirs(output_dir, exist_ok=True)
         t = timeout or self.timeout_generate
+        # Normalise voice_instruct vers items whitelist OmniVoice
+        # (accepte prompt prose EN/FR → items valides, 1 par catégorie)
+        normalized_instruct = normalize_voice_instruct(voice_instruct)
+        if not normalized_instruct:
+            logger.error("design: voice_instruct '%s' n'a produit aucun item valide", voice_instruct[:80])
+            return None
+        if normalized_instruct != voice_instruct.strip():
+            logger.info("design: voice_instruct normalisé '%s' → '%s'",
+                        voice_instruct[:60], normalized_instruct)
         try:
             data = {
                 "text": text,
-                "voice_instruct": voice_instruct,
+                "voice_instruct": normalized_instruct,
                 "language": language
             }
             # OmniVoice /design attend un body JSON (pas form-encoded comme /preset)
