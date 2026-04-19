@@ -29,15 +29,17 @@ trap cleanup INT TERM
 
 echo "=== OmniStudio — démarrage ==="
 
-# 0. Clé Albert (LLM pour voice design)
+# 0. Clé Albert (LLM pour voice design) — source unique : config-claude/credentials.json
 CRED_FILE="$HOME/Claude/config-claude/credentials.json"
 if [ -z "${OPENAI_API_KEY:-}" ] && [ -f "$CRED_FILE" ]; then
     ALBERT_KEY=$("$VENV_PY" -c "import json; d=json.load(open('$CRED_FILE')); print(d.get('albert',{}).get('api_key',''))" 2>/dev/null || echo "")
     if [ -n "$ALBERT_KEY" ]; then
         export OPENAI_API_KEY="$ALBERT_KEY"
-        echo "Clé Albert chargée."
+        echo "Clé Albert chargée depuis credentials.json."
     else
-        echo "Clé Albert absente dans credentials.json — design voice tombera en fallback parser (sans LLM)."
+        echo "ATTENTION : clé Albert absente dans credentials.json (section 'albert.api_key')."
+        echo "  → voice design retombera sur normalize_voice_instruct (fallback parser, sans LLM)."
+        echo "  → ajouter la clé avec : jq '.albert.api_key = \"sk-...\"' credentials.json"
     fi
 fi
 
