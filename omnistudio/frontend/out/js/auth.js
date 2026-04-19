@@ -3,9 +3,9 @@
  */
 
 const STORAGE_KEYS = {
-    ACCESS_TOKEN: 'vx_access_token',
-    REFRESH_TOKEN: 'vx_refresh_token',
-    TOKEN_EXP: 'vx_token_exp',
+    ACCESS_TOKEN: 'ov_access_token',
+    REFRESH_TOKEN: 'ov_refresh_token',
+    TOKEN_EXP: 'ov_token_exp',
 };
 
 const MAX_REFRESH_FAILURES = 3;

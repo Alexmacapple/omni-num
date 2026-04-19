@@ -13,6 +13,7 @@ import tabVoices from './tab-voices.js';
 import tabAssign from './tab-assign.js';
 import tabGenerate from './tab-generate.js';
 import tabExport from './tab-export.js';
+import { initTagPalette, mountTagPalette } from './tag-palette.js';
 
 // --- Mode ---
 const _isMinified = !import.meta.url.includes('/js/app.js');
@@ -226,6 +227,12 @@ function showApp() {
         tabGenerate.init();
         tabExport.init();
 
+        // Palette de marqueurs émotionnels (montée à l'activation de l'onglet Préparation)
+        initTagPalette();
+        eventBus.on('tab-activated:tab-clean', () => {
+            mountTagPalette('clean-tag-palette');
+        });
+
         // Observer les onglets DSFR
         setTimeout(observeTabChanges, 200);
 
@@ -396,7 +403,7 @@ async function checkStatus() {
         let generationHtml = '';
         try {
             const ttsResp = await fetch('api/tts/status', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('vx_access_token') || ''}` }
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('ov_access_token') || ''}` }
             });
             if (ttsResp.ok) {
                 const ttsJson = await ttsResp.json();
@@ -465,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleTokenRefresh();
 
         try {
-            const token = localStorage.getItem('vx_access_token');
+            const token = localStorage.getItem('ov_access_token');
             if (token) {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 if (usernameDisplay) usernameDisplay.textContent = payload.preferred_username || '';

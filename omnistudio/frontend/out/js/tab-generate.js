@@ -11,6 +11,8 @@ const ITEMS_PER_PAGE = 10;
 const DOM = {
     summaryText: () => document.getElementById('generate-summary-text'),
     sampleBtn: () => document.getElementById('gen-sample-btn'),
+    randomBtn: () => document.getElementById('gen-random-btn'),
+    randomResult: () => document.getElementById('gen-random-result'),
     startBtn: () => document.getElementById('gen-start-btn'),
     resumeContainer: () => document.getElementById('gen-resume'),
     resumeBtn: () => document.getElementById('gen-resume-btn'),
@@ -38,6 +40,7 @@ function setGenerating(value) {
 
 function init() {
     DOM.sampleBtn().addEventListener('click', onSample);
+    DOM.randomBtn().addEventListener('click', onRandom);
     DOM.startBtn().addEventListener('click', () => onGenerate(false));
     DOM.resumeBtn().addEventListener('click', () => onGenerate(true));
     DOM.nextBtn().addEventListener('click', () => eventBus.emit('navigate', 'tab-export'));
@@ -196,6 +199,40 @@ async function onSample() {
         btn.disabled = false;
         btn.removeAttribute('aria-busy');
         btn.textContent = originalText;
+    }
+}
+
+// --- Voix aléatoire (prototype rapide) ---
+
+async function onRandom() {
+    const btn = DOM.randomBtn();
+    const original = btn.textContent;
+    const result = DOM.randomResult();
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    btn.innerHTML = '<span class="vx-spin" aria-hidden="true">&#9696;</span> Tirage en cours\u2026';
+    result.hidden = false;
+    result.innerHTML = '<p class="fr-text--sm fr-text--mention-grey">Génération d\'un échantillon avec voix aléatoire…</p>';
+
+    try {
+        const text = "Bonjour, ceci est un test rapide avec une voix tirée au hasard.";
+        const response = await apiPost('/api/generate/random', { text, language: 'fr' });
+        if (response.error) throw new Error(response.error.message || 'Erreur');
+        const voice = response.data?.voice || response.data?.filename || 'voix tirée au hasard';
+        const audioUrl = response.data?.audio_url;
+        const message = response.data?.message || '';
+        if (!audioUrl) throw new Error('Aucun audio retourné');
+        result.innerHTML = `
+            <p class="fr-text--sm"><strong>Échantillon :</strong> ${escapeHtml(voice)}</p>
+            <audio src="${authenticatedUrl(audioUrl)}" controls class="vx-audio-player" title="Échantillon voix aléatoire ${escapeHtml(voice)}"></audio>
+            ${message ? `<p class="fr-hint-text fr-mt-1w">${escapeHtml(message)}</p>` : ''}`;
+    } catch (err) {
+        result.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
+    } finally {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+        btn.textContent = original;
     }
 }
 
