@@ -8,7 +8,7 @@
     <base href="/omni/">
 
     <!-- Prevention flash theme -->
-    <script src="js/theme-init.js?v=20260419l"></script>
+    <script src="js/theme-init.js?v=20260419m"></script>
 
     <!-- Preload polices critiques (PRD-028) -->
     <link rel="preload" href="dsfr/fonts/Marianne-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="dsfr/utility/utility.min.css">
 
     <!-- Styles custom OmniStudio -->
-    <link rel="stylesheet" href="css/app.css?v=20260419l">
+    <link rel="stylesheet" href="css/app.css?v=20260419m">
 </head>
 <body>
     <!-- Skip links -->
@@ -562,7 +562,7 @@
                     <div id="panel-voices" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-voices" tabindex="0">
                         <h2 class="fr-h4 fr-mb-1w">Design des voix</h2>
                         <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
-                            Créez, explorez et verrouillez les voix pour votre production.
+                            Créez, explorez et enregistrez les voix pour votre production.
                         </p>
 
                         <!-- Phrase de test (partagee entre sous-onglets) -->
@@ -574,8 +574,10 @@
                             <select class="fr-select fr-select--sm fr-mb-1w" id="voice-test-segment">
                                 <option value="">— Texte libre —</option>
                             </select>
-                            <label class="fr-label" for="voice-test-text">Texte de test</label>
-                            <textarea class="fr-input" id="voice-test-text" rows="2"
+                            <label class="fr-label" for="voice-test-text">Texte de test
+                                <span class="fr-hint-text">Ce texte sera lu par la voix. Ouvrez la palette « Marqueurs émotionnels » ci-dessous pour insérer [laughter], [sigh], etc. à la position du curseur.</span>
+                            </label>
+                            <textarea class="fr-input ov-tag-target" id="voice-test-text" rows="2"
                                       placeholder="Bonjour, ceci est un test de timbre et de rythme pour notre nouvelle voix studio.">Ceci est un test de timbre et de rythme pour notre nouvelle voix studio.</textarea>
                         </div>
 
@@ -1021,26 +1023,16 @@
                                     </div>
 
                                     <div class="fr-btns-group fr-mb-3w">
-                                        <button class="fr-btn" id="design-lock-btn" disabled>Verrouiller cette voix</button>
+                                        <button class="fr-btn" id="design-lock-btn" disabled>Enregistrer la voix dans ma bibliothèque</button>
                                     </div>
 
                                     <div id="design-lock-result" hidden>
                                         <div class="fr-alert fr-alert--success fr-alert--sm fr-mb-2w">
                                             <p id="design-lock-msg"></p>
                                         </div>
-                                        <audio id="design-locked-player" controls class="ov-audio-player" aria-label="Aperçu de la voix verrouillée">
+                                        <audio id="design-locked-player" controls class="ov-audio-player" aria-label="Aperçu de la voix enregistrée">
                                                                                     </audio>
                                     </div>
-                                </div>
-
-                                <!-- Phase 4 : Test de stabilité -->
-                                <div id="design-stability-section" hidden>
-                                    <h4 class="fr-h6 fr-mb-2w">Test de stabilité</h4>
-                                    <button class="fr-btn fr-btn--secondary fr-btn--sm" id="design-stability-btn">
-                                        Tester la stabilité (3 générations)
-                                    </button>
-                                    <div id="design-stability-results" class="fr-grid-row fr-grid-row--gutters fr-mt-2w" hidden></div>
-                                    <div id="design-stability-indicator" class="fr-mb-3w" hidden></div>
                                 </div>
 
                                 <div id="design-status" role="status" aria-live="polite"></div>
@@ -1930,6 +1922,6 @@
     <script type="module" src="dsfr/dsfr/dsfr.module.min.js"></script>
 
     <!-- App JS -->
-    <script type="module" src="js/app.js?v=20260419l"></script>
+    <script type="module" src="js/app.js?v=20260419m"></script>
 </body>
 </html>

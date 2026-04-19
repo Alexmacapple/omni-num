@@ -1297,7 +1297,7 @@ async function onLock() {
     const lockBtn = DOM.designLockBtn();
     const status = DOM.designStatus();
     if (lockBtn) lockBtn.disabled = true;
-    showLoading(status, 'Verrouillage et test en cours...');
+    showLoading(status, 'Enregistrement et test en cours...');
 
     try {
         const result = await apiPost('/api/voices/lock', {
@@ -1312,7 +1312,7 @@ async function onLock() {
         const lockMsg = DOM.designLockMsg();
         const lockedPlayer = DOM.designLockedPlayer();
         if (lockResult) lockResult.hidden = false;
-        if (lockMsg) lockMsg.textContent = `Voix "${result.data.name}" verrouillée avec succès.`;
+        if (lockMsg) lockMsg.textContent = `Voix « ${result.data.name} » enregistrée avec succès dans votre bibliothèque.`;
         if (lockedPlayer) lockedPlayer.src = authenticatedUrl(result.data.audio_url);
 
         const stabilitySection = DOM.designStabilitySection();
@@ -1428,7 +1428,7 @@ async function onClone() {
         const cloneAudioPlayer = DOM.cloneAudioPlayer();
         const authUrl = authenticatedUrl(result.data.audio_url);
         if (cloneResult) cloneResult.hidden = false;
-        if (cloneResultMsg) cloneResultMsg.textContent = `Voix "${result.data.name}" clonée et verrouillée.`;
+        if (cloneResultMsg) cloneResultMsg.textContent = `Voix « ${result.data.name} » clonée et enregistrée dans votre bibliothèque.`;
         if (cloneAudioPlayer) cloneAudioPlayer.src = authUrl;
         // Lien download WAV du clone
         const dl = document.getElementById('clone-download-link');
