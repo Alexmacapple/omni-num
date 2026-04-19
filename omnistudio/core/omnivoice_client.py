@@ -257,7 +257,8 @@ class OmniVoiceClient:
                 "voice_instruct": voice_instruct,
                 "language": language
             }
-            response = httpx.post(f"{self.base_url}/design", data=data, timeout=t)
+            # OmniVoice /design attend un body JSON (pas form-encoded comme /preset)
+            response = httpx.post(f"{self.base_url}/design", json=data, timeout=t)
             self._check_tts_error(response)
             if response.status_code == 200:
                 filepath = os.path.join(output_dir, f"design_{hash(voice_instruct)%1000}.wav")

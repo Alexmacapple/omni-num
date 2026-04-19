@@ -411,14 +411,23 @@ class RandomRequest(BaseModel):
 
 
 @router.post("/api/generate/random")
-async def generate_random(req: RandomRequest, user=Depends(get_current_user)):
+async def generate_random(
+    req: RandomRequest,
+    user=Depends(get_current_user),
+    thread_id: str = Depends(get_thread_id),
+):
     """Génère un audio avec une voix aléatoire cohérente (proxy OmniVoice POST /auto).
 
     Utile pour prototypage rapide sans sélection de voix (PRD décision 15).
-    L'audio n'est PAS sauvegardé comme voix custom.
+    L'audio n'est PAS sauvegardé comme voix custom mais dans data/voices/{thread_id}/random/
+    pour que l'endpoint /api/audio puisse le servir.
     """
+    output_dir = f"data/voices/{thread_id}/random"
+    os.makedirs(output_dir, exist_ok=True)
     try:
-        filepath = await asyncio.to_thread(vox_client.random_auto, req.text, req.language)
+        filepath = await asyncio.to_thread(
+            vox_client.random_auto, req.text, req.language, output_dir
+        )
         if filepath is None:
             return api_error("RANDOM_FAILED", "Voix aléatoire échouée", status_code=500)
 
