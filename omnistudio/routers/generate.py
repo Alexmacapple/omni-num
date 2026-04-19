@@ -8,6 +8,7 @@ Endpoints :
 import asyncio
 import json
 import os
+import re
 import time
 
 from fastapi import APIRouter, Depends, Request
@@ -16,6 +17,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from auth import get_current_user
 from core.omnivoice_client import OmniVoiceBusyError, OmniVoiceTimeoutError
+from routers.voices import _inject_owner_in_meta
 from dependencies import (
     graph_app,
     vox_client,
@@ -441,3 +443,56 @@ async def generate_random(
         return api_error("TTS_BUSY", "Moteur TTS occupé, réessayez dans un moment", status_code=503)
     except OmniVoiceTimeoutError:
         return api_error("TTS_TIMEOUT", "Génération trop longue, réessayez", status_code=504)
+
+
+class SaveRandomRequest(BaseModel):
+    name: str
+    filename: str  # basename du wav dans data/voices/{thread_id}/random/
+    transcription: str = ""  # texte parlé dans le WAV (référence pour le clone)
+
+
+_VOICE_NAME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{2,49}$")
+
+
+@router.post("/api/voices/save-random")
+@limiter.limit("5/minute")
+async def save_random_voice(
+    request: Request,
+    req: SaveRandomRequest,
+    user=Depends(get_current_user),
+    thread_id: str = Depends(get_thread_id),
+):
+    """Conserve une voix aléatoire générée par /api/generate/random en voix custom.
+
+    Utilise save_custom_voice source="clone" avec le WAV random comme audio
+    de référence. Nom utilisateur validé par regex (PRD-SECURITE-031).
+    """
+    if not _VOICE_NAME_RE.match(req.name):
+        return api_error("INVALID_NAME",
+                         "Nom invalide. Format : lettre + 2-49 caractères alphanumériques, _ ou -.",
+                         status_code=400)
+
+    existing = await asyncio.to_thread(vox_client.get_custom_voice_details, req.name)
+    if existing:
+        return api_error("VOICE_EXISTS", f"La voix '{req.name}' existe déjà.", status_code=409)
+
+    random_path = os.path.abspath(f"data/voices/{thread_id}/random/{req.filename}")
+    random_root = os.path.abspath(f"data/voices/{thread_id}/random")
+    if not random_path.startswith(random_root + os.sep):
+        return api_error("INVALID_FILENAME", "Chemin non autorisé.", status_code=400)
+    if not os.path.isfile(random_path):
+        return api_error("FILE_NOT_FOUND",
+                         "Fichier audio aléatoire introuvable. Régénérez la voix puis réessayez.",
+                         status_code=404)
+
+    transcription = req.transcription or "Bonjour, ceci est un test rapide avec une voix tirée au hasard."
+    result = await asyncio.to_thread(
+        vox_client.save_custom_voice,
+        name=req.name, source="clone",
+        audio_path=random_path, transcription=transcription,
+    )
+    if not result.get("ok"):
+        return api_error("OMNIVOICE_ERROR", result.get("detail", "Erreur OmniVoice"), status_code=502)
+
+    await asyncio.to_thread(_inject_owner_in_meta, req.name, user["user_id"])
+    return api_response({"name": req.name, "source": "random-clone"})

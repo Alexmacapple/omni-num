@@ -3,7 +3,7 @@
  */
 import { apiGet, apiPost, fetchSSE } from './api-client.js';
 import { eventBus } from './app.js';
-import { escapeHtml } from './dom-utils.js';
+import { escapeHtml, escapeAttr } from './dom-utils.js';
 import { authenticatedUrl } from './audio-player.js';
 
 const ITEMS_PER_PAGE = 10;
@@ -221,18 +221,70 @@ async function onRandom() {
         if (response.error) throw new Error(response.error.message || 'Erreur');
         const voice = response.data?.voice || response.data?.filename || 'voix tirée au hasard';
         const audioUrl = response.data?.audio_url;
-        const message = response.data?.message || '';
+        const filename = response.data?.filename || '';
         if (!audioUrl) throw new Error('Aucun audio retourné');
         result.innerHTML = `
             <p class="fr-text--sm"><strong>Échantillon :</strong> ${escapeHtml(voice)}</p>
             <audio src="${authenticatedUrl(audioUrl)}" controls class="vx-audio-player" title="Échantillon voix aléatoire ${escapeHtml(voice)}"></audio>
-            ${message ? `<p class="fr-hint-text fr-mt-1w">${escapeHtml(message)}</p>` : ''}`;
+            <div class="fr-mt-2w" id="vx-random-save-box">
+                <label for="vx-random-save-name" class="fr-label fr-text--sm">Nom pour conserver cette voix</label>
+                <div class="fr-input-group">
+                    <input class="fr-input" type="text" id="vx-random-save-name"
+                        placeholder="ex. voix-aleatoire-1" maxlength="50"
+                        pattern="^[a-zA-Z][a-zA-Z0-9_-]{2,49}$"
+                        aria-describedby="vx-random-save-hint">
+                </div>
+                <p class="fr-hint-text" id="vx-random-save-hint">
+                    Lettre + 2 à 49 caractères alphanumériques, _ ou -.
+                </p>
+                <button class="fr-btn fr-btn--secondary" type="button" id="vx-random-save-btn"
+                    data-filename="${escapeAttr(filename)}" data-text="${escapeAttr(text)}">
+                    Ajouter à la bibliothèque
+                </button>
+                <p class="fr-mt-1w" id="vx-random-save-status" role="status" aria-live="polite"></p>
+            </div>`;
+        const saveBtn = document.getElementById('vx-random-save-btn');
+        if (saveBtn) saveBtn.addEventListener('click', onSaveRandom);
     } catch (err) {
         result.innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
     } finally {
         btn.disabled = false;
         btn.removeAttribute('aria-busy');
         btn.textContent = original;
+    }
+}
+
+async function onSaveRandom(e) {
+    const btn = e.currentTarget;
+    const nameInput = document.getElementById('vx-random-save-name');
+    const status = document.getElementById('vx-random-save-status');
+    const name = (nameInput?.value || '').trim();
+    const filename = btn.dataset.filename || '';
+    const text = btn.dataset.text || '';
+
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,49}$/.test(name)) {
+        if (status) status.innerHTML = '<span class="fr-text--error">Nom invalide : lettre + 2-49 caractères alphanumériques, _ ou -.</span>';
+        nameInput?.focus();
+        return;
+    }
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    if (status) status.textContent = 'Enregistrement en cours…';
+
+    try {
+        const response = await apiPost('/api/voices/save-random', {
+            name, filename, transcription: text,
+        });
+        if (response.error) throw new Error(response.error.message || 'Erreur');
+        if (status) status.innerHTML = `<span class="fr-text--success">Voix « ${escapeHtml(name)} » ajoutée à la bibliothèque.</span>`;
+        btn.disabled = true;
+        btn.textContent = 'Ajoutée';
+    } catch (err) {
+        if (status) status.innerHTML = `<span class="fr-text--error">${escapeHtml(err.message)}</span>`;
+        btn.disabled = false;
+    } finally {
+        btn.removeAttribute('aria-busy');
     }
 }
 
