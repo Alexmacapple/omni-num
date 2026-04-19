@@ -500,7 +500,19 @@
                         <div id="clean-status" class="fr-mb-2w" role="status" aria-live="polite"></div>
 
                         <!-- Palette de marqueurs émotionnels (PRD-MIGRATION-001 §6) -->
-                        <div id="clean-tag-palette" class="fr-mb-3w" aria-label="Palette de marqueurs émotionnels"></div>
+                        <div class="fr-accordion fr-mb-3w">
+                            <h3 class="fr-accordion__title">
+                                <button class="fr-accordion__btn" aria-expanded="false" aria-controls="clean-tag-palette-panel">
+                                    Marqueurs émotionnels (13 tags non verbaux OmniVoice)
+                                </button>
+                            </h3>
+                            <div class="fr-collapse" id="clean-tag-palette-panel">
+                                <p class="fr-hint-text fr-mb-1w">
+                                    Cliquez un tag pour l'insérer à la position du curseur dans le dernier segment édité.
+                                </p>
+                                <div id="clean-tag-palette" aria-label="Palette de marqueurs émotionnels"></div>
+                            </div>
+                        </div>
 
                         <!-- État vide (PRD-018) -->
                         <div class="fr-callout fr-mb-3w" id="clean-empty-state" hidden>
