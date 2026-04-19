@@ -34,6 +34,7 @@ from dependencies import (
     _verify_session_owner,
     _touch_session,
 )
+from routers.voices import _read_voice_meta
 
 # ---------------------------------------------------------------------------
 # Constantes locales
@@ -127,13 +128,29 @@ async def get_assign(
     assignments = state.get("assignments", {})
     instructions = state.get("instructions", {})
 
-    # Voix disponibles (natives + custom verrouillees)
+    # Voix disponibles filtrées par ownership (PRD v1.5 décision 7 + PRD-032)
+    # Un user ne voit que : voix système + voix dont il est owner
     omnivoice_voices = await asyncio.to_thread(vox_client.get_voices)
-    voices = [
-        {"name": v["name"], "type": v.get("type", "native")}
-        for v in omnivoice_voices
-        if v.get("type", "native") in ("native", "custom")
-    ]
+    user_sub = user["user_id"]
+    voices = []
+    for v in omnivoice_voices:
+        vtype = v.get("type", "native")
+        if vtype == "native":
+            voices.append({"name": v["name"], "type": "native", "system": True})
+            continue
+        if vtype != "custom":
+            continue
+        meta = _read_voice_meta(v["name"])
+        is_system = meta.get("system", False)
+        owner = meta.get("owner")
+        if not is_system and owner != user_sub:
+            continue  # voix d'un autre user, masquer
+        voices.append({
+            "name": v["name"],
+            "type": "custom",
+            "source": v.get("source", meta.get("source", "unknown")),
+            "system": is_system,
+        })
     # Filtrer sur selected_voices si defini et non vide
     selected = state.get("selected_voices", [])
     locked = state.get("locked_voices", [])
