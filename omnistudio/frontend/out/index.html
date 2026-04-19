@@ -635,32 +635,17 @@
                                     <p class="fr-stepper__details fr-text--sm" id="design-stepper-details">Choisissez un profil prédéfini ou composez votre propre description.</p>
                                 </div>
 
-                                <!-- Décision 5 — Deux modes Voice Design : Guidé (templates) + Expert (brief IA paramétré) -->
-                                <div class="fr-tabs fr-mb-3w" role="tablist">
-                                    <ul class="fr-tabs__list" role="tablist" aria-label="Mode de création de voix">
-                                        <li role="presentation">
-                                            <button id="design-mode-guided" class="fr-tabs__tab" tabindex="0" role="tab"
-                                                    aria-selected="true" aria-controls="design-panel-guided">
-                                                Mode Guidé
-                                            </button>
-                                        </li>
-                                        <li role="presentation">
-                                            <button id="design-mode-expert" class="fr-tabs__tab" tabindex="-1" role="tab"
-                                                    aria-selected="false" aria-controls="design-panel-expert">
-                                                Mode Expert
-                                            </button>
-                                        </li>
-                                    </ul>
-                                    <div id="design-panel-guided" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="design-mode-guided" tabindex="0">
-                                        <p class="fr-text--sm fr-mb-2w">Partez d'un profil prédéfini. Le prompt vocal est généré instantanément, sans LLM.</p>
-                                        <div id="design-templates" class="fr-btns-group fr-btns-group--inline fr-btns-group--sm"></div>
-                                    </div>
-                                    <div id="design-panel-expert" class="fr-tabs__panel" role="tabpanel" aria-labelledby="design-mode-expert" tabindex="0">
-                                        <p class="fr-text--sm fr-mb-2w">Composez une description précise (genre, âge, pitch, style, accent). L'IA synthétise le prompt vocal optimisé pour OmniVoice.</p>
-                                        <!-- Brief IA paramétré — contenu original -->
-                                        <div class="fr-accordion fr-mb-2w" id="design-brief-accordion">
+                                <!-- Option A : Profils prédéfinis (Mode Guidé — décision 5) -->
+                                <div class="fr-callout fr-mb-3w">
+                                    <h4 class="fr-callout__title">Mode Guidé — partir d'un profil prédéfini</h4>
+                                    <p class="fr-callout__text fr-text--sm fr-mb-2w">Cliquez sur un profil pour pré-remplir la description de voix. Vous pourrez la modifier ensuite.</p>
+                                    <div id="design-templates" class="fr-btns-group fr-btns-group--inline fr-btns-group--sm"></div>
+                                </div>
+
+                                <!-- Option B : Brief IA (Mode Expert — décision 5) -->
+                                <div class="fr-accordion fr-mb-3w" id="design-brief-accordion">
                                     <h3 class="fr-accordion__title">
-                                        <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-brief-panel">Ouvrir les paramètres du brief IA</button>
+                                        <button class="fr-accordion__btn" aria-expanded="false" aria-controls="design-brief-panel">Mode Expert — composer depuis zéro avec l'IA</button>
                                     </h3>
                                     <div class="fr-collapse" id="design-brief-panel">
                                         <fieldset class="fr-fieldset fr-mt-2w" id="design-brief">
@@ -843,9 +828,6 @@
                                         </p>
                                     </div>
                                 </div>
-                                        </div><!-- /#design-brief-accordion -->
-                                    </div><!-- /#design-panel-expert -->
-                                </div><!-- /fr-tabs modes Guidé/Expert -->
 
                                 <!-- Description de voix (résultat profil ou IA) -->
                                 <div class="fr-input-group fr-mb-3w" id="design-instruct-group" hidden>
