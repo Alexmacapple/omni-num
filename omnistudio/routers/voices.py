@@ -353,10 +353,28 @@ async def voices_lock(
         return api_response(error={"code": "VOICE_EXISTS",
             "message": f"La voix '{req.name}' existe déjà."}, status_code=409)
 
-    result = await asyncio.to_thread(
-        vox_client.save_custom_voice,
-        name=req.name, source="design", voice_instruct=req.voice_instruct,
-    )
+    # Fidélité sonore : cloner la voix depuis le DERNIER WAV d'exploration.
+    # Sinon source=design produirait un nouveau tirage ≠ de celui écouté.
+    # Si aucun wav exploration disponible → fallback source=design (tirage neuf).
+    config = {"configurable": {"thread_id": thread_id}}
+    state = await asyncio.to_thread(lambda: graph_app.get_state(config).values)
+    wav_paths = state.get("wav_paths", [])
+    last_wav = wav_paths[-1] if wav_paths else None
+    use_clone = last_wav and os.path.isfile(last_wav)
+
+    if use_clone:
+        logger.info("voices/lock: clone depuis %s (fidélité sonore)", last_wav)
+        result = await asyncio.to_thread(
+            vox_client.save_custom_voice,
+            name=req.name, source="clone",
+            audio_path=last_wav, transcription=req.test_text,
+        )
+    else:
+        logger.info("voices/lock: pas de WAV exploration, fallback source=design")
+        result = await asyncio.to_thread(
+            vox_client.save_custom_voice,
+            name=req.name, source="design", voice_instruct=req.voice_instruct,
+        )
     if not result.get("ok"):
         return api_response(error={"code": "OMNIVOICE_ERROR",
             "message": result.get("detail", "Erreur OmniVoice")}, status_code=502)
@@ -385,14 +403,14 @@ async def voices_lock(
     audio_url = f"/api/audio/{os.path.basename(wav_path)}" if wav_path else None
 
     # State LangGraph : locked_voices a un reducteur add -> uniquement le nouvel element
-    config = {"configurable": {"thread_id": thread_id}}
     await asyncio.to_thread(graph_app.update_state, config, {
         "locked_voices": [req.name], "locked_name": req.name, "decision": "lock",
     })
 
     return api_response({
         "name": req.name, "status": "locked",
-        "audio_url": audio_url, "source": "design",
+        "audio_url": audio_url,
+        "source": "clone" if use_clone else "design",
     })
 
 
