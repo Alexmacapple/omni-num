@@ -45,7 +45,7 @@ lxml==6.0.2
 markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
-nest-asyncio==1.6.0
+# nest-asyncio SUPPRIMÉ — non nécessaire après suppression Gradio (PRD v1.5)
 numpy==2.4.2
 openai==2.23.0
 openpyxl==3.1.5

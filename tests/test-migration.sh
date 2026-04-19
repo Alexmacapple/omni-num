@@ -1,6 +1,9 @@
 #!/bin/bash
 # tests/test-migration.sh — Tests automatises migration DSFR
 # Usage : ./tests/test-migration.sh [prd-001|prd-002|prd-003|prd-004|prd-005|all]
+
+set -euo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PASS=0; FAIL=0; WARN=0
 

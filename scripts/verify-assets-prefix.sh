@@ -11,7 +11,7 @@
 # Sans argument, audite voxstudio/frontend/out/ (source du fork) puis
 # omnistudio/frontend/out/ (cible, si existe).
 
-set -e
+set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VOXSTUDIO_FRONTEND="${ROOT_DIR}/../voice-num/voxstudio/frontend/out"
