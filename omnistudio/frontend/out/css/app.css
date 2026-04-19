@@ -62,6 +62,15 @@
     margin-bottom: 0 !important;
 }
 
+/* Fix DSFR : fr-error-text a display:flex qui peut battre [hidden] de l'UA.
+   Force display:none quand l'élément est explicitement masqué. */
+.fr-error-text[hidden],
+.fr-info-text[hidden],
+.fr-valid-text[hidden],
+.fr-hint-text[hidden] {
+    display: none !important;
+}
+
 /* --- Toast container ---
    top: 5rem pour passer SOUS le header DSFR (hauteur ~60-80px).
    Évite que les notifications empiètent sur le menu header. */

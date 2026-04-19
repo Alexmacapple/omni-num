@@ -77,12 +77,29 @@ def _validate_voice_name(name: str) -> Optional[str]:
 # Modeles Pydantic
 # ---------------------------------------------------------------------------
 
+class AdvancedDesignParams(BaseModel):
+    """12 paramètres avancés acceptés par OmniVoice /design."""
+    num_step: Optional[int] = None
+    speed: Optional[float] = None
+    guidance_scale: Optional[float] = None
+    duration: Optional[float] = None
+    denoise: Optional[bool] = None
+    t_shift: Optional[float] = None
+    position_temperature: Optional[float] = None
+    class_temperature: Optional[float] = None
+    layer_penalty_factor: Optional[float] = None
+    postprocess_output: Optional[bool] = None
+    audio_chunk_duration: Optional[float] = None
+    audio_chunk_threshold: Optional[float] = None
+
+
 class DesignFlowRequest(BaseModel):
     brief: Dict
     test_text: str = "Ceci est un test de timbre et de rythme pour notre nouvelle voix studio."
     temperature: Optional[float] = None
     language: str = "auto"
     want_subtitles: bool = False
+    advanced: Optional[AdvancedDesignParams] = None
 
 
 class ExploreRequest(BaseModel):
@@ -91,6 +108,7 @@ class ExploreRequest(BaseModel):
     regenerate_instruct: bool = False
     language: str = "auto"
     want_subtitles: bool = False
+    advanced: Optional[AdvancedDesignParams] = None
 
 
 class LockRequest(BaseModel):
@@ -262,7 +280,9 @@ async def voices_design_flow(
         audio_url = f"/api/audio/{filename}"
     else:
         wav_path = await asyncio.to_thread(
-            vox_client.design, req.test_text, voice_instruct, req.language, output_dir
+            vox_client.design, req.test_text, voice_instruct, req.language, output_dir,
+            None,  # timeout
+            req.advanced.model_dump(exclude_none=True) if req.advanced else None,
         )
         if wav_path:
             audio_url = f"/api/audio/{os.path.basename(wav_path)}"
@@ -311,7 +331,9 @@ async def voices_explore(
         os.remove(old_wav)
 
     wav_path = await asyncio.to_thread(
-        vox_client.design, req.test_text, voice_instruct, req.language, output_dir
+        vox_client.design, req.test_text, voice_instruct, req.language, output_dir,
+        None,  # timeout
+        req.advanced.model_dump(exclude_none=True) if req.advanced else None,
     )
 
     audio_url = None

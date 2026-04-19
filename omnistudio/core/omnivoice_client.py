@@ -388,7 +388,14 @@ class OmniVoiceClient:
             return []
 
     def design(self, text: str, voice_instruct: str, language: str = "fr",
-               output_dir: str = "temp", timeout: Optional[float] = None) -> Optional[str]:
+               output_dir: str = "temp", timeout: Optional[float] = None,
+               advanced: Optional[Dict] = None) -> Optional[str]:
+        """POST /design OmniVoice. `advanced` = dict optionnel des 11 params
+        avancés (num_step, speed, guidance_scale, duration, denoise, t_shift,
+        position_temperature, class_temperature, layer_penalty_factor,
+        postprocess_output, audio_chunk_duration, audio_chunk_threshold).
+        Les valeurs None sont ignorées (OmniVoice applique ses défauts).
+        """
         os.makedirs(output_dir, exist_ok=True)
         t = timeout or self.timeout_generate
         # Normalise voice_instruct vers items whitelist OmniVoice
@@ -406,6 +413,16 @@ class OmniVoiceClient:
                 "voice_instruct": normalized_instruct,
                 "language": language
             }
+            # Whitelist des 12 params avancés acceptés par /design
+            if advanced:
+                allowed = {"num_step", "speed", "guidance_scale", "duration",
+                           "denoise", "t_shift", "position_temperature",
+                           "class_temperature", "layer_penalty_factor",
+                           "postprocess_output", "audio_chunk_duration",
+                           "audio_chunk_threshold"}
+                for k, v in advanced.items():
+                    if v is not None and k in allowed:
+                        data[k] = v
             # OmniVoice /design attend un body JSON (pas form-encoded comme /preset)
             response = httpx.post(f"{self.base_url}/design", json=data, timeout=t)
             self._check_tts_error(response)

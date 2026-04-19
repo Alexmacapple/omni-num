@@ -384,6 +384,10 @@ function showAudioPreview(url, info) {
 }
 
 export function init() {
+    // Listener bouton Réinitialiser des paramètres avancés Design
+    const designAdvResetBtn = document.getElementById('design-adv-reset-btn');
+    if (designAdvResetBtn) designAdvResetBtn.addEventListener('click', resetDesignAdvanced);
+
     const refreshBtn = DOM.refreshBtn();
     const voiceList = DOM.voiceList();
     const designGenerateBtn = DOM.designGenerateBtn();
@@ -941,6 +945,60 @@ function getDesignWantSubtitles() {
     return !!document.getElementById('design-want-subtitles')?.checked;
 }
 
+/** 12 paramètres avancés OmniVoice /design. Retourne null si tous défauts. */
+function getDesignAdvanced() {
+    const num = (id) => {
+        const el = document.getElementById(id);
+        if (!el || el.value === '' || el.value == null) return null;
+        const v = parseFloat(el.value);
+        return isNaN(v) ? null : v;
+    };
+    const bool = (id) => {
+        const el = document.getElementById(id);
+        return el ? !!el.checked : null;
+    };
+    const out = {
+        num_step: num('design-adv-num-step'),
+        speed: num('design-adv-speed'),
+        guidance_scale: num('design-adv-guidance'),
+        duration: num('design-adv-duration'),
+        t_shift: num('design-adv-t-shift'),
+        position_temperature: num('design-adv-pos-temp'),
+        class_temperature: num('design-adv-class-temp'),
+        layer_penalty_factor: num('design-adv-layer-penalty'),
+        audio_chunk_duration: num('design-adv-chunk-dur'),
+        audio_chunk_threshold: num('design-adv-chunk-thr'),
+        denoise: bool('design-adv-denoise'),
+        postprocess_output: bool('design-adv-postprocess'),
+    };
+    const allDefault =
+        out.num_step === 32 && out.speed === 1.0 && out.guidance_scale === 2.0 &&
+        out.duration === null && out.t_shift === 0.1 &&
+        out.position_temperature === 5.0 && out.class_temperature === 0.0 &&
+        out.layer_penalty_factor === 5.0 && out.audio_chunk_duration === 15.0 &&
+        out.audio_chunk_threshold === 30.0 && out.denoise === true &&
+        out.postprocess_output === true;
+    return allDefault ? null : out;
+}
+
+function resetDesignAdvanced() {
+    const defaults = {
+        'design-adv-num-step': '32', 'design-adv-speed': '1.0',
+        'design-adv-guidance': '2.0', 'design-adv-duration': '',
+        'design-adv-t-shift': '0.1', 'design-adv-pos-temp': '5.0',
+        'design-adv-class-temp': '0.0', 'design-adv-layer-penalty': '5.0',
+        'design-adv-chunk-dur': '15.0', 'design-adv-chunk-thr': '30.0',
+    };
+    for (const [id, v] of Object.entries(defaults)) {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+    }
+    ['design-adv-denoise', 'design-adv-postprocess'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = true;
+    });
+}
+
 function getBrief() {
     return {
         contexte: document.getElementById('design-context')?.value || '',
@@ -1011,6 +1069,7 @@ async function onUseDirectPrompt() {
             regenerate_instruct: false,
             language: getDesignLanguage(),
             want_subtitles: getDesignWantSubtitles(),
+            advanced: getDesignAdvanced(),
         });
         if (result.error) throw new Error(result.error.message);
 
@@ -1039,6 +1098,7 @@ async function onGenerateBrief() {
             temperature: tempSlider ? parseFloat(tempSlider.value) : 0.5,
             language: getDesignLanguage(),
             want_subtitles: getDesignWantSubtitles(),
+            advanced: getDesignAdvanced(),
         });
         if (result.error) throw new Error(result.error.message);
 
@@ -1098,6 +1158,7 @@ async function onExplore(regenerateInstruct) {
             regenerate_instruct: regenerateInstruct,
             language: getDesignLanguage(),
             want_subtitles: getDesignWantSubtitles(),
+            advanced: getDesignAdvanced(),
         });
         if (result.error) throw new Error(result.error.message);
 
