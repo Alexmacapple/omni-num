@@ -643,7 +643,7 @@ async function loadVoices() {
     try {
         const result = await apiGet('/api/voices');
         if (result.error) return;
-        const voices = result.data.voices;
+        const voices = [...result.data.voices].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
         const voiceList = DOM.voiceList();
         if (voiceList) voiceList.innerHTML = voices.map(renderVoiceCard).join('');
         const voiceCount = DOM.voiceCount();
