@@ -277,16 +277,24 @@ async def export_zip(
                 unique_audio_path = unique_path
 
         # SRT global (make_unique + unique_srt)
+        logger.info("SRT global check — unique_audio_path=%s, req.unique_srt=%s",
+                    unique_audio_path, req.unique_srt)
         if unique_audio_path and req.unique_srt:
             yield {"event": "progress", "data": json.dumps({
                 "step": "sous-titres-global", "progress": 92,
                 "message": "Transcription de la narration complète..."
             })}
             subtitle_client = _get_subtitle_client()
+            logger.info("SubtitleClient: %s", subtitle_client)
             if subtitle_client:
-                segments = await asyncio.to_thread(
-                    subtitle_client.transcribe, unique_audio_path, "auto"
-                )
+                try:
+                    segments = await asyncio.to_thread(
+                        subtitle_client.transcribe, unique_audio_path, "auto"
+                    )
+                    logger.info("Segments Whisper: %d", len(segments) if segments else 0)
+                except Exception as e:
+                    logger.error("Exception transcription SRT global: %s", e)
+                    segments = None
                 if segments:
                     gen_method = {
                         "standard": subtitle_client.generate_srt,
@@ -300,6 +308,7 @@ async def export_zip(
                         with open(srt_path, "w", encoding="utf-8") as srt_f:
                             srt_f.write(srt_text)
                         global_subtitle_path = srt_path
+                        logger.info("SRT global écrit : %s", srt_path)
                     except OSError as e:
                         logger.warning("Écriture SRT global échouée : %s", e)
             yield {"event": "progress", "data": json.dumps({
