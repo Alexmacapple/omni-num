@@ -144,7 +144,7 @@
                                 <a class="fr-breadcrumb__link" href="#main-content">OmniStudio</a>
                             </li>
                             <li>
-                                <a class="fr-breadcrumb__link" aria-current="page">Import</a>
+                                <a class="fr-breadcrumb__link" aria-current="page" tabindex="0">Import</a>
                             </li>
                         </ol>
                     </div>
@@ -343,7 +343,7 @@
                         </div>
 
                         <!-- Message statut -->
-                        <div id="import-status" role="status" aria-live="polite"></div>
+                        <div id="import-status" role="status" aria-live="polite" aria-label="Statut import"></div>
 
                         <!-- Tableau aperçu -->
                         <div class="fr-table fr-mb-3w" id="import-table-container" hidden>
@@ -508,7 +508,7 @@
                         </div>
 
                         <!-- Message statut -->
-                        <div id="clean-status" class="fr-mb-2w" role="status" aria-live="polite"></div>
+                        <div id="clean-status" class="fr-mb-2w" role="status" aria-live="polite" aria-label="Statut préparation"></div>
 
                         <!-- Palette de marqueurs émotionnels (PRD-MIGRATION-001 §6) -->
                         <div class="fr-accordion fr-mb-3w">
@@ -609,19 +609,22 @@
                             <ul class="fr-tabs__list" role="tablist" aria-label="Gestion des voix">
                                 <li role="presentation">
                                     <button id="sub-tab-library" class="fr-tabs__tab" role="tab"
-                                            aria-selected="true" aria-controls="sub-panel-library">
+                                            tabindex="0" aria-selected="true" aria-controls="sub-panel-library"
+                                            data-fr-js-tab-button="true">
                                         Bibliothèque
                                     </button>
                                 </li>
                                 <li role="presentation">
                                     <button id="sub-tab-design" class="fr-tabs__tab" role="tab"
-                                            aria-selected="false" aria-controls="sub-panel-design">
+                                            tabindex="-1" aria-selected="false" aria-controls="sub-panel-design"
+                                            data-fr-js-tab-button="true">
                                         Créer
                                     </button>
                                 </li>
                                 <li role="presentation">
                                     <button id="sub-tab-clone" class="fr-tabs__tab" role="tab"
-                                            aria-selected="false" aria-controls="sub-panel-clone">
+                                            tabindex="-1" aria-selected="false" aria-controls="sub-panel-clone"
+                                            data-fr-js-tab-button="true">
                                         Cloner
                                     </button>
                                 </li>
@@ -1115,7 +1118,7 @@
                                     </div>
                                 </div>
 
-                                <div id="design-status" role="status" aria-live="polite"></div>
+                                <div id="design-status" role="status" aria-live="polite" aria-label="Statut création de voix"></div>
                             </div>
 
                             <!-- 3c. Cloner -->
@@ -1175,7 +1178,7 @@
                                                             aria-describedby="clone-record-label"
                                                             data-label-start="Démarrer l'enregistrement"
                                                             data-label-stop="Arrêter et valider">Démarrer l'enregistrement</button>
-                                                    <div id="clone-record-status" class="fr-text--sm fr-mt-2v" role="status" aria-live="polite"></div>
+                                                    <div id="clone-record-status" class="fr-text--sm fr-mt-2v" role="status" aria-live="polite" aria-label="Statut enregistrement"></div>
                                                     <button class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-btn--icon-left fr-icon-delete-line fr-mt-1v"
                                                             id="clone-record-delete" type="button" hidden>Supprimer et recommencer</button>
                                                 </div>
@@ -1282,7 +1285,7 @@
                                 <p id="clone-validation-hint" class="fr-text--xs fr-text--mention-grey fr-mb-2w" aria-live="polite"></p>
 
                                 <!-- Statut de progression (avant le resultat) -->
-                                <div id="clone-status" class="fr-mb-2w" role="status" aria-live="polite"></div>
+                                <div id="clone-status" class="fr-mb-2w" role="status" aria-live="polite" aria-label="Statut clonage de voix"></div>
 
                                 <!-- Resultat du clonage -->
                                 <div id="clone-result" class="fr-mb-3w" hidden>
@@ -1518,7 +1521,7 @@
                         </div>
 
                         <!-- Statut + Navigation -->
-                        <div id="assign-status" role="status" aria-live="polite"></div>
+                        <div id="assign-status" role="status" aria-live="polite" aria-label="Statut assignation"></div>
 
                         <div class="fr-btns-group fr-btns-group--right fr-mt-3w">
                             <button class="fr-btn" id="assign-next-btn">
@@ -1722,7 +1725,7 @@
                         </div>
 
                         <!-- Statut -->
-                        <div id="gen-status" role="status" aria-live="polite"></div>
+                        <div id="gen-status" role="status" aria-live="polite" aria-label="Statut génération"></div>
 
                         <!-- Navigation -->
                         <div class="fr-btns-group fr-btns-group--right fr-mt-3w">
@@ -1927,7 +1930,7 @@
                         <div id="export-unique-player" class="fr-mt-4w"></div>
 
                         <!-- Statut -->
-                        <div id="export-status" role="status" aria-live="polite"></div>
+                        <div id="export-status" role="status" aria-live="polite" aria-label="Statut export"></div>
                     </div>
                 </div>
 
@@ -2086,7 +2089,7 @@
     </dialog>
 
     <!-- Toast container -->
-    <div id="ov-toast-container" role="status" aria-live="polite"></div>
+    <div id="ov-toast-container" role="status" aria-live="polite" aria-label="Notifications"></div>
 
     <!-- Modale de renommage des voix custom (remplace prompt() natif) -->
     <dialog id="rename-voice-modal" class="ov-modal" aria-labelledby="rename-modal-title">

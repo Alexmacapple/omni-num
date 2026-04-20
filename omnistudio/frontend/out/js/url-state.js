@@ -210,10 +210,10 @@ function updateBreadcrumb(tabId, subTabId) {
     if (tabId === 'tab-voices' && subTabId && SUB_TAB_LABELS[subTabId]) {
         // 3 niveaux : OmniStudio > Voix > Sous-onglet
         html += `<li><a class="fr-breadcrumb__link" href="#panel-${tabHash}">${tabLabel}</a></li>`;
-        html += `<li><a class="fr-breadcrumb__link" aria-current="page">${SUB_TAB_LABELS[subTabId]}</a></li>`;
+        html += `<li><a class="fr-breadcrumb__link" aria-current="page" tabindex="0">${SUB_TAB_LABELS[subTabId]}</a></li>`;
     } else {
         // 2 niveaux : OmniStudio > Onglet
-        html += `<li><a class="fr-breadcrumb__link" aria-current="page">${tabLabel}</a></li>`;
+        html += `<li><a class="fr-breadcrumb__link" aria-current="page" tabindex="0">${tabLabel}</a></li>`;
     }
 
     list.innerHTML = html;

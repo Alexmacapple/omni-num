@@ -1,5 +1,10 @@
 """Configuration serveur OmniStudio DSFR."""
 import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+except ImportError:
+    pass  # python-dotenv absent : variables chargées par start.sh ou l'environnement système
 
 # LLM
 LLM_PROVIDER = os.getenv("OMNISTUDIO_LLM_PROVIDER", "Albert Large 120B")
@@ -33,6 +38,8 @@ DB_PATH = os.getenv("OMNISTUDIO_DB_PATH", "data/omnistudio_checkpoint.db")
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "out")
 FRONTEND_DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "out-dist")
 MINIFY = os.getenv("OMNISTUDIO_MINIFY", "false").lower() == "true"
+# Relâche le CSP pour autoriser les bookmarklets d'audit a11y en développement
+CSP_DEV = os.getenv("OMNISTUDIO_CSP_DEV", "false").lower() == "true"
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OMNIVOICE_VOICES_DIR = os.getenv("OMNIVOICE_VOICES_DIR", os.path.join(_PROJECT_ROOT, "OmniVoice", "voices"))
 

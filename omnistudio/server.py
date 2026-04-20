@@ -13,7 +13,7 @@ from starlette.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 
-from config import CORS_ORIGINS, FRONTEND_DIR, FRONTEND_DIST_DIR, MINIFY, OMNISTUDIO_PORT
+from config import CORS_ORIGINS, CSP_DEV, FRONTEND_DIR, FRONTEND_DIST_DIR, MINIFY, OMNISTUDIO_PORT
 from dependencies import (
     _check_disk_quota,
     _init_sessions_db,
@@ -74,19 +74,33 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Pas de CSP restrictif sur la documentation API (Swagger UI charge depuis CDN)
         if request.url.path in ("/docs", "/redoc", "/openapi.json"):
             return response
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data:; "
-            "font-src 'self'; "
-            "connect-src 'self'; "
-            "media-src 'self' blob:; "
-            "object-src 'none'; "
-            "base-uri 'self'; "
-            "form-action 'self'; "
-            "frame-ancestors 'none'"
-        )
+        if CSP_DEV:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; "
+                "style-src 'self' 'unsafe-inline' https:; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' https:; "
+                "connect-src 'self' https:; "
+                "media-src 'self' blob:; "
+                "object-src 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self'"
+            )
+        else:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data:; "
+                "font-src 'self'; "
+                "connect-src 'self'; "
+                "media-src 'self' blob:; "
+                "object-src 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self'; "
+                "frame-ancestors 'none'"
+            )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

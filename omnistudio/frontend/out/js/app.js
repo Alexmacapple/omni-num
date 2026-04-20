@@ -94,6 +94,7 @@ function switchTab(tabId) {
         if (!btn) return;
         // Synchroniser l'etat visuel du bouton d'onglet
         btn.setAttribute('aria-selected', tid === tabId ? 'true' : 'false');
+        btn.setAttribute('tabindex', tid === tabId ? '0' : '-1');
         const panelId = btn.getAttribute('aria-controls');
         const panel = panelId ? document.getElementById(panelId) : null;
         if (panel) {
@@ -196,28 +197,39 @@ function observeTabChanges() {
     tabs.forEach(t => observer.observe(t, { attributes: true, attributeFilter: ['aria-selected'] }));
     tabObservers.push(observer);
 
-    // Fix DSFR tabindex : tous les onglets (principaux + sous-onglets) restent
-    // atteignables au clavier (Tab). Le DSFR pose tabindex="-1" sur les onglets
-    // inactifs (roving tabindex), on force tabindex="0" pour la conformité RGAA.
-    const allTabIds = new Set([...TAB_IDS, 'sub-tab-library', 'sub-tab-design', 'sub-tab-clone']);
-    tabs.forEach(t => { if (allTabIds.has(t.id)) t.setAttribute('tabindex', '0'); });
-    const tabIndexObserver = new MutationObserver((mutations) => {
-        for (const m of mutations) {
-            if (m.attributeName === 'tabindex' && m.target.getAttribute('tabindex') === '-1') {
-                if (allTabIds.has(m.target.id)) {
-                    m.target.setAttribute('tabindex', '0');
-                }
-            }
-        }
-    });
-    tabs.forEach(t => tabIndexObserver.observe(t, { attributes: true, attributeFilter: ['tabindex'] }));
-    tabObservers.push(tabIndexObserver);
 }
 
 // Ecouter les demandes de navigation
 eventBus.on('navigate', (tabId) => {
     switchTab(tabId);
 });
+
+// Navigation clavier dans la tablist principale (ArrowLeft/Right/Home/End)
+// Nécessaire car app.js gère l'état des onglets en direct,
+// ce qui empêche le DSFR JS d'initialiser ses propres listeners clavier.
+function initTabKeyboardNav() {
+    const tablist = document.querySelector('#main-tabs .fr-tabs__list');
+    if (!tablist) return;
+    // Phase CAPTURE (3e arg = true) : le handler s'exécute pendant la descente
+    // de l'événement vers le bouton, AVANT que DSFR (attaché au bouton) ne le voie.
+    // stopPropagation() empêche l'événement d'atteindre le bouton → pas de conflit DSFR.
+    tablist.addEventListener('keydown', (e) => {
+        // Utiliser e.target (élément original du keydown) et non document.activeElement
+        // car DSFR peut avoir un listener document-capture qui déplace le focus avant nous.
+        const idx = TAB_IDS.indexOf(e.target?.id);
+        if (idx === -1) return;
+        let next = -1;
+        if (e.key === 'ArrowRight') next = (idx + 1) % TAB_IDS.length;
+        else if (e.key === 'ArrowLeft') next = (idx - 1 + TAB_IDS.length) % TAB_IDS.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = TAB_IDS.length - 1;
+        else return;
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = document.getElementById(TAB_IDS[next]);
+        if (btn) { btn.focus(); switchTab(TAB_IDS[next]); }
+    }, true);
+}
 
 // --- Affichage login / app ---
 
@@ -250,8 +262,13 @@ function showApp() {
             mountTagPalette('design-tag-palette');
         });
 
-        // Observer les onglets DSFR
-        setTimeout(observeTabChanges, 200);
+        // Observer les onglets DSFR — immédiat pour capter les changements
+        // du DSFR JS dès la première interaction clavier (suppression du délai 200ms
+        // qui laissait une fenêtre aveugle où ArrowRight ne switchait pas le panel).
+        observeTabChanges();
+
+        // Navigation clavier tablist principale
+        initTabKeyboardNav();
 
         // Stepper mobile
         const stepperPrev = document.getElementById('ov-stepper-prev');

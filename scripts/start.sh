@@ -32,9 +32,18 @@ trap cleanup INT TERM
 echo "=== OmniStudio — démarrage ==="
 mkdir -p "$ROOT_DIR/logs"
 
+# Charger .env local si présent (gitignored — variables de dev comme CSP_DEV)
+if [ -f "$ROOT_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$ROOT_DIR/.env"
+    set +a
+fi
+
 # Par défaut, on sert le bundle prod/minifié sur cette instance.
 # Le mode développement reste accessible via OMNISTUDIO_MINIFY=false ./start.sh
 export OMNISTUDIO_MINIFY="${OMNISTUDIO_MINIFY:-true}"
+export OMNISTUDIO_CSP_DEV="${OMNISTUDIO_CSP_DEV:-false}"
 
 submit_launchctl_job() {
     local label="$1"
@@ -116,7 +125,7 @@ if ! curl -s http://localhost:7870/api/health >/dev/null 2>&1; then
     submit_launchctl_job \
         "$OMNISTUDIO_LABEL" \
         "$ROOT_DIR/logs/omnistudio.log" \
-        "cd \"$ROOT_DIR/omnistudio\" && export OMNISTUDIO_MINIFY=\"$OMNISTUDIO_MINIFY\" && export OPENAI_API_KEY=\"${OPENAI_API_KEY:-}\" && exec \"$VENV_PY\" server.py"
+        "cd \"$ROOT_DIR/omnistudio\" && export OMNISTUDIO_MINIFY=\"$OMNISTUDIO_MINIFY\" && export OMNISTUDIO_CSP_DEV=\"$OMNISTUDIO_CSP_DEV\" && export OPENAI_API_KEY=\"${OPENAI_API_KEY:-}\" && exec \"$VENV_PY\" server.py"
     echo -n "Attente omnistudio :7870..."
     for i in $(seq 1 30); do
         curl -s http://localhost:7870/api/health >/dev/null 2>&1 && echo " OK" && break
