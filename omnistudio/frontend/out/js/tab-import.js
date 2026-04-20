@@ -18,7 +18,46 @@ const DOM = {
     selectionCount: () => document.getElementById('import-selection-count'),
     nextBtn: () => document.getElementById('import-next-btn'),
     progressBar: () => document.querySelector('.ov-upload-progress'),
+    sampleBtn: () => document.getElementById('import-sample-btn'),
+    sampleConfirm: () => document.getElementById('import-sample-confirm'),
+    sampleConfirmBtn: () => document.getElementById('import-sample-confirm-btn'),
+    sampleCancelBtn: () => document.getElementById('import-sample-cancel-btn'),
 };
+
+const SPLEEN_MD = `### Étape 1
+J'ai plus de souvenirs que si j'avais mille ans.
+
+### Étape 2
+Un gros meuble à tiroirs encombré de bilans,
+De vers, de billets doux, de procès, de romances,
+Avec de lourds cheveux roulés dans des quittances,
+Cache moins de secrets que mon triste cerveau.
+C'est une pyramide, un immense caveau,
+Qui contient plus de morts que la fosse commune.
+- Je suis un cimetière abhorré de la lune,
+
+### Étape 3
+Où comme des remords se traînent de longs vers
+Qui s'acharnent toujours sur mes morts les plus chers.
+Je suis un vieux boudoir plein de roses fanées,
+Où gît tout un fouillis de modes surannées,
+Où les pastels plaintifs et les pâles Boucher,
+Seuls, respirent l'odeur d'un flacon débouché.
+
+### Étape 4
+Rien n'égale en longueur les boiteuses journées,
+Quand sous les lourds flocons des neigeuses années
+L'ennui, fruit de la morne incuriosité,
+Prend les proportions de l'immortalité.
+
+### Étape 5
+- Désormais tu n'es plus, ô matière vivante !
+Qu'un granit entouré d'une vague épouvante,
+Assoupi dans le fond d'un Saharah brumeux ;
+Un vieux sphinx ignoré du monde insoucieux,
+Oublié sur la carte, et dont l'humeur farouche
+Ne chante qu'aux rayons du soleil qui se couche.
+`;
 
 let steps = [];
 
@@ -35,6 +74,18 @@ export function init() {
     if (nextBtn) nextBtn.addEventListener('click', onContinue);
     if (tableBody) tableBody.addEventListener('change', onCheckboxChange);
 
+    const sampleBtn = DOM.sampleBtn();
+    if (sampleBtn) sampleBtn.addEventListener('click', onLoadSample);
+    const sampleConfirmBtn = DOM.sampleConfirmBtn();
+    if (sampleConfirmBtn) sampleConfirmBtn.addEventListener('click', () => {
+        DOM.sampleConfirm().hidden = true;
+        importSampleFile();
+    });
+    const sampleCancelBtn = DOM.sampleCancelBtn();
+    if (sampleCancelBtn) sampleCancelBtn.addEventListener('click', () => {
+        DOM.sampleConfirm().hidden = true;
+    });
+
     const skipTopBtn = document.getElementById('import-skip-top-btn');
     if (skipTopBtn) skipTopBtn.addEventListener('click', () => eventBus.emit('navigate', 'tab-clean'));
 
@@ -48,9 +99,50 @@ export function init() {
         const fileInput = DOM.fileInput();
         if (fileInput) fileInput.value = '';
         DOM.excelOptions().hidden = true;
+        const sampleConfirm = DOM.sampleConfirm();
+        if (sampleConfirm) sampleConfirm.hidden = true;
         const status = DOM.status();
         if (status) status.innerHTML = '';
     });
+}
+
+function onLoadSample() {
+    if (steps.length > 0) {
+        DOM.sampleConfirm().hidden = false;
+        DOM.sampleConfirm().scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        importSampleFile();
+    }
+}
+
+async function importSampleFile() {
+    const blob = new Blob([SPLEEN_MD], { type: 'text/markdown' });
+    const file = new File([blob], 'spleen.md', { type: 'text/markdown' });
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('sheet', 'PLAN');
+    formData.append('mode', 'replace');
+
+    DOM.importBtn().disabled = true;
+    DOM.status().innerHTML = '<p class="fr-badge fr-badge--info fr-badge--no-icon">Import en cours...</p>';
+
+    try {
+        const result = await uploadFile('/api/import', formData, () => {});
+
+        if (result.error) throw new Error(result.error.message);
+
+        steps = result.data.steps;
+        renderTable(steps);
+        updateSelectionCount();
+        DOM.tableContainer().hidden = false;
+        DOM.selectionBar().hidden = false;
+        DOM.status().innerHTML = `<p class="fr-alert fr-alert--success fr-alert--sm"><span class="fr-alert__title">${steps.length} étapes importées depuis spleen.md</span></p>`;
+    } catch (err) {
+        DOM.status().innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
+    } finally {
+        DOM.importBtn().disabled = false;
+    }
 }
 
 function onFileChange(e) {
