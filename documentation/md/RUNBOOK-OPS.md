@@ -31,8 +31,8 @@ OmniStudio a deux modes de fonctionnement contrôlés par `OMNISTUDIO_MINIFY` :
 
 | Mode | Variable | Assets servis | Cache | Console navigateur |
 |------|----------|--------------|-------|-------------------|
-| **Développement** | `OMNISTUDIO_MINIFY=false` (défaut) | `frontend/out/` (14 modules JS sources) | no-cache sur JS/CSS/HTML | `DÉVELOPPEMENT (sources)` |
-| **Production** | `OMNISTUDIO_MINIFY=true` | `frontend/out-dist/` (1 bundle JS minifié) | 7 jours JS/CSS, 1 an DSFR | `PRODUCTION (minifié)` |
+| **Développement** | `OMNISTUDIO_MINIFY=false` | `frontend/out/` (14 modules JS sources) | no-cache sur JS/CSS/HTML | `DÉVELOPPEMENT (sources)` |
+| **Production** | `OMNISTUDIO_MINIFY=true` (défaut de `./start.sh`) | `frontend/out-dist/` (1 bundle JS minifié) | 7 jours JS/CSS, 1 an DSFR | `PRODUCTION (minifié)` |
 
 ### Passer en production
 
@@ -41,7 +41,7 @@ OmniStudio a deux modes de fonctionnement contrôlés par `OMNISTUDIO_MINIFY` :
 ./scripts/build-frontend.sh
 
 # 2. Démarrer en mode production
-OMNISTUDIO_MINIFY=true ./start.sh
+./start.sh
 ```
 
 Ou pour un serveur déjà en cours :
@@ -55,7 +55,7 @@ OMNISTUDIO_MINIFY=true ./start.sh
 
 ```bash
 ./stop.sh
-./start.sh    # OMNISTUDIO_MINIFY=false par défaut
+OMNISTUDIO_MINIFY=false ./start.sh
 ```
 
 ### Basculement rapide
@@ -194,7 +194,7 @@ curl http://localhost:7870/api/health
    `kill $(lsof -t -i :7870); cd omnistudio && ./venv/bin/python3 server.py`
 4. Vérifier les logs : `tail -50 omnistudio/logs/omnistudio.log`
 
-### OmniVoice ne répond pas (port 8060)
+### OmniVoice ne répond pas (port 8070)
 1. Vérifier le processus : `lsof -i :8070`
 2. Si absent, relancer : `cd OmniVoice && ./venv/bin/python3 main.py`
 3. Vérifier les logs : `tail -50 OmniVoice/logs/omnivoice.log`

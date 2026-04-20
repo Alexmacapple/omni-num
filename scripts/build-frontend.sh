@@ -51,6 +51,9 @@ esbuild "$SRC_DIR/css/app.css" \
 # 3. Copier theme-init.js (charge separement, avant le CSS)
 cp "$SRC_DIR/js/theme-init.js" "$DIST_DIR/js/theme-init.js"
 
+# 3bis. Copier les assets racine referencés par index.html
+[ -f "$SRC_DIR/favicon.svg" ] && cp "$SRC_DIR/favicon.svg" "$DIST_DIR/favicon.svg"
+
 # 4. Copier DSFR (inchange)
 cp -r "$SRC_DIR/dsfr" "$DIST_DIR/dsfr"
 
@@ -61,15 +64,24 @@ else
     HASH=$(md5 -r "$DIST_DIR/js/app.min.js" | cut -c1-8)
 fi
 
-# 6. Reecrire index.html avec les chemins minifies + hash
+# 6. Reecrire index.html avec les chemins minifies + hash.
+# Les chemins doivent rester relatifs pour que <base href="/omni/"> continue
+# de normaliser correctement les requetes via Tailscale Funnel.
 sed \
-    -e "s|/css/app\.css[^\"]*|/css/app.min.css?v=$HASH|g" \
-    -e "s|/js/app\.js[^\"]*|/js/app.min.js?v=$HASH|g" \
+    -e "s|href=\"css/app\.css[^\"]*\"|href=\"css/app.min.css?v=$HASH\"|g" \
+    -e "s|src=\"js/app\.js[^\"]*\"|src=\"js/app.min.js?v=$HASH\"|g" \
     "$SRC_DIR/index.html" > "$DIST_DIR/index.html"
 
 # 7. Smoke test
 [ -s "$DIST_DIR/js/app.min.js" ] || { echo "[ERREUR] Bundle JS vide"; exit 1; }
 [ -s "$DIST_DIR/css/app.min.css" ] || { echo "[ERREUR] Bundle CSS vide"; exit 1; }
+grep -q '<base href="/omni/">' "$DIST_DIR/index.html" || { echo "[ERREUR] <base href=\"/omni/\"> absent du build prod"; exit 1; }
+grep -q 'href="css/app.min.css?v=' "$DIST_DIR/index.html" || { echo "[ERREUR] index.html n'utilise pas app.min.css"; exit 1; }
+grep -q 'src="js/app.min.js?v=' "$DIST_DIR/index.html" || { echo "[ERREUR] index.html n'utilise pas app.min.js"; exit 1; }
+if rg -q 'VoxStudio|vx_access_token|vx-login-screen|data-vx-active' "$DIST_DIR/index.html" "$DIST_DIR/css/app.min.css" "$DIST_DIR/js/app.min.js"; then
+    echo "[ERREUR] Bundle prod stale detecte (restes VoxStudio)"
+    exit 1
+fi
 
 JS_SIZE=$(wc -c < "$DIST_DIR/js/app.min.js")
 CSS_SIZE=$(wc -c < "$DIST_DIR/css/app.min.css")

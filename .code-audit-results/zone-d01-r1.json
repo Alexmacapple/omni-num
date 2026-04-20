@@ -1,0 +1,34 @@
+{
+  "zone": "omnistudio/routers",
+  "round": 1,
+  "files_audited": 11,
+  "duration_ms": 45000,
+  "bugs": [
+    {
+      "id": "r1-d01-001",
+      "severity": "medium",
+      "category": "error-handling",
+      "subcategory": "logger_f_string_with_format_spec",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/routers/status.py",
+      "line": 47,
+      "title": "f-string dans logger.debug avec %s (anti-pattern)",
+      "description": "Ligne 47 : logger.debug(\"OmniVoice status check failed: %s\", e) utilise une f-string qui contient %s, ce qui mélange l'interpolation f-string avec le format old-style. C'est un anti-pattern qui peut causer une eager evaluation au lieu d'une lazy evaluation du logging. L'argument excepté. qui arrive",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Remplacer `logger.debug(\"OmniVoice status check failed: %s\", e)` par `logger.debug(\"OmniVoice status check failed: %s\", e)` (le message est OK, mais vérifier que ce n'est pas un f-string contenant des substitutions)"
+    },
+    {
+      "id": "r1-d01-002",
+      "severity": "high",
+      "category": "compatibility",
+      "subcategory": "pathlib_is_relative_to_python39",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/routers/voices.py",
+      "line": 669,
+      "title": "Path.is_relative_to() n'existe qu'en Python 3.9+",
+      "description": "Ligne 669 : `dest.resolve().is_relative_to(voices_dir.resolve())` utilise la méthode `is_relative_to()` qui a été ajoutée à pathlib uniquement en Python 3.9. Si OmniStudio s'exécute sur Python 3.8, cet appel levera une AttributeError au runtime. C'est un bug de compatibilité qui cassera la fonctionnalité d'import de voix custom.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Remplacer par une vérification alternative compatible Python 3.8 : `str(dest.resolve()).startswith(str(voices_dir.resolve()))` ou utiliser `dest.resolve().relative_to(voices_dir.resolve())` dans un try/except"
+    }
+  ]
+}

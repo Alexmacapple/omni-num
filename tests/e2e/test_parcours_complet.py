@@ -10,7 +10,7 @@ Ce test simule un utilisateur réel qui traverse les 6 onglets :
 
 Prérequis :
     - OmniStudio actif (./start.sh)
-    - OmniVoice actif (GPU, port 8060)
+    - OmniVoice actif (GPU, port 8070)
     - Albert API accessible (clé OPENAI_API_KEY)
     - Keycloak actif (port 8082)
 

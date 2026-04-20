@@ -19,7 +19,7 @@
 - **Démarrer le site** : `./start.sh` (lance Keycloak + OmniVoice:8070 + seed si vide + omnistudio:7870).
 - **Arrêter** : `./stop.sh`.
 - **Smoke test** : `./test-smoke.sh`.
-- **Build prod** : `VOXSTUDIO_MINIFY=true ./scripts/build-frontend.sh`.
+- **Build prod** : `OMNISTUDIO_MINIFY=true ./scripts/build-frontend.sh`.
 - **Audit assets sous `/omni`** : `./scripts/verify-assets-prefix.sh`.
 - **Exposer en 5G** : `tailscale funnel --https=443 --set-path=/omni http://localhost:7870`.
 - **Monitor** : `./scripts/monitor.sh` (vérifie Keycloak, OmniVoice, omnistudio, `memory_pressure < 0.5`).

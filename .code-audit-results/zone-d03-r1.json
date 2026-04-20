@@ -1,0 +1,73 @@
+{
+  "zone": "omnistudio/graph/__init__.py",
+  "round": 1,
+  "files_audited": 10,
+  "duration_ms": 3200,
+  "bugs": [
+    {
+      "id": "r1-d03-001",
+      "severity": "low",
+      "category": "dead-code",
+      "subcategory": "typo-portugais",
+      "file": "omnistudio/graph/workflow.py",
+      "line": 110,
+      "title": "Typo portugais dans message d'erreur critique",
+      "description": "Le message logging.critical à la ligne 110 contient 'Impossível' (portugais) au lieu de 'Impossible' (français). Impacte la lisibilité des logs en cas d'erreur au démarrage du workflow.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Remplacer 'Impossível' par 'Impossible' ligne 110."
+    },
+    {
+      "id": "r1-d03-002",
+      "severity": "medium",
+      "category": "dead-code",
+      "subcategory": "unused-import",
+      "file": "omnistudio/graph/subgraphs/clean_loop.py",
+      "line": 3,
+      "title": "Import time présent mais usage non documenté",
+      "description": "Le module `time` est importé ligne 3 mais n'est utilisé qu'implicitement via time.sleep() pour rate limiting. L'import devrait être après les imports principaux et documenté. Note: time.sleep() ligne 69 est effectivement utilisé pour rate limiting, donc l'import n'est pas mort, juste mal placé.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Déplacer l'import `time` après les imports logging/re et ajouter un commentaire justifiant son usage pour rate limiting."
+    },
+    {
+      "id": "r1-d03-003",
+      "severity": "high",
+      "category": "silent-exception",
+      "subcategory": "logger-without-import",
+      "file": "omnistudio/graph/subgraphs/design_loop.py",
+      "line": 7,
+      "title": "logger utilisé sans import explicite à niveau module",
+      "description": "Le module design_loop.py déclare `logger = logging.getLogger('omnistudio')` ligne 7 MAIS le module `logging` n'est importé que ligne 1. L'assignation à ligne 7 utilise `logging.getLogger()` qui fonctionne car logging est en scope, MAIS la convention est fragile. Inspection du code montre que logger est utilisé aux lignes 139 — ce pattern est ok en Python mais fragile à la refactorisation.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Vérifier que `import logging` est présent ligne 1 (OK) et que l'assignation logger = logging.getLogger() suit la ligne d'import pour clarté."
+    },
+    {
+      "id": "r1-d03-004",
+      "severity": "medium",
+      "category": "input-validation",
+      "subcategory": "unguarded-dict-access",
+      "file": "omnistudio/graph/subgraphs/multi_voice_expansion.py",
+      "line": 54,
+      "title": "Accès à assignments[step_id] sans .get()",
+      "description": "Ligne 54: `assignment = assignments[step_id]` lève KeyError si step_id n'existe pas dans assignments dict, alors qu'une vérification HTTPException 422 existe ligne 47-51. Si la vérification est bypassée ou l'état est race-condition, KeyError non attrapée planteMerge le graph.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Utiliser `assignment = assignments.get(step_id)` et ajouter un guard explicite avant la ligne 54."
+    },
+    {
+      "id": "r1-d03-005",
+      "severity": "medium",
+      "category": "type-mismatch",
+      "subcategory": "reducer-contract-violation",
+      "file": "omnistudio/graph/workflow.py",
+      "line": 16,
+      "title": "prepare_clean() retourne state complet au lieu de diff",
+      "description": "La fonction prepare_clean() ligne 16-26 retourne un dict avec multiple clés (steps, cleaning_mode, cleaning_validated, etc.). Selon le pattern reducer Annotated[List, add], chaque node doit retourner UNIQUEMENT les clés qui doivent être mergées. Retourner le state complet viole ce contrat et peut causer une accrétion/surcharge de l'état.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Vérifier que prepare_clean() retourne seulement les clés qui doivent changer (probablement l'empty dict {} car prepare_clean est juste une preparation)."
+    }
+  ]
+}

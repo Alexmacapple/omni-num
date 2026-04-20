@@ -1,0 +1,47 @@
+{
+  "zone": "omnistudio/server.py",
+  "round": 1,
+  "files_audited": 5,
+  "duration_ms": 1200,
+  "bugs": [
+    {
+      "id": "r1-d04-001",
+      "severity": "medium",
+      "category": "error-handling",
+      "subcategory": "f-string in logger call",
+      "file": "omnistudio/dependencies.py",
+      "line": 405,
+      "title": "f-string dans logger.warning — anti-pattern PEP",
+      "description": "Ligne 405 utilise une f-string directement dans logger.warning(). Cela évalue l'expression immédiatement (eager evaluation) au lieu de laisser le logger formatter le message. Pattern incorrect : logger.warning(f\"Erreur fermeture client OmniVoice: {e}\"). PEP 391 recommande logger.warning(\"Erreur...: %s\", e) pour la lazy evaluation et la cohérence avec le reste du code.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Remplacer par : logger.warning(\"Erreur fermeture client OmniVoice: %s\", e)"
+    },
+    {
+      "id": "r1-d04-002",
+      "severity": "high",
+      "category": "type-mismatch",
+      "subcategory": "untyped dict value access in list comprehension",
+      "file": "omnistudio/dependencies.py",
+      "line": 150,
+      "title": "Accès non typé de ts dans _locks.items() sans vérification datetime",
+      "description": "Ligne 150 itère sur locks.items() et appelle is_session_stale(ts) sur chaque ts. Cependant, release_stale_locks() est appelée au démarrage et à chaque endpoint SSE, sans garantie que tous les ts sont datetime. Si un ts est None, string, ou un autre type, is_session_stale() ligne 141 appellera datetime.now(timezone.utc) - last_activity qui lèverait TypeError. Pas de validation du type avant usage.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Ajouter une vérification : if isinstance(ts, datetime) avant d'appeler is_session_stale(ts), ou utiliser un type hint Dict[str, datetime] sur _cleaning_locks et autres."
+    },
+    {
+      "id": "r1-d04-003",
+      "severity": "high",
+      "category": "silent-exception",
+      "subcategory": "exception swallowing on checkpoint purge",
+      "file": "omnistudio/dependencies.py",
+      "line": 236,
+      "title": "Exception logguée mais non re-raisée sur purge checkpoints",
+      "description": "Ligne 227-237 : essai de purger les checkpoints LangGraph en cas d'inactivité session. Si une erreur DB survient (espace disque, permission, corruption), elle est logguée en warning (ligne 237) mais l'exception n'est pas re-raisée. La fonction _purge_old_sessions() continue comme si la purge avait réussi, alors qu'elle a échoué. Potentiel data leak de sessions obsolètes qui accumulent les checkpoints.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Soit re-raise l'exception (logger.error + raise), soit augmenter le sévérité à logger.critical et mesurer en monitoring. Au minimum ajouter un flag pour savoir que la purge a échoué."
+    }
+  ]
+}

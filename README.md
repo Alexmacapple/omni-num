@@ -10,6 +10,7 @@ Fork de [voice-num/voxstudio](https://github.com/Alexmacapple/voice-num) avec **
 
 ```bash
 # 1. Lancer tous les services (Keycloak + OmniVoice + omnistudio)
+#    Par défaut, ./start.sh sert le build production minifié.
 ./start.sh
 
 # 2. Ouvrir
@@ -20,6 +21,8 @@ open https://mac-studio-alex.tail0fc408.ts.net/omni/   # public 5G
 ```
 
 Arrêter : `./stop.sh`. Smoke test : `./test-smoke.sh`.
+
+Mode développement front : `OMNISTUDIO_MINIFY=false ./start.sh`.
 
 ---
 

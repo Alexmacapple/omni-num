@@ -1,0 +1,73 @@
+{
+  "zone": "omnistudio/routers",
+  "round": 2,
+  "files_audited": 11,
+  "duration_ms": 60000,
+  "bugs": [
+    {
+      "id": "r2-d01-001",
+      "severity": "low",
+      "category": "error-handling",
+      "subcategory": "logger_f_string_bad_style",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/dependencies.py",
+      "line": 405,
+      "title": "f-string dans logger.warning avec format implicite",
+      "description": "Ligne 405 : `logger.warning(f\"Erreur fermeture client OmniVoice: {e}\")` utilise une f-string alors que le reste du codebase utilise le style `logger.warning(\"Erreur...\", e)`. Bien que cela fonctionne, c'est un mélange de styles qui réduit la cohérence et la lisibilité du code de logging. PEP 8 préfère passer l'argument comme paramètre séparé au logger.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Remplacer `logger.warning(f\"Erreur fermeture client OmniVoice: {e}\")` par `logger.warning(\"Erreur fermeture client OmniVoice: %s\", e)`"
+    },
+    {
+      "id": "r2-d01-002",
+      "severity": "low",
+      "category": "dead-code",
+      "subcategory": "unused_constant",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/routers/generate.py",
+      "line": 413,
+      "title": "Endpoint /api/generate/random sans accès au thread_id",
+      "description": "Ligne 413-435 : l'endpoint `generate_random` n'inclut pas `thread_id: str = Depends(get_thread_id)` comme paramètre, bien que la plupart des autres endpoints le font. Cela signifie que cet endpoint ne peut pas accéder à la session utilisateur, ni ne peut vérifier l'ownership. Le WAV généré atterrit dans `/api/audio/random/{filename}` qui n'est jamais servi par le routeur audio.py (qui s'attend à un filename sans préfixe). C'est un endpoint incomplet.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Soit ajouter `thread_id: str = Depends(get_thread_id)` et `_verify_session_owner()`, soit documenter pourquoi cet endpoint échappe au contrôle de session (s'il est vraiment public)"
+    },
+    {
+      "id": "r2-d01-003",
+      "severity": "medium",
+      "category": "api-guard",
+      "subcategory": "request_body_access_unguarded",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/routers/sessions.py",
+      "line": 50,
+      "title": "Body JSON parsé sans content-type check strict",
+      "description": "Ligne 50 : `body = await request.json() if request.headers.get(\"content-type\", \"\").startswith(\"application/json\") else {}`. Cette condition est correcte en surface, mais le ternary operator cache l'absence d'handling d'exceptions lors du parsing JSON. Si le client envoie Content-Type: application/json mais un JSON malformé, `request.json()` lèvera une JSONDecodeError qui n'est pas catchée, ce qui retournera un 400 générique au lieu de 400 avec message descriptif.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Entourer `body = await request.json()` dans un try/except pour retourner `api_error(\"INVALID_JSON\", \"Corps de requête JSON invalide\", 400)`"
+    },
+    {
+      "id": "r2-d01-004",
+      "severity": "medium",
+      "category": "input-validation",
+      "subcategory": "file_read_without_size_check",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/routers/import_steps.py",
+      "line": 107,
+      "title": "Lecture du fichier uploadé sans validation de taille pré-check",
+      "description": "Ligne 107-108 : `content = await file.read()` suivi de `if len(content) > MAX_UPLOAD_SIZE`. Cet ordre est correct, mais FastAPI/Starlette n'applique pas la limite MAX_UPLOAD_SIZE côté infrastructure (il faut la faire manuellement). Si un client envoie un fichier de 1 Go, la lecture tiendra tout en mémoire avant la vérification. Pas de security issue (validation existe), mais problème de ressources (OOM).",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Ajouter une limite de taille au level FastAPI app.add_middleware ou implémenter un Reader par chunks qui vérifie la taille cumulée au fur et à mesure"
+    },
+    {
+      "id": "r2-d01-005",
+      "severity": "low",
+      "category": "logic-error",
+      "subcategory": "dict_get_type_mismatch",
+      "file": "/Users/alex/Claude/projets-heberges/omni-num/omnistudio/routers/export.py",
+      "line": 216,
+      "title": "assignments.get() retourne une chaine, pas un dict",
+      "description": "Ligne 216 : `assignment = assignments.get(str(sid), {})` puis ligne 217-218 : `if isinstance(assignment, dict): lang = assignment.get(\"language\")`. Mais dans le contexte du code, `assignments` est un dict mappant step_id -> voice_name (string), pas step_id -> {language: ...}. La vérification `isinstance(assignment, dict)` sera toujours False, donc `lang` ne sera jamais défini par ce chemin. C'est un code mort ou une logique de state outdatée.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Vérifier la structure réelle de `assignments` et corriger le chemin pour extraire la langue. Probable : `lang = step_info.get(\"language_override\")` suffit."
+    }
+  ]
+}

@@ -62,12 +62,10 @@
     margin-bottom: 0 !important;
 }
 
-/* Fix DSFR : fr-error-text a display:flex qui peut battre [hidden] de l'UA.
-   Force display:none quand l'élément est explicitement masqué. */
-.fr-error-text[hidden],
-.fr-info-text[hidden],
-.fr-valid-text[hidden],
-.fr-hint-text[hidden] {
+/* Fix DSFR : plusieurs composants posent display:flex/block et peuvent battre
+   la feuille UA. Le contrat HTML reste prioritaire : un élément [hidden] doit
+   toujours disparaître, y compris sur les grilles/lignes DSFR. */
+[hidden] {
     display: none !important;
 }
 

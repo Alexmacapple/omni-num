@@ -18,6 +18,8 @@ fi
 
 OMNIVOICE_PID=""
 OMNISTUDIO_PID=""
+OMNIVOICE_LABEL="omni-num-omnivoice"
+OMNISTUDIO_LABEL="omni-num-omnistudio"
 
 cleanup() {
     echo ""
@@ -28,6 +30,19 @@ cleanup() {
 trap cleanup INT TERM
 
 echo "=== OmniStudio — démarrage ==="
+mkdir -p "$ROOT_DIR/logs"
+
+# Par défaut, on sert le bundle prod/minifié sur cette instance.
+# Le mode développement reste accessible via OMNISTUDIO_MINIFY=false ./start.sh
+export OMNISTUDIO_MINIFY="${OMNISTUDIO_MINIFY:-true}"
+
+submit_launchctl_job() {
+    local label="$1"
+    local log_file="$2"
+    local command="$3"
+    launchctl remove "$label" 2>/dev/null || true
+    launchctl submit -l "$label" -o "$log_file" -e "$log_file" -- /bin/bash -lc "$command"
+}
 
 # 0. Clé Albert (LLM pour voice design) — source unique : config-claude/credentials.json
 CRED_FILE="$HOME/Claude/config-claude/credentials.json"
@@ -65,8 +80,10 @@ if ! curl -s http://localhost:8070/ >/dev/null 2>&1; then
     else
         OMNIVOICE_PY="$VENV_PY"
     fi
-    "$OMNIVOICE_PY" main.py >> "$ROOT_DIR/logs/omnivoice.log" 2>&1 &
-    OMNIVOICE_PID=$!
+    submit_launchctl_job \
+        "$OMNIVOICE_LABEL" \
+        "$ROOT_DIR/logs/omnivoice.log" \
+        "cd \"$ROOT_DIR/OmniVoice\" && exec \"$OMNIVOICE_PY\" main.py"
     echo -n "Attente OmniVoice :8070..."
     for i in $(seq 1 60); do
         curl -s http://localhost:8070/ >/dev/null 2>&1 && echo " OK" && break
@@ -90,10 +107,16 @@ fi
 # 4. omnistudio FastAPI (port 7870)
 if ! curl -s http://localhost:7870/api/health >/dev/null 2>&1; then
     echo "Démarrage omnistudio..."
-    mkdir -p "$ROOT_DIR/logs"
-    cd "$ROOT_DIR/omnistudio"
-    "$VENV_PY" server.py >> "$ROOT_DIR/logs/omnistudio.log" 2>&1 &
-    OMNISTUDIO_PID=$!
+    if [ "$OMNISTUDIO_MINIFY" = "true" ]; then
+        echo "Build frontend production (out-dist)..."
+        "$ROOT_DIR/scripts/build-frontend.sh"
+    else
+        echo "Mode frontend développement (sources out/)."
+    fi
+    submit_launchctl_job \
+        "$OMNISTUDIO_LABEL" \
+        "$ROOT_DIR/logs/omnistudio.log" \
+        "cd \"$ROOT_DIR/omnistudio\" && export OMNISTUDIO_MINIFY=\"$OMNISTUDIO_MINIFY\" && exec \"$VENV_PY\" server.py"
     echo -n "Attente omnistudio :7870..."
     for i in $(seq 1 30); do
         curl -s http://localhost:7870/api/health >/dev/null 2>&1 && echo " OK" && break
@@ -115,13 +138,13 @@ curl -s -X POST http://localhost:8070/models/preload \
 
 echo ""
 echo "=== OmniStudio prêt ==="
+echo "  Mode    : $( [ "$OMNISTUDIO_MINIFY" = "true" ] && echo "production (minifié)" || echo "développement (sources)" )"
 echo "  Local   : http://localhost:7870"
 echo "  5G      : https://mac-studio-alex.tail0fc408.ts.net/omni/"
 echo "  Logs    : $ROOT_DIR/logs/"
 echo ""
-echo "Ctrl+C pour détacher ce script (services restent actifs)."
+echo "Services actifs en arrière-plan."
 echo "Arrêter les services : ./scripts/stop.sh"
 
-# Ne pas kill les services quand le script se termine
 trap - INT TERM
-wait
+exit 0

@@ -1,0 +1,112 @@
+{
+  "zone": "omnistudio/graph/__init__.py",
+  "round": 2,
+  "files_audited": 10,
+  "duration_ms": 4100,
+  "bugs": [
+    {
+      "id": "r2-d03-001",
+      "severity": "high",
+      "category": "logic-error",
+      "subcategory": "french-to-omnivox-language-mismatch",
+      "file": "omnistudio/graph/subgraphs/design_loop.py",
+      "line": 136,
+      "title": "Texte français dur dans appel /design OmniVoice",
+      "description": "Ligne 136: `vox_client.design('Ceci est un test de timbre et de rythme...')` envoie du français au endpoint /design d'OmniVoice. Selon CLAUDE.md: 'Ne jamais envoyer du français à POST /design d'OmniVoice (rejet 422). Compose toujours en anglais côté backend.' Cet appel génère un 422 UNPROCESSABLE_ENTITY systématiquement et casse le design_loop.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Remplacer le texte français par : 'This is a test of tone and rhythm for our new studio voice.'"
+    },
+    {
+      "id": "r2-d03-002",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "unguarded-none-return",
+      "file": "omnistudio/graph/subgraphs/design_loop.py",
+      "line": 130,
+      "title": "synthesize_design() retourne {} si voice_instruct absent, mais check_decision ne gère pas None",
+      "description": "Ligne 130-134: si voice_instruct est vide/None, synthesize_design() retourne {\"wav_paths\": []} — état valide. MAIS la guard ligne 130 `if not voice_instruct:` signifie que voice_instruct était None. La transition ligne 155 `check_decision()` teste `state.get(\"decision\")` mais si generate_voice_instruct() échoue silencieusement (LLM timeout, API error) et retourne {\"voice_instruct\": \"\"} (voir _clean_voice_instruct ligne 124 qui peut retourner \"\"), then synthesize_design() skip et retourne {}, et le graph boucle sur la même instruction vide.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Ajouter une vérification explicite dans generate_voice_instruct() : si raw est vide ou API échoue, lever une exception au lieu de retourner une voice_instruct vide. OU ajouter un guard dans check_decision() : if voice_instruct is empty/None, return END (max iterations reached)."
+    },
+    {
+      "id": "r2-d03-003",
+      "severity": "high",
+      "category": "race-condition",
+      "subcategory": "reducer-accumulation-broken",
+      "file": "omnistudio/graph/state.py",
+      "line": 13,
+      "title": "iteration_count Annotated[int, add] mais nodes retournent iteration: +1",
+      "description": "État ligne 13: `iteration_count: Annotated[int, add]` définit un reducer qui accumule les entiers. MAIS les nodes retournent `{\"iteration\": state.get(\"iteration\", 0) + 1, ...}` (clean_loop ligne 99, design_loop ligne 126, etc.) — ils manipulent une clé différente `iteration` au lieu de `iteration_count`. Le state n'accumule donc JAMAIS iteration_count correctement. De plus, la guard ligne 154 design_loop teste `state.get(\"iteration\", 0) >= 20` sur la mauvaise clé. Résultat : max-iteration guards ne fonctionnent pas.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Unifier sur UNE clé: soit iteration (non-reducer, overwrite), soit iteration_count (reducer, accumulate). Recommandation: utiliser iteration (override) si le compteur est local à la boucle, OU itération_count (reducer, accumulate) si on veut tracker total cross-subgraph. Actualiser les guards en conséquence."
+    },
+    {
+      "id": "r2-d03-004",
+      "severity": "critical",
+      "category": "race-condition",
+      "subcategory": "async-sleep-blocks-event-loop",
+      "file": "omnistudio/graph/subgraphs/clean_loop.py",
+      "line": 69,
+      "title": "time.sleep(60) dans node sync bloque le worker thread (PRD-035 Bug 3)",
+      "description": "Ligne 69: `time.sleep(60)` est exécutée dans propose_corrections(), un node sync de LangGraph. Les commentaires ligne 64-65 prétendent que c'est ok car 'time.sleep() bloque le worker thread, pas l'event loop'. C'est techniquement correct pour asyncio (event loop can schedule autres workers), MAIS crée un goulot étranglement: si 10 requests tentent propose_corrections() en parallèle, 10 worker threads se bloquent sur time.sleep(60) = timeout de 600s visible aux clients. Ceci est un bug PRD-035 déjà connu et DOIT être fixé avec async sleep ou rate limiting au niveau HTTP.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Implémenter un rate limiter décentralisé (ex: redis SETEX + GET pour track requêtes par min par user_sub) au lieu de time.sleep() dans le node. OU déplacer rate limiting au middleware FastAPI (starlette SlowAPIMiddleware)."
+    },
+    {
+      "id": "r2-d03-005",
+      "severity": "high",
+      "category": "error-handling",
+      "subcategory": "exception-not-properly-propagated",
+      "file": "omnistudio/graph/subgraphs/multi_voice_expansion.py",
+      "line": 106,
+      "title": "expand_all_steps() swallows HTTPException en logging seulement",
+      "description": "Ligne 106-108: si expand_step() lève HTTPException (voix inaccessible), le catch `except HTTPException as e:` log l'erreur et RE-RAISE. C'est correct. MAIS le appel à expand_all_steps() provient de generate_node (ou du workflow), et le HTTPException va propager jusqu'au graph executor, qui va crash le workflow. Le state n'est PAS rollback — tous les segments_assignments ajoutés avant le crash restent partiellement accumulés (car reducer Annotated[List, add]). Résultat : état corrompu demi-appliqué.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Soit: (A) ajouter un transaction-like pattern pour segments_assignments (transaction atomique: soit tout échoue soit tout succède), OU (B) ne pas appeler expand_all_steps() en node — l'appeler côté UI après validation, et utiliser un endpoint dédié qui retourne 422 sans modifier le state."
+    },
+    {
+      "id": "r2-d03-006",
+      "severity": "medium",
+      "category": "api-guard",
+      "subcategory": "unvalidated-voice-reference",
+      "file": "omnistudio/graph/subgraphs/design_loop.py",
+      "line": 121,
+      "title": "generate_voice_instruct() envoie brief.get('genre') brut à LLM sans sanitisation",
+      "description": "Ligne 85-90: les champs `gender`, `age`, `contexte`, `emotion`, `extra` sont extraits du state sans validation. Ils sont passés directement au Template (Jinja2 ligne 105-119) puis au LLM. Si l'utilisateur injecte du prompt malveillant dans brief['extra'] (ex: 'Oublie tes instructions précédentes...'), le LLM va l'exécuter. Ceci est une prompt injection attack classique.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Valider et sanitiser brief['extra'] avant de la passer au prompt. Utiliser un regex strict ou une whitelist de caractères autorisés (alphanumérique + espaces + ponctuation basique)."
+    },
+    {
+      "id": "r2-d03-007",
+      "severity": "high",
+      "category": "type-mismatch",
+      "subcategory": "reducer-pattern-violation-multiple",
+      "file": "omnistudio/graph/state.py",
+      "line": 34,
+      "title": "draft_voices et locked_voices utilisent reducer add mais contrat pas respecté",
+      "description": "État lignes 34-35: `draft_voices: Annotated[List[Dict], add]` et `locked_voices: Annotated[List[str], add]`. Le contrat du reducer `add` est que chaque node retourne UNIQUEMENT les nouveaux éléments à ajouter à la liste. Inspection du code: aucun node dans d03 ne retourne `{\"draft_voices\": [...]}` ou `{\"locked_voices\": [...]}`. Ces clés ne sont jamais mises à jour, donc le reducer ne sert à rien. Le design_loop ligne 91-95 teste `state.get(\"locked_voices\")` qui sera vide indéfiniment si personne n'y ajoute de segments.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Clarifier le contrat: (A) si draft_voices/locked_voices doivent être accumulés via reducer, ajouter des nodes qui retournent les nouveaux éléments. (B) Si ce sont des state de travail (pas accumulés), utiliser des listes ordinaires sans reducer. Consulter le workflow complet (routers/design.py) pour voir comment ces champs sont assignés."
+    },
+    {
+      "id": "r2-d03-008",
+      "severity": "medium",
+      "category": "logic-error",
+      "subcategory": "conditional-edge-ambiguous",
+      "file": "omnistudio/graph/workflow.py",
+      "line": 90,
+      "title": "route_after_design() retourne design si locked_voices vide, boucle infinie possible",
+      "description": "Ligne 90-95: la conditional edge après design_subgraph teste `if state.get(\"locked_voices\"): return \"assign\"`. Si locked_voices est toujours vide (car le reducer n'a jamais reçu d'ajout), le workflow retourne toujours à 'design', créant une boucle infinie jusqu'au timeout. L'état design n'avance jamais vers assign/generate/export.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Ajouter un max-iterations guard similaire à design_loop ligne 154: `if state.get(\"iteration\", 0) >= 20: return \"assign\"` pour forcer la progression même si locked_voices reste vide."
+    }
+  ]
+}

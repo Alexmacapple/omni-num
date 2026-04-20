@@ -1,0 +1,60 @@
+{
+  "zone": "omnistudio/server.py",
+  "round": 2,
+  "files_audited": 5,
+  "duration_ms": 1800,
+  "bugs": [
+    {
+      "id": "r2-d04-001",
+      "severity": "high",
+      "category": "race-condition",
+      "subcategory": "TOCTOU on lock deletion in _is_locked",
+      "file": "omnistudio/dependencies.py",
+      "line": 169,
+      "title": "Condition de course (TOCTOU) sur suppression de verrous orphelins",
+      "description": "Ligne 156-171 : _is_locked() vérifie si un verrou est orphelin (> _LOCK_TIMEOUT = 600s), puis le supprime ligne 169 (del locks[thread_id]). Entre la lecture du timestamp ligne 166 et la suppression ligne 169, un autre endpoint async peut : (1) relancer le même SSE et vérifier _is_locked(locks, thread_id) qui retourne True car le verrou existe toujours, (2) faire un travail, (3) arriver ici et supprimer le verrou. Résultat : deux SSE actifs pour le même thread_id, cascade de 423 Locked ou 409 Conflict. Pas de mutex sur _cleaning_locks/etc.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Ajouter un asyncio.Lock global protégeant chaque Dict[str, datetime] _cleaning_locks, _generating_locks, _exporting_locks. Ou utiliser redis pour les locks distribués. Ou mieux : une structure de données thread-safe (Queue, Semaphore, etc.)."
+    },
+    {
+      "id": "r2-d04-002",
+      "severity": "medium",
+      "category": "performance",
+      "subcategory": "excessive timeout on httpx AsyncClient",
+      "file": "omnistudio/dependencies.py",
+      "line": 396,
+      "title": "Timeout httpx = 300.0s (5 min) — peut cause hanging requests",
+      "description": "Ligne 396 : _omnivoice_client = httpx.AsyncClient(base_url=OMNIVOICE_URL, timeout=300.0). Un timeout de 5 minutes sur un appel TTS à OmniVoice est excessif. Si OmniVoice freeze ou hang, le client FastAPI attend 5 min avant de timeout. Entre-temps, la connexion client reste ouverte (memory leak potentiel), et les pool connections httpx se vident. Attendu : ~10-30s pour TTS simple, ~60s pour un long format audio. À 300s, les failures du backend causent des timeouts client.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Réduire à timeout=30.0 ou 60.0 max. Ou implémenter un health check OmniVoice au démarrage pour détecter les hangs tôt, avec circuit-breaker pattern."
+    },
+    {
+      "id": "r2-d04-003",
+      "severity": "medium",
+      "category": "api-guard",
+      "subcategory": "unguarded dict access in filter_voices_for_user",
+      "file": "omnistudio/dependencies.py",
+      "line": 111,
+      "title": "Accès dict non gardé sur v.get() — hypothèse structure",
+      "description": "Ligne 110-113 : filter_voices_for_user() assume que chaque voice dict contient 'system' et 'owner' keys. Si OmniVoice retourne un objet partiel (ex. lors d'une migration, ou corruption), v.get(\"system\") peut retourner None et la comparaison None is True échoue silencieusement, alors que v.get(\"owner\") pourrait être absent. Le filtre devient faux : certaines voix ne s'affichent pas. Pas de schema validation des inputs.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Ajouter une Pydantic model VoiceMeta avec champs obligatoires, valider les inputs de all_voices avec model_validate_python() avant le filtrage. Ou ajouter des asserts/logs pour détecter des voix mal formées."
+    },
+    {
+      "id": "r2-d04-004",
+      "severity": "medium",
+      "category": "error-handling",
+      "subcategory": "auth validation missing ownership check in some paths",
+      "file": "omnistudio/dependencies.py",
+      "line": 116,
+      "title": "check_voice_ownership() OK mais pas utilisé partout dans les routers",
+      "description": "Ligne 116-124 : check_voice_ownership() existe et vérifie owner == user_sub. Cependant, ce check n'est pas appliqué automatiquement sur tous les endpoints DELETE/PATCH. Un endpoint /api/voices/{voice_id}/delete pourrait oublier l'appel à check_voice_ownership(), créant une BOLA (Broken Object Level Authorization) : un utilisateur peut supprimer une voix d'un autre. Le vérification est décentralisée dans chaque routeur — risque d'oubli.",
+      "fix_applied": false,
+      "fix_commit": "",
+      "suggested_fix": "Créer une FastAPI Dependency qui valide ownership automatiquement : async def verify_voice_ownership(voice_id: str, current_user: dict = Depends(get_current_user)) -> dict. Puis l'utiliser dans tous les endpoints modifiant une voix."
+    }
+  ]
+}

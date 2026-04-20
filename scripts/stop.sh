@@ -3,9 +3,11 @@
 
 echo "Arrêt omnistudio (:7870)..."
 kill $(lsof -t -i :7870) 2>/dev/null || true
+launchctl remove omni-num-omnistudio 2>/dev/null || true
 
 echo "Arrêt OmniVoice (:8070)..."
 kill $(lsof -t -i :8070) 2>/dev/null || true
+launchctl remove omni-num-omnivoice 2>/dev/null || true
 
 echo "Arrêt Keycloak (Docker)..."
 (cd "$HOME/Claude/keycloak" && docker compose down) 2>/dev/null || true
