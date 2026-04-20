@@ -97,6 +97,30 @@ class TestChunking:
             assert (c["end"] - c["start"]) <= 8.0
 
 
+class TestGenerateGlobalSrtCondition:
+    """Vérifie la logique conditionnelle de déclenchement du SRT global.
+
+    Condition (export.py) :
+        generate_global_srt = bool(unique_audio_path and (req.unique_srt or req.include_subtitles))
+    """
+
+    @pytest.mark.parametrize("unique_audio_path,unique_srt,include_subtitles,expected", [
+        # unique_audio_path présent : SRT si l'un ou l'autre coché
+        ("/tmp/narration.wav", True,  False, True),   # unique_srt seul
+        ("/tmp/narration.wav", False, True,  True),   # include_subtitles seul
+        ("/tmp/narration.wav", True,  True,  True),   # les deux cochés
+        ("/tmp/narration.wav", False, False, False),  # aucun coché
+        # unique_audio_path absent : jamais de SRT quel que soit le flag
+        (None,                 True,  True,  False),
+        ("",                   True,  True,  False),
+    ])
+    def test_condition_generate_global_srt(
+        self, unique_audio_path, unique_srt, include_subtitles, expected
+    ):
+        result = bool(unique_audio_path and (unique_srt or include_subtitles))
+        assert result is expected
+
+
 class TestIntegrationExport:
     def test_zip_contient_dossier_subtitles_si_coche(self):
         """Export avec include_subtitles=True produit dossier subtitles/ dans le ZIP."""

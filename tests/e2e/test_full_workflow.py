@@ -306,3 +306,137 @@ class TestAccessibilite:
         live_regions = page.locator("[aria-live]")
         count = live_regions.count()
         assert count >= 2, f"Attendu au moins 2 regions aria-live, trouve {count}"
+
+    def test_badges_etape_sans_aria_label(self, page: Page):
+        """Les badges Étape X/6 ne portent pas aria-label (interdit sur role=paragraph)."""
+        badges = page.locator("p.fr-badge[aria-label]")
+        assert badges.count() == 0, (
+            f"{badges.count()} badge(s) avec aria-label invalide trouvé(s)"
+        )
+
+
+# ===========================================================================
+# 11. ALTERNANCE DES VOIX (Onglet Assignation)
+# ===========================================================================
+class TestAlternanceVoix:
+    """Vérifie la feature Alterner les voix dans l'onglet Assignation."""
+
+    def _go_to_assign(self, page: Page):
+        page.locator("#import-file").set_input_files(str(FIXTURES_DIR / "test-scenario.md"))
+        page.locator("#import-btn").click()
+        page.wait_for_selector("#import-table-container:not([hidden])", timeout=15_000)
+        page.locator("#import-next-btn").click()
+        page.wait_for_selector("#tab-clean[aria-selected='true']", timeout=10_000)
+        page.click("#tab-assign")
+        page.wait_for_selector("#tab-assign[aria-selected='true']", timeout=5_000)
+        page.wait_for_selector("#assign-table-container:not([hidden])", timeout=15_000)
+
+    def test_alternate_controls_present(self, page: Page):
+        """Les selects Voix 1/2 et les boutons Inverser/Alterner sont présents."""
+        self._go_to_assign(page)
+        expect(page.locator("#assign-alt-voice1")).to_be_visible()
+        expect(page.locator("#assign-alt-voice2")).to_be_visible()
+        expect(page.locator("#assign-alt-invert-btn")).to_be_visible()
+        expect(page.locator("#assign-alt-btn")).to_be_visible()
+
+    def test_alternate_applies_round_robin(self, page: Page):
+        """Alterner applique Voix1/Voix2 en alternance sur les étapes."""
+        self._go_to_assign(page)
+
+        # Sélectionner des voix distinctes
+        v1_select = page.locator("#assign-alt-voice1")
+        v2_select = page.locator("#assign-alt-voice2")
+        v1_options = v1_select.locator("option")
+        v2_options = v2_select.locator("option")
+        if v1_options.count() < 2 or v2_options.count() < 1:
+            pytest.skip("Moins de 2 voix disponibles — test non applicable")
+
+        v1_val = v1_options.nth(0).get_attribute("value")
+        v2_val = v2_options.nth(1).get_attribute("value") if v2_options.count() > 1 else v1_options.nth(0).get_attribute("value")
+        v1_select.select_option(v1_val)
+        v2_select.select_option(v2_val)
+
+        page.click("#assign-alt-btn")
+
+        # Vérifier le round-robin sur les lignes
+        rows = page.locator("#assign-table tbody tr")
+        count = rows.count()
+        for i in range(count):
+            voice_sel = rows.nth(i).locator(".ov-assign-voice")
+            expected = v1_val if i % 2 == 0 else v2_val
+            assert voice_sel.input_value() == expected, (
+                f"Ligne {i} : attendu {expected}, obtenu {voice_sel.input_value()}"
+            )
+
+    def test_invert_swaps_voices(self, page: Page):
+        """Inverser échange les valeurs de Voix 1 et Voix 2."""
+        self._go_to_assign(page)
+
+        v1 = page.locator("#assign-alt-voice1")
+        v2 = page.locator("#assign-alt-voice2")
+        if v1.locator("option").count() < 2:
+            pytest.skip("Moins de 2 voix disponibles")
+
+        options = v1.locator("option")
+        val_a = options.nth(0).get_attribute("value")
+        val_b = options.nth(1).get_attribute("value") if options.count() > 1 else val_a
+
+        v1.select_option(val_a)
+        v2.select_option(val_b)
+        page.click("#assign-alt-invert-btn")
+
+        assert v1.input_value() == val_b
+        assert v2.input_value() == val_a
+
+
+# ===========================================================================
+# 12. EXCLUSIVITE SEGMENT / TEXTE LIBRE (Onglet Voix)
+# ===========================================================================
+class TestVoicesExclusivite:
+    """Vérifie la logique d'exclusivité mutuelle segment sélectionné / textarea."""
+
+    def _go_to_voices(self, page: Page):
+        page.click("#tab-voices")
+        page.wait_for_selector("#tab-voices[aria-selected='true']", timeout=5_000)
+
+    def test_select_segment_clears_textarea(self, page: Page):
+        """Sélectionner un segment vide le textarea de texte libre."""
+        self._go_to_voices(page)
+
+        textarea = page.locator("#voices-test-text")
+        segment_select = page.locator("#voices-test-segment")
+
+        if segment_select.locator("option[value!='']").count() == 0:
+            pytest.skip("Aucun segment disponible pour ce test")
+
+        # Pré-remplir le textarea
+        textarea.fill("Texte de test à effacer")
+
+        # Sélectionner un segment
+        first_segment = segment_select.locator("option[value!='']").first.get_attribute("value")
+        segment_select.select_option(first_segment)
+
+        assert textarea.input_value() == "", (
+            "Le textarea devrait être vide après sélection d'un segment"
+        )
+
+    def test_type_in_textarea_resets_segment(self, page: Page):
+        """Taper dans le textarea repasse le segment sur l'option vide."""
+        self._go_to_voices(page)
+
+        textarea = page.locator("#voices-test-text")
+        segment_select = page.locator("#voices-test-segment")
+
+        if segment_select.locator("option[value!='']").count() == 0:
+            pytest.skip("Aucun segment disponible pour ce test")
+
+        # Sélectionner un segment
+        first_val = segment_select.locator("option[value!='']").first.get_attribute("value")
+        segment_select.select_option(first_val)
+
+        # Taper dans le textarea
+        textarea.fill("Nouveau texte")
+
+        assert segment_select.input_value() == "", (
+            "Le segment devrait être désélectionné (valeur vide) après saisie dans le textarea"
+        )
