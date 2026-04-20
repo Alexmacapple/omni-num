@@ -508,6 +508,8 @@ export function init() {
     // Texte exemple Baudelaire
     const sampleTextBtn = document.getElementById('voice-sample-text-btn');
     if (sampleTextBtn) sampleTextBtn.addEventListener('click', () => {
+        const seg = DOM.testSegment();
+        if (seg) seg.value = '';
         const ta = DOM.testText();
         if (ta) {
             ta.value = 'Rien n\'égale en longueur les boiteuses journées,\nQuand sous les lourds flocons des neigeuses années\nL\'ennui, fruit de la morne incuriosité,\nPrend les proportions de l\'immortalité.';
