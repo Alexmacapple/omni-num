@@ -1826,6 +1826,15 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div id="export-unique-srt-group" class="fr-mt-2w" hidden>
+                                    <div class="fr-checkbox-group">
+                                        <input type="checkbox" id="export-unique-srt">
+                                        <label class="fr-label" for="export-unique-srt">
+                                            Générer le SRT de la narration complète
+                                            <span class="fr-hint-text">Transcription Whisper sur le fichier concaténé — timestamps continus</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </fieldset>
 
@@ -1885,7 +1894,7 @@
                         </div>
 
                         <!-- Player narration complète (affiché si make_unique=true) -->
-                        <div id="export-unique-player" class="fr-mt-3w"></div>
+                        <div id="export-unique-player" class="fr-mt-4w"></div>
 
                         <!-- Statut -->
                         <div id="export-status" role="status" aria-live="polite"></div>

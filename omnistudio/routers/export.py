@@ -54,6 +54,7 @@ class ExportRequest(BaseModel):
     output_format: str = "wav"
     # PRD v1.5 décision 16 — sous-titres SRT via faster-whisper (Phase 3ter)
     include_subtitles: bool = False
+    unique_srt: bool = False
     subtitle_format: str = "standard"  # standard | word | shorts | multiline
 
 
@@ -126,7 +127,7 @@ async def export_zip(
     async def event_generator():
         last_heartbeat = time.monotonic()
         unique_audio_path = None  # chemin du fichier unique si make_unique=True
-        global_subtitle_path = None  # chemin du SRT global si make_unique + include_subtitles
+        global_subtitle_path = None  # chemin du SRT global si make_unique + unique_srt
 
         # Repertoires
         export_base = os.path.abspath(f"export/{thread_id}")
@@ -275,8 +276,8 @@ async def export_zip(
             if os.path.exists(unique_path):
                 unique_audio_path = unique_path
 
-        # SRT global (make_unique + include_subtitles)
-        if unique_audio_path and req.include_subtitles:
+        # SRT global (make_unique + unique_srt)
+        if unique_audio_path and req.unique_srt:
             yield {"event": "progress", "data": json.dumps({
                 "step": "sous-titres-global", "progress": 92,
                 "message": "Transcription de la narration complète..."

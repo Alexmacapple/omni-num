@@ -16,6 +16,8 @@ const DOM = {
     silence: () => document.getElementById('export-silence'),
     silenceValue: () => document.getElementById('export-silence-value'),
     subtitles: () => document.getElementById('export-subtitles'),
+    uniqueSrt: () => document.getElementById('export-unique-srt'),
+    uniqueSrtGroup: () => document.getElementById('export-unique-srt-group'),
     subtitleFormatGroup: () => document.getElementById('export-subtitle-format-group'),
     subtitleFormat: () => document.getElementById('export-subtitle-format'),
     exportBtn: () => document.getElementById('export-btn'),
@@ -44,7 +46,10 @@ function updateExportEmptyState() {
 function init() {
     DOM.exportBtn().addEventListener('click', onExport);
     DOM.unique().addEventListener('change', () => {
-        DOM.silenceGroup().hidden = !DOM.unique().checked;
+        const checked = DOM.unique().checked;
+        DOM.silenceGroup().hidden = !checked;
+        DOM.uniqueSrtGroup().hidden = !checked;
+        if (!checked && DOM.uniqueSrt()) DOM.uniqueSrt().checked = false;
     });
     DOM.subtitles().addEventListener('change', () => {
         DOM.subtitleFormatGroup().hidden = !DOM.subtitles().checked;
@@ -98,7 +103,8 @@ async function onExport() {
         make_unique: DOM.unique().checked,
         silence_duration: parseFloat(DOM.silence().value),
         include_subtitles: DOM.subtitles().checked,
-        subtitle_format: DOM.subtitleFormat().value
+        subtitle_format: DOM.subtitleFormat().value,
+        unique_srt: DOM.uniqueSrt()?.checked || false
     }, {
         onProgress(data) {
             DOM.progressBar().value = data.progress || 0;
