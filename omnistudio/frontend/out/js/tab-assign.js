@@ -6,18 +6,11 @@ import { eventBus } from './app.js';
 import { escapeHtml, escapeAttr } from './dom-utils.js';
 import { authenticatedUrl } from './audio-player.js';
 
-const NATIVE_VOICES = new Set([
-    'vivian', 'serena', 'uncle_fu', 'dylan', 'eric',
-    'ryan', 'aiden', 'ono_anna', 'sohee'
-]);
-
 const DOM = {
     voiceSelect: () => document.getElementById('assign-voice'),
     langSelect: () => document.getElementById('assign-lang'),
     speedRange: () => document.getElementById('assign-speed'),
     speedValue: () => document.getElementById('assign-speed-value'),
-    instruction: () => document.getElementById('assign-instruction'),
-    instructionInfo: () => document.getElementById('assign-instruction-info'),
     applyAllBtn: () => document.getElementById('assign-apply-all-btn'),
     tableBody: () => document.querySelector('#assign-table tbody'),
     status: () => document.getElementById('assign-status'),
@@ -94,11 +87,6 @@ function init() {
 }
 
 function onVoiceChange() {
-    const voice = DOM.voiceSelect().value;
-    const isNative = NATIVE_VOICES.has(voice.toLowerCase());
-    DOM.instruction().disabled = !isNative;
-    DOM.instructionInfo().hidden = isNative;
-    if (!isNative) DOM.instruction().value = '';
 }
 
 async function loadAssignData() {
@@ -240,13 +228,6 @@ function renderTable(rows, voices) {
                     <span class="fr-range__max">2.0x</span>
                 </div>
             </td>
-            <td data-label="Instruction">
-                <input type="text" class="fr-input fr-input--sm ov-assign-instruct" data-step-id="${escapeAttr(r.step_id)}"
-                       value="${escapeAttr(r.instruction || '')}"
-                       title="Instruction étape ${escapeAttr(r.step_id)}"
-                       placeholder="Instruction"
-                       ${(voiceTypes[r.voice] || 'custom') !== 'native' ? 'disabled' : ''}>
-            </td>
             <td data-label="Actions">
                 <div class="fr-btns-group fr-btns-group--sm fr-btns-group--inline">
                     <button class="fr-btn fr-btn--secondary fr-btn--sm"
@@ -290,7 +271,6 @@ async function onTableAction(e) {
     const voice = voiceEl.value;
     const lang = row.querySelector('.ov-assign-lang')?.value || 'fr';
     const speed = parseFloat(row.querySelector('.ov-assign-speed')?.value || '1');
-    const instruction = row.querySelector('.ov-assign-instruct')?.value || '';
     const text = row.querySelector('.ov-assign-text')?.value || '';
 
     const statusZone = document.querySelector(`[data-status-zone="${CSS.escape(stepId)}"]`);
@@ -323,7 +303,7 @@ async function onTableAction(e) {
 
     try {
         const advanced = getAssignAdvancedParams();
-        const payload = { voice, language: lang, speed, instruction, text };
+        const payload = { voice, language: lang, speed, text };
         if (advanced) payload.advanced = advanced;
         const result = await apiPost(`/api/assign/preview/${stepId}`, payload);
         if (result.error) throw new Error(result.error.message || 'Erreur de synthèse');
@@ -386,17 +366,6 @@ function onTableInput(e) {
 }
 
 function onTableChange(e) {
-    if (e.target.classList.contains('ov-assign-voice')) {
-        const stepId = e.target.dataset.stepId;
-        const voice = e.target.value;
-        const isNative = NATIVE_VOICES.has(voice.toLowerCase());
-        const row = document.querySelector(`tr[data-step-id="${stepId}"]`);
-        const instruct = row?.querySelector('.ov-assign-instruct');
-        if (instruct) {
-            instruct.disabled = !isNative;
-            if (!isNative) instruct.value = '';
-        }
-    }
 }
 
 async function onAddStep() {
@@ -440,7 +409,6 @@ async function onDeleteStep(stepId) {
 
 function collectAssignments() {
     const assignments = {};
-    const instructions = {};
     const speeds = {};
     const languages = {};
 
@@ -449,22 +417,19 @@ function collectAssignments() {
         assignments[stepId] = row.querySelector('.ov-assign-voice').value;
         languages[stepId] = row.querySelector('.ov-assign-lang').value;
         speeds[stepId] = parseFloat(row.querySelector('.ov-assign-speed').value);
-        const inst = row.querySelector('.ov-assign-instruct').value;
-        if (inst) instructions[stepId] = inst;
     });
 
-    return { assignments, instructions, speeds, languages };
+    return { assignments, speeds, languages };
 }
 
 async function onApplyAll() {
     const voice = DOM.voiceSelect().value;
     const lang = DOM.langSelect().value;
     const speed = parseFloat(DOM.speedRange().value);
-    const instruction = DOM.instruction().value;
 
     try {
         const result = await apiPost('/api/assign/apply-all', {
-            voice, language: lang, speed, instruction
+            voice, language: lang, speed
         });
         DOM.status().innerHTML = `<p class="fr-alert fr-alert--success fr-alert--sm"><span class="fr-alert__title">${escapeHtml(result.data.voice)} appliqué à ${result.data.applied} étapes</span></p>`;
         await loadAssignData();
