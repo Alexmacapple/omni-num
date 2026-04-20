@@ -4,7 +4,7 @@
 import { fetchSSE } from './api-client.js';
 import { escapeHtml } from './dom-utils.js';
 import { eventBus } from './app.js';
-import { authenticatedUrl } from './audio-player.js';
+import { authenticatedUrl, createAudioPlayer } from './audio-player.js';
 
 const DOM = {
     normalize: () => document.getElementById('export-normalize'),
@@ -27,6 +27,7 @@ const DOM = {
     downloadLink: () => document.getElementById('export-download-link'),
     downloadDesc: () => document.getElementById('export-download-desc'),
     downloadDetail: () => document.getElementById('export-download-detail'),
+    uniquePlayer: () => document.getElementById('export-unique-player'),
     status: () => document.getElementById('export-status'),
 };
 
@@ -117,6 +118,20 @@ async function onExport() {
             DOM.downloadLink().textContent = `Pack audio OmniStudio — ${data.files_count} fichiers`;
             DOM.downloadDesc().textContent = `Fichiers audio post-traités, script de paroles et traçabilité technique.`;
             DOM.downloadDetail().innerHTML = `<span class="fr-icon-download-line" aria-hidden="true"></span> ZIP — ${sizeMo} — ${data.files_count} fichiers`;
+
+            const playerContainer = DOM.uniquePlayer();
+            playerContainer.innerHTML = '';
+            if (data.unique_audio_url) {
+                playerContainer.appendChild(createAudioPlayer(data.unique_audio_url, 'Narration complète'));
+            }
+            if (data.global_subtitle_url) {
+                const srtLink = document.createElement('a');
+                srtLink.href = authenticatedUrl(data.global_subtitle_url);
+                srtLink.download = 'narration-complete.srt';
+                srtLink.className = 'fr-link fr-link--download fr-mt-1w';
+                srtLink.innerHTML = '<span class="fr-icon-download-line" aria-hidden="true"></span><span class="fr-link__detail">SRT</span>Sous-titres — narration complète';
+                playerContainer.appendChild(srtLink);
+            }
 
             if (data.skipped?.length > 0) {
                 DOM.status().innerHTML = `<p class="fr-alert fr-alert--warning fr-alert--sm"><span class="fr-alert__title">Étapes ignorées : ${escapeHtml(data.skipped.join(', '))}</span></p>`;

@@ -125,6 +125,8 @@ async def export_zip(
 
     async def event_generator():
         last_heartbeat = time.monotonic()
+        unique_audio_path = None  # chemin du fichier unique si make_unique=True
+        global_subtitle_path = None  # chemin du SRT global si make_unique + include_subtitles
 
         # Repertoires
         export_base = os.path.abspath(f"export/{thread_id}")
@@ -269,6 +271,40 @@ async def export_zip(
                     concatenate_audio, processed_files, unique_path,
                     req.silence_duration, audio_config
                 )
+            # Exposer l'URL uniquement si le fichier est bien sur disque
+            if os.path.exists(unique_path):
+                unique_audio_path = unique_path
+
+        # SRT global (make_unique + include_subtitles)
+        if unique_audio_path and req.include_subtitles:
+            yield {"event": "progress", "data": json.dumps({
+                "step": "sous-titres-global", "progress": 92,
+                "message": "Transcription de la narration complète..."
+            })}
+            subtitle_client = _get_subtitle_client()
+            if subtitle_client:
+                segments = await asyncio.to_thread(
+                    subtitle_client.transcribe, unique_audio_path, "auto"
+                )
+                if segments:
+                    gen_method = {
+                        "standard": subtitle_client.generate_srt,
+                        "word": subtitle_client.generate_word_srt,
+                        "shorts": subtitle_client.generate_shorts_srt,
+                        "multiline": subtitle_client.generate_multiline_srt,
+                    }.get(req.subtitle_format, subtitle_client.generate_srt)
+                    srt_text = gen_method(segments)
+                    srt_path = os.path.splitext(unique_audio_path)[0] + ".srt"
+                    try:
+                        with open(srt_path, "w", encoding="utf-8") as srt_f:
+                            srt_f.write(srt_text)
+                        global_subtitle_path = srt_path
+                    except OSError as e:
+                        logger.warning("Écriture SRT global échouée : %s", e)
+            yield {"event": "progress", "data": json.dumps({
+                "step": "sous-titres-global", "progress": 94,
+                "message": "Sous-titres générés." if global_subtitle_path else "Sous-titres indisponibles, export continue."
+            })}
 
         # Documents Markdown
         yield {"event": "progress", "data": json.dumps({
@@ -339,12 +375,18 @@ async def export_zip(
         zip_size = round(os.path.getsize(zip_path) / 1024)
         await asyncio.to_thread(graph_app.update_state, config, {"export_path": zip_path})
 
-        yield {"event": "done", "data": json.dumps({
+        done_data = {
             "export_path": "/api/export/download",
             "size_kb": zip_size,
             "files_count": len(processed_files),
-            "skipped": skipped
-        })}
+            "skipped": skipped,
+        }
+        if unique_audio_path:
+            ext = os.path.splitext(unique_audio_path)[1].lstrip(".")
+            done_data["unique_audio_url"] = f"api/export/audio/narration-complete.{ext}"
+        if global_subtitle_path:
+            done_data["global_subtitle_url"] = "api/export/audio/narration-complete.srt"
+        yield {"event": "done", "data": json.dumps(done_data)}
 
     async def safe_generator():
         try:
@@ -403,3 +445,44 @@ async def download_export(
         media_type="application/zip",
         filename=f"OmniStudio_Export_{thread_id[:8]}.zip"
     )
+
+
+@router.get("/api/export/audio/{filename}")
+async def serve_export_audio(
+    filename: str,
+    request: Request,
+    token: str = Query(None),
+    tid: str = Query(None),
+):
+    """Servir le fichier audio unique (narration-complete) depuis export/{thread_id}/audio/."""
+    auth_header = request.headers.get("Authorization", "")
+    user = None
+    if auth_header.startswith("Bearer "):
+        user = await get_current_user(request)
+    elif token:
+        user = await validate_token(token)
+    else:
+        raise HTTPException(status_code=401, detail="Token requis")
+
+    thread_id = request.headers.get("X-Thread-Id", "") or tid or ""
+    if not thread_id or not THREAD_ID_RE.match(thread_id):
+        raise HTTPException(status_code=400, detail="Thread ID invalide")
+
+    if user and user.get("user_id"):
+        _verify_session_owner(thread_id, user["user_id"])
+
+    base_dir = os.path.abspath(f"export/{thread_id}/audio")
+    file_path = os.path.abspath(os.path.join(base_dir, filename))
+    if not file_path.startswith(base_dir + os.sep):
+        raise HTTPException(status_code=403, detail="Accès au répertoire refusé")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Fichier audio introuvable")
+
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".mp3":
+        media_type = "audio/mpeg"
+    elif ext == ".srt":
+        media_type = "text/plain; charset=utf-8"
+    else:
+        media_type = "audio/wav"
+    return FileResponse(file_path, media_type=media_type, headers={"Cache-Control": "private, no-cache"})
