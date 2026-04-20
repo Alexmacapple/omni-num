@@ -505,6 +505,16 @@ export function init() {
     if (refreshBtn) refreshBtn.addEventListener('click', loadVoices);
     if (voiceList) voiceList.addEventListener('click', onVoiceListAction);
 
+    // Texte exemple Baudelaire
+    const sampleTextBtn = document.getElementById('voice-sample-text-btn');
+    if (sampleTextBtn) sampleTextBtn.addEventListener('click', () => {
+        const ta = DOM.testText();
+        if (ta) {
+            ta.value = 'Rien n\'égale en longueur les boiteuses journées,\nQuand sous les lourds flocons des neigeuses années\nL\'ennui, fruit de la morne incuriosité,\nPrend les proportions de l\'immortalité.';
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
     // Design
     if (designGenerateBtn) designGenerateBtn.addEventListener('click', onGenerateBrief);
     const designUseDirectBtn = DOM.designUseDirectBtn();
