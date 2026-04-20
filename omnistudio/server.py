@@ -106,15 +106,16 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
         path = request.url.path
-        # Mode dev (MINIFY=false) : pas de cache sur JS/CSS/HTML
-        if not MINIFY:
-            if path.endswith((".js", ".css", ".html")):
+        # HTML + route racine : jamais mis en cache (tous modes)
+        if path.endswith(".html") or path in ("/", ""):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        # Mode dev : pas de cache sur JS/CSS non plus
+        elif not MINIFY:
+            if path.endswith((".js", ".css")):
                 response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            return response
-        # Assets DSFR (fonts, icônes, CSS, JS) : cache 1 an (immuables, version 1.11.2 fixe)
-        if path.startswith("/dsfr/") or path.endswith((".woff2", ".woff", ".svg")):
+        # Mode prod : assets DSFR immuables 1 an, JS/CSS applicatifs 7 jours
+        elif path.startswith("/dsfr/") or path.endswith((".woff2", ".woff", ".svg")):
             response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-        # CSS et JS applicatifs : cache 7 jours (versionnés par hash ?v=)
         elif path.endswith((".js", ".css")):
             response.headers["Cache-Control"] = "public, max-age=604800"
         return response
@@ -201,7 +202,10 @@ async def serve_js(path: str):
 @app.api_route("/", methods=["GET", "HEAD"])
 async def serve_index():
     """SPA : sert index.html."""
-    return FileResponse(os.path.join(ACTIVE_FRONTEND, "index.html"))
+    return FileResponse(
+        os.path.join(ACTIVE_FRONTEND, "index.html"),
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 
 if __name__ == "__main__":

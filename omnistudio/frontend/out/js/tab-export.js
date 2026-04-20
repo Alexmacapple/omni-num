@@ -49,10 +49,17 @@ function init() {
         const checked = DOM.unique().checked;
         DOM.silenceGroup().hidden = !checked;
         DOM.uniqueSrtGroup().hidden = !checked;
-        if (!checked && DOM.uniqueSrt()) DOM.uniqueSrt().checked = false;
+        if (!checked && DOM.uniqueSrt()) {
+            DOM.uniqueSrt().checked = false;
+        } else if (checked && DOM.subtitles()?.checked && DOM.uniqueSrt()) {
+            DOM.uniqueSrt().checked = true;
+        }
     });
     DOM.subtitles().addEventListener('change', () => {
         DOM.subtitleFormatGroup().hidden = !DOM.subtitles().checked;
+        if (DOM.unique()?.checked && DOM.uniqueSrt()) {
+            DOM.uniqueSrt().checked = DOM.subtitles().checked;
+        }
     });
     DOM.silence().addEventListener('input', () => {
         const v = DOM.silence().value + 's';
@@ -69,6 +76,11 @@ function init() {
     });
 
     eventBus.on('tab-activated:tab-export', updateExportEmptyState);
+
+    // Sync initial : si unique + subtitles déjà cochés au chargement, cocher uniqueSrt
+    if (DOM.unique()?.checked && DOM.subtitles()?.checked && DOM.uniqueSrt()) {
+        DOM.uniqueSrt().checked = true;
+    }
 
     eventBus.on('session-reset', () => {
         DOM.progress().hidden = true;

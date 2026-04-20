@@ -276,10 +276,14 @@ async def export_zip(
             if os.path.exists(unique_path):
                 unique_audio_path = unique_path
 
-        # SRT global (make_unique + unique_srt)
-        logger.info("SRT global check — unique_audio_path=%s, req.unique_srt=%s",
-                    unique_audio_path, req.unique_srt)
-        if unique_audio_path and req.unique_srt:
+        # SRT global : déclenché si unique_srt coché explicitement OU si
+        # include_subtitles est actif (l'utilisateur veut des sous-titres et a
+        # une narration unique — il s'attend naturellement à un SRT global).
+        generate_global_srt = bool(unique_audio_path and (req.unique_srt or req.include_subtitles))
+        print(f"SRT global check — unique_audio_path={unique_audio_path}, "
+              f"req.unique_srt={req.unique_srt}, req.include_subtitles={req.include_subtitles}, "
+              f"generate_global_srt={generate_global_srt}", flush=True)
+        if generate_global_srt:
             yield {"event": "progress", "data": json.dumps({
                 "step": "sous-titres-global", "progress": 92,
                 "message": "Transcription de la narration complète..."

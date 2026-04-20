@@ -212,7 +212,7 @@
 
                     <!-- Panel 1 : Import -->
                     <div id="panel-import" class="fr-tabs__panel fr-tabs__panel--selected" role="tabpanel" aria-labelledby="tab-import" tabindex="0">
-                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 1 sur 6 du projet">Étape 1 / 6</p>
+                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w">Étape 1 / 6</p>
                         <h2 class="fr-h4 fr-mb-1w">Import du scénario</h2>
                         <p class="fr-text--sm fr-text--mention-grey fr-mb-2w">
                             Téléchargez votre fichier pour commencer. Formats acceptés : Excel, CSV, Word, PDF, Markdown ou texte brut.
@@ -382,7 +382,7 @@
 
                     <!-- Panel 2 : Préparation -->
                     <div id="panel-clean" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-clean" tabindex="0">
-                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 2 sur 6 du projet">Étape 2 / 6</p>
+                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w">Étape 2 / 6</p>
                         <h2 class="fr-h4 fr-mb-1w">Préparation des textes</h2>
                         <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
                             L'IA prépare vos textes pour une lecture optimale par la synthèse vocale.
@@ -575,7 +575,7 @@
 
                     <!-- Panel 3 : Voix -->
                     <div id="panel-voices" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-voices" tabindex="0">
-                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 3 sur 6 du projet">Étape 3 / 6</p>
+                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w">Étape 3 / 6</p>
                         <h2 class="fr-h4 fr-mb-1w">Design des voix</h2>
                         <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
                             Créez, explorez et enregistrez les voix pour votre production.
@@ -1132,12 +1132,11 @@
                                                         Téléverser un fichier
                                                     </h4>
                                                     <div class="fr-upload-group fr-mb-0" id="clone-audio-group">
-                                                        <label class="fr-label fr-sr-only" for="clone-audio"><span id="clone-audio-label">Fichier audio de référence pour le clonage</span>
+                                                        <label class="fr-label" for="clone-audio">Fichier audio de référence pour le clonage
                                                             <span class="fr-hint-text" id="clone-audio-hint">WAV, MP3, FLAC ou OGG</span>
                                                         </label>
                                                         <input class="fr-upload" type="file" id="clone-audio"
                                                                accept=".wav,.mp3,.flac,.ogg"
-                                                               aria-labelledby="clone-audio-label"
                                                                aria-describedby="clone-audio-hint">
                                                         <p class="fr-hint-text fr-mt-1v">Formats WAV, MP3, FLAC, OGG</p>
                                                         <p id="clone-audio-error" class="fr-error-text" style="display:none"></p>
@@ -1195,7 +1194,7 @@
                                     <div class="fr-col-12 fr-col-md-6">
                                         <div class="fr-input-group">
                                             <label class="fr-label" for="clone-name">
-                                                Nom de la voix
+                                                Nom de la voix <span class="fr-badge fr-badge--sm fr-badge--error" aria-label="champ obligatoire">Obligatoire</span>
                                                 <span class="fr-hint-text">3-50 caractères, minuscules non accentuées, chiffres et tirets</span>
                                             </label>
                                             <input class="fr-input" type="text" id="clone-name"
@@ -1302,7 +1301,7 @@
 
                     <!-- Panel 4 : Assignation -->
                     <div id="panel-assign" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-assign" tabindex="0">
-                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 4 sur 6 du projet">Étape 4 / 6</p>
+                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w">Étape 4 / 6</p>
                         <h2 class="fr-h3 fr-mb-1w">Assignation des voix</h2>
                         <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
                             Attribuez une voix à chaque étape du scénario.
@@ -1348,6 +1347,31 @@
                             <div class="fr-col-12 fr-col-md-6 fr-col-lg-2">
                                 <div class="fr-btns-group fr-mt-4w">
                                     <button class="fr-btn" id="assign-apply-all-btn">Appliquer à tout</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alterner les voix (round-robin A/B) -->
+                        <div class="fr-grid-row fr-grid-row--gutters fr-mb-3w">
+                            <div class="fr-col-12 fr-col-md-4 fr-col-lg-3">
+                                <div class="fr-select-group">
+                                    <label class="fr-label" for="assign-alt-voice1">Voix 1 — étapes impaires</label>
+                                    <select class="fr-select" id="assign-alt-voice1"></select>
+                                </div>
+                            </div>
+                            <div class="fr-col-12 fr-col-md-4 fr-col-lg-3">
+                                <div class="fr-select-group">
+                                    <label class="fr-label" for="assign-alt-voice2">Voix 2 — étapes paires</label>
+                                    <select class="fr-select" id="assign-alt-voice2"></select>
+                                </div>
+                            </div>
+                            <div class="fr-col-12 fr-col-md-4 fr-col-lg-4">
+                                <div class="fr-btns-group fr-btns-group--inline fr-mt-4w">
+                                    <button class="fr-btn fr-btn--secondary fr-btn--icon-left fr-icon-refresh-line"
+                                            id="assign-alt-invert-btn"
+                                            title="Inverser Voix 1 et Voix 2">Inverser</button>
+                                    <button class="fr-btn fr-btn--tertiary"
+                                            id="assign-alt-btn">Alterner les voix</button>
                                 </div>
                             </div>
                         </div>
@@ -1508,7 +1532,7 @@
 
                     <!-- Panel 5 : Génération -->
                     <div id="panel-generate" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-generate" tabindex="0">
-                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 5 sur 6 du projet">Étape 5 / 6</p>
+                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w">Étape 5 / 6</p>
                         <h2 class="fr-h3 fr-mb-3w">Génération des voix</h2>
 
                         <!-- Récapitulatif -->
@@ -1693,7 +1717,7 @@
 
                     <!-- Panel 6 : Export -->
                     <div id="panel-export" class="fr-tabs__panel" role="tabpanel" aria-labelledby="tab-export" tabindex="0">
-                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w" aria-label="Étape 6 sur 6 du projet">Étape 6 / 6</p>
+                        <p class="fr-badge fr-badge--sm fr-badge--info fr-mb-1w">Étape 6 / 6</p>
                         <h2 class="fr-h3 fr-mb-1w">Export final</h2>
                         <p class="fr-text--sm fr-text--mention-grey fr-mb-3w">
                             Post-traitement audio et packaging des livrables.

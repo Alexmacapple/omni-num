@@ -596,6 +596,13 @@ export function init() {
     const testSegment = DOM.testSegment();
     if (testSegment) testSegment.addEventListener('change', onSegmentSelect);
 
+    // Exclusivité mutuelle : texte libre → reset segment sur option vide
+    const testTextInput = DOM.testText();
+    if (testTextInput) testTextInput.addEventListener('input', () => {
+        const seg = DOM.testSegment();
+        if (seg && seg.value && testTextInput.value) seg.value = '';
+    });
+
     // Charger les templates dans l'onglet Créer
     loadTemplates();
 
@@ -645,7 +652,7 @@ function onSegmentSelect() {
     const textarea = DOM.testText();
     if (!select || !textarea) return;
     if (select.value) {
-        textarea.value = select.value;
+        textarea.value = '';
     }
 }
 
@@ -809,8 +816,8 @@ async function onVoiceListAction(e) {
 }
 
 async function previewVoice(voiceName, btn) {
-    const testText = DOM.testText();
-    if (!testText?.value) return;
+    const previewText = DOM.testSegment()?.value || DOM.testText()?.value;
+    if (!previewText) return;
 
     const card = document.querySelector(`[data-voice-name="${CSS.escape(voiceName)}"].fr-card`);
     const footer = card?.querySelector('.fr-card__footer');
@@ -843,7 +850,7 @@ async function previewVoice(voiceName, btn) {
 
     try {
         const result = await apiPost('/api/voices/preview', {
-            voice: voiceName, text: testText.value, language: getSessionLanguage(),
+            voice: voiceName, text: previewText, language: getSessionLanguage(),
         });
         if (result.error) throw new Error(result.error.message || 'Erreur de synthèse');
 
@@ -1618,13 +1625,14 @@ async function onLock() {
             test_text: DOM.testText()?.value || '',
         });
         if (result.error) throw new Error(result.error.message);
+        if (!result.data) throw new Error('Réponse serveur invalide');
 
         const lockResult = DOM.designLockResult();
         const lockMsg = DOM.designLockMsg();
         const lockedPlayer = DOM.designLockedPlayer();
         if (lockResult) lockResult.hidden = false;
         if (lockMsg) lockMsg.textContent = `Voix « ${result.data.name} » enregistrée avec succès dans votre bibliothèque.`;
-        if (lockedPlayer) lockedPlayer.src = authenticatedUrl(result.data.audio_url);
+        if (lockedPlayer && result.data.audio_url) lockedPlayer.src = authenticatedUrl(result.data.audio_url);
 
         const stabilitySection = DOM.designStabilitySection();
         if (stabilitySection) stabilitySection.hidden = false;
@@ -1765,11 +1773,12 @@ async function onClone() {
     try {
         const result = await uploadFile('/api/voices/clone', formData);
         if (result.error) throw new Error(result.error.message);
+        if (!result.data) throw new Error('Réponse serveur invalide');
 
         const cloneResult = DOM.cloneResult();
         const cloneResultMsg = DOM.cloneResultMsg();
         const cloneAudioPlayer = DOM.cloneAudioPlayer();
-        const authUrl = authenticatedUrl(result.data.audio_url);
+        const authUrl = result.data.audio_url ? authenticatedUrl(result.data.audio_url) : null;
         if (cloneResult) cloneResult.hidden = false;
         if (cloneResultMsg) cloneResultMsg.textContent = `Voix « ${result.data.name} » clonée et enregistrée dans votre bibliothèque.`;
         if (cloneAudioPlayer) cloneAudioPlayer.src = authUrl;

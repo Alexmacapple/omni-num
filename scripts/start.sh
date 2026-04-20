@@ -116,7 +116,7 @@ if ! curl -s http://localhost:7870/api/health >/dev/null 2>&1; then
     submit_launchctl_job \
         "$OMNISTUDIO_LABEL" \
         "$ROOT_DIR/logs/omnistudio.log" \
-        "cd \"$ROOT_DIR/omnistudio\" && export OMNISTUDIO_MINIFY=\"$OMNISTUDIO_MINIFY\" && exec \"$VENV_PY\" server.py"
+        "cd \"$ROOT_DIR/omnistudio\" && export OMNISTUDIO_MINIFY=\"$OMNISTUDIO_MINIFY\" && export OPENAI_API_KEY=\"${OPENAI_API_KEY:-}\" && exec \"$VENV_PY\" server.py"
     echo -n "Attente omnistudio :7870..."
     for i in $(seq 1 30); do
         curl -s http://localhost:7870/api/health >/dev/null 2>&1 && echo " OK" && break

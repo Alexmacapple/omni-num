@@ -18,11 +18,16 @@ const DOM = {
     addId: () => document.getElementById('assign-add-id'),
     addText: () => document.getElementById('assign-add-text'),
     addBtn: () => document.getElementById('assign-add-btn'),
+    altVoice1: () => document.getElementById('assign-alt-voice1'),
+    altVoice2: () => document.getElementById('assign-alt-voice2'),
+    altBtn: () => document.getElementById('assign-alt-btn'),
+    altInvertBtn: () => document.getElementById('assign-alt-invert-btn'),
 };
 
 let voiceTypes = {};
 let assignData = [];
 let voicesList = [];
+let _alternating = false;
 
 function init() {
     const applyAllBtn = DOM.applyAllBtn();
@@ -41,6 +46,11 @@ function init() {
 
     applyAllBtn.addEventListener('click', onApplyAll);
     nextBtn.addEventListener('click', onContinue);
+
+    const altBtn = DOM.altBtn();
+    if (altBtn) altBtn.addEventListener('click', onAlternate);
+    const altInvertBtn = DOM.altInvertBtn();
+    if (altInvertBtn) altInvertBtn.addEventListener('click', onInvert);
     speedRange.addEventListener('input', () => {
         const v = speedRange.value + 'x';
         const speedValue = DOM.speedValue();
@@ -81,6 +91,8 @@ function init() {
         DOM.nextBtn().disabled = true;
         const status = DOM.status();
         if (status) status.innerHTML = '';
+        if (DOM.altVoice1()) DOM.altVoice1().innerHTML = '';
+        if (DOM.altVoice2()) DOM.altVoice2().innerHTML = '';
         // PRD-018 : réafficher état vide
         updateAssignEmptyState([]);
     });
@@ -108,6 +120,15 @@ async function loadAssignData() {
         }
 
         voicesList = result.data.voices;
+
+        const altV1 = DOM.altVoice1();
+        const altV2 = DOM.altVoice2();
+        if (altV1) altV1.innerHTML = renderVoiceOptions(voicesList, voicesList[0]?.name || '');
+        if (altV2) {
+            const secondName = voicesList.length > 1 ? voicesList[1].name : voicesList[0]?.name || '';
+            altV2.innerHTML = renderVoiceOptions(voicesList, secondName);
+        }
+
         renderTable(assignData, voicesList);
         onVoiceChange();
         // PRD-018 : état vide
@@ -435,6 +456,40 @@ async function onApplyAll() {
         await loadAssignData();
     } catch (err) {
         DOM.status().innerHTML = `<p class="fr-alert fr-alert--error fr-alert--sm"><span class="fr-alert__title">${escapeHtml(err.message)}</span></p>`;
+    }
+}
+
+function onInvert() {
+    const s1 = DOM.altVoice1();
+    const s2 = DOM.altVoice2();
+    if (!s1 || !s2) return;
+    const tmp = s1.value;
+    s1.value = s2.value;
+    s2.value = tmp;
+}
+
+function onAlternate() {
+    if (_alternating) return;
+    _alternating = true;
+    try {
+        const v1 = DOM.altVoice1()?.value;
+        const v2 = DOM.altVoice2()?.value;
+        if (!v1 || !v2) {
+            DOM.status().innerHTML = '<p class="fr-alert fr-alert--warning fr-alert--sm"><span class="fr-alert__title">Sélectionnez Voix 1 et Voix 2 avant d\'alterner.</span></p>';
+            return;
+        }
+        const rows = document.querySelectorAll('#assign-table tbody tr');
+        if (!rows.length) {
+            DOM.status().innerHTML = '<p class="fr-alert fr-alert--warning fr-alert--sm"><span class="fr-alert__title">Aucune étape à alterner.</span></p>';
+            return;
+        }
+        rows.forEach((row, i) => {
+            const voiceSel = row.querySelector('.ov-assign-voice');
+            if (voiceSel) voiceSel.value = i % 2 === 0 ? v1 : v2;
+        });
+        DOM.status().innerHTML = `<p class="fr-alert fr-alert--success fr-alert--sm"><span class="fr-alert__title">Alternance appliquée : ${escapeHtml(v1)} / ${escapeHtml(v2)} sur ${rows.length} étapes.</span></p>`;
+    } finally {
+        _alternating = false;
     }
 }
 
