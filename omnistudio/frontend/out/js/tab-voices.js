@@ -999,7 +999,7 @@ function useTemplate(voice) {
     showQuickAdjust();
     const listen = DOM.designListenSection();
     if (listen) listen.hidden = false;
-    updateDesignStepper(2);
+    updateDesignStepper(3);
     // Si on est deja sur l'onglet design, pas besoin de changer
     const subTab = document.getElementById('sub-tab-design');
     if (subTab && subTab.getAttribute('aria-selected') !== 'true') {
@@ -1038,7 +1038,7 @@ function updateDesignStepper(step) {
     const steps = document.querySelector('#design-stepper .fr-stepper__steps');
     // 3 étapes : Choisir un parcours · Décrire la voix · Écouter et enregistrer.
     // Le step 2 (rétrocompat : ancien nom) pointe désormais sur « Écouter ».
-    const normalized = step >= 2 ? 3 : step;
+    const normalized = step;
     if (normalized === 1) {
         if (title) title.firstChild.textContent = 'Choisir un parcours ';
         if (state) state.textContent = 'Étape 1 sur 3';
@@ -1340,7 +1340,7 @@ async function onComposeAttrs() {
         if (lockSection) lockSection.hidden = false;
         const listen = DOM.designListenSection();
         if (listen) listen.hidden = false;
-        updateDesignStepper(2);
+        updateDesignStepper(3);
         if (status) status.innerHTML = '';
         await loadVoices();
     } catch (err) {
@@ -1372,7 +1372,7 @@ async function onUseDirectPrompt() {
     if (listen) listen.hidden = false;
     const lockSection = DOM.designLockSection();
     if (lockSection) lockSection.hidden = false;
-    updateDesignStepper(2);
+    updateDesignStepper(3);
 
     // Remplir l'accordéon transparence (mode direct)
     const brief = getBrief();
@@ -1447,7 +1447,7 @@ async function onGenerateBrief() {
         showQuickAdjust();
         const listen = DOM.designListenSection();
         if (listen) listen.hidden = false;
-        updateDesignStepper(2);
+        updateDesignStepper(3);
 
         if (result.data.audio_url) {
             showDesignAudio(result.data.audio_url, result.data.srt_url);
