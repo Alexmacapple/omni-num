@@ -1,7 +1,7 @@
 # PRD-MIGRATION-001 : Fork OmniStudio depuis VoxStudio
 
-**Version** : 1.8
-**Statut** : En exploitation ; Phase 10 qualité dépôt 18/20 candidate localement, CI distante à confirmer
+**Version** : 1.8.2
+**Statut** : En exploitation ; Phase 10 qualité dépôt 18/20 clôturée, restes non bloquants au backlog
 **Priorité** : P1 (projet de création)
 **Date** : 2026-04-18
 **Auteur** : Alex + Claude
@@ -349,14 +349,17 @@ Déclenchée après l'évaluation globale du dépôt : **16/20**. Objectif : att
 - Tests : `548 passed / 163 skipped / 0 failed`.
 - Couverture Python : `78 %`.
 
-**État local après implémentation Phase 10** :
+**État courant après clôture Phase 10** :
 
-- CI GitHub Actions ajoutée localement, validation distante à confirmer après push.
+- CI GitHub Actions verte sur `main`.
 - Hygiène Git nettoyée : artefacts d'audit et résultats E2E générés retirés du suivi.
 - E2E authentifiés reproductibles : compte `omni-e2e`, script de préparation et skips documentés.
-- Suite complète locale : `583 passed / 162 skipped / 0 failed`.
-- Couverture Python locale : `84 %` (`routers/export.py` 89 %, `routers/voices.py` 85 %).
-- Statut qualité : candidat local `18/20`, sous réserve de CI verte sur `main` après push.
+- Suite complète : `590 passed / 162 skipped / 0 failed`.
+- Couverture Python : `84 %` (`routers/export.py` 89 %, `routers/voices.py` 88 %).
+- Build frontend reproductible : `package.json`, `package-lock.json`, `npm ci`, `npm run build`, `esbuild` local verrouillé.
+- Scan sécurité final : `scripts/security-smoke.sh`, branché dans la CI.
+- Durcissements additionnels : `root_path` forcé vide, uploads audio bornés, garde-chemins `Path.resolve().is_relative_to(...)`, paramètres avancés Pydantic bornés, stub front sans `innerHTML` ni logs console.
+- Statut qualité : **18/20 atteint**.
 
 **Plan d'implémentation** :
 
@@ -365,7 +368,7 @@ Déclenchée après l'évaluation globale du dépôt : **16/20**. Objectif : att
 3. **E2E authentifiés** : documenter le compte `omni-e2e`, fournir un script de préparation non interactif et réduire les skips évitables.
 4. **Coverage ciblée** : remonter en priorité `routers/export.py`, `routers/voices.py`, `core/subtitle_client.py`, `routers/auth_routes.py`.
 5. **Complexité maintenabilité** : extraire progressivement des helpers testables depuis `tab-voices.js`, `routers/voices.py` et `core/omnivoice_client.py`.
-6. **Sécurité et dépendances** : ajouter un scan de secrets/patterns dangereux et verrouiller le build frontend pour ne plus dépendre d'un `esbuild` global.
+6. **Sécurité et dépendances** : verrouiller le build frontend pour ne plus dépendre d'un `esbuild` global, puis ajouter un scan final de secrets/patterns dangereux.
 
 **Critères de sortie Phase 10** :
 
@@ -378,7 +381,15 @@ Déclenchée après l'évaluation globale du dépôt : **16/20**. Objectif : att
 - Skips E2E documentés ; aucun skip dû à une configuration inconnue ou implicite.
 - `git ls-files` ne contient plus d'artefacts runtime/audit non nécessaires.
 - `scripts/monitor.sh`, `scripts/test-smoke.sh` et `scripts/verify-assets-prefix.sh` verts.
-- Évaluation dépôt révisée ≥ 18/20.
+- Évaluation dépôt révisée : **18/20 atteint**.
+
+**Restes non bloquants post-Phase 10** :
+
+- Refactor progressif de `omnistudio/frontend/out/js/tab-voices.js`.
+- Extraction de helpers depuis `omnistudio/routers/voices.py`.
+- Isolation de branches testables dans `omnistudio/core/omnivoice_client.py`.
+- Audit RGAA approfondi avant exposition publique plus large que le Funnel interne.
+- Réduction progressive des usages historiques de `innerHTML` dans le frontend principal.
 
 ---
 
@@ -578,6 +589,8 @@ Script `scripts/verify-assets-prefix.sh` parcourt `frontend/out/` et liste tous 
 
 ## Changelog du PRD
 
+- **v1.8.2 (2026-05-05)** : **Phase 10 clôturée à 18/20**. Ajout du scan sécurité final `scripts/security-smoke.sh` dans la CI : secrets accidentels, clés privées, tokens haute confiance, `eval`/`exec`, `document.write`, invariants `root_path`, dépendance à `esbuild` global et régression du stub front. Les restes sont reclassés en backlog non bloquant : refactors frontend/backend ciblés, audit RGAA approfondi, réduction progressive des usages historiques de `innerHTML`.
+- **v1.8.1 (2026-05-05)** : **Phase 10 candidate 18/20 confirmée par CI**. Dernier commit poussé `e2924d8 ci: Prépare actions Node 24`, CI GitHub Actions verte sur `main` (run `25398760139`, 1m20). Suite complète `590 passed / 162 skipped / 0 failed`, coverage Python `84 %`. Build frontend reproductible via `package.json` + `package-lock.json` + `esbuild` local ; CI prépare le runtime GitHub Actions Node 24. Durcissements livrés : uploads audio bornés, `root_path` verrouillé vide, garde-chemins robustes, paramètres avancés bornés, stub front sans `innerHTML` ni logs console. Reste avant clôture formelle : scan statique sécurité/secrets final.
 - **v1.8 (2026-05-05)** : **Phase 10 qualité dépôt 18/20 ouverte** après évaluation globale à 16/20. État mesuré sur commit technique `beca4b6` poussé sur `origin/main` : services verts (`monitor.sh`, `test-smoke.sh`, `verify-assets-prefix.sh`), tests `548 passed / 163 skipped / 0 failed`, coverage Python `78 %`. Commit documentaire final : `b41fbfa docs: Prépare la phase qualité 18 sur 20`. Ajout du plan CI reproductible, hygiène Git, E2E authentifiés, coverage ciblée, réduction de complexité, sécurité/dépendances. Nouveaux critères #31-#36 et risque #21.
 - **v1.7 (2026-04-20)** : **Correctifs UX/RGAA + feature Alterner les voix (commit `f722bd5`)**. (1) Onglet Assignation : bouton « Alterner les voix » (round-robin A/B strict, Voix 1 = étapes impaires, Voix 2 = paires) + bouton « Inverser » swap. Selects pré-remplis avec voix[0]/voix[1] au chargement, verrou anti-double-clic, feedback succès/erreur. (2) Onglet Voix : exclusivité mutuelle segment sélectionné ↔ textarea texte libre — sélection d'un segment vide le textarea ; saisie dans le textarea désélectionne le segment. (3) Correction SRT global : condition `req.unique_srt or req.include_subtitles` (l'init sync JS seul ne suffisait pas — le flag côté serveur n'était pas transmis). (4) Corrections RGAA 4.1.2 critère 1.3 : suppression `aria-label` sur les 6 badges `<p>.fr-badge` (attribut interdit sur `role="paragraph"`) ; label clone-audio visible (retrait `fr-sr-only` + `aria-labelledby` redondant) ; badge « Obligatoire » sur champ clone-name. (5) Runbook Keycloak créé (`documentation/md/RUNBOOK-KEYCLOAK-USERS.md`) : création comptes, policy mot de passe, mapper audience JWT. Nouveaux tests : `TestGenerateGlobalSrtCondition` (6 cas paramétrés), `TestAlternanceVoix` (3 cas e2e Playwright), `TestVoicesExclusivite` (2 cas e2e), `test_badges_etape_sans_aria_label` (1 cas ARIA).
 - **v1.6 (2026-04-19)** : **Phase 9 UX post-livraison ajoutée** suite à l'audit `/ux-checklist` parallèle sur les 6 onglets (Import, Clean, Voix, Assign, Generate, Export). Verdict initial unanime « À corriger ». P1 et P2 livrés dans 8 commits (`d372f3c` → `c085289`) : refonte Voix/Design (3 parcours + stepper), Voix/Clone (MediaRecorder + stepper + cap 30 s), modale rename, pagination Clean, tiroir preview Assign, hiérarchie boutons Generate, paramètres Export scindés, badges d'étape cross-onglets, retrait des résidus VoxQwen (sélecteurs Fidélité et Modèle 1.7B/0.6B), classifieur LLM strict calé sur `/design/attributes` (whitelist 6 catégories). Ajout des helpers `describe_instruct_fr()` et `fetch_design_attributes()`. 31 nouveaux tests anti-régression dans `tests/test_voice_helpers.py`. **Reste à faire** : audit RGAA 4.1.2 détaillé (est. 6 h, bloquant ouverture publique) + focus-visible cohérent sur composants custom (est. 2 h, WCAG 2.4.7).

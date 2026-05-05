@@ -62,6 +62,9 @@ jobs:
       - name: Static smoke
         run: ./scripts/ci-static-smoke.sh
 
+      - name: Security smoke
+        run: ./scripts/security-smoke.sh
+
       - name: Build frontend
         run: npm run build
 

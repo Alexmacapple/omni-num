@@ -1,7 +1,7 @@
 # AGENTS.md — omnistudio
 
 Ce fichier complète `CLAUDE.md` (protocole agent 6 blocs) et le PRD.
-**Ne pas répéter** ce qui est déjà dans `CLAUDE.md` ou dans le PRD v1.8.
+**Ne pas répéter** ce qui est déjà dans `CLAUDE.md` ou dans le PRD v1.8.2.
 
 ## Vue d'ensemble
 
@@ -12,12 +12,12 @@ Auth : Keycloak JWT (realm `harmonia` partagé avec Harmonia et voxstudio, clien
 
 ## État courant (2026-05-05)
 
-- Dernier commit poussé : `b41fbfa docs: Prépare la phase qualité 18 sur 20`.
-- Dernier commit technique testé : `beca4b6 Stabilise routage Omni et tests E2E`.
+- Branche : `main`, alignée avec `origin/main` après le commit de clôture Phase 10.
+- Phase 10 qualité dépôt : **18/20 atteint**.
 - Services validés : Keycloak `8082`, OmniVoice `8070`, OmniStudio `7870`, Funnel public `/omni`.
-- Vérifications vertes : `monitor.sh`, `test-smoke.sh`, `verify-assets-prefix.sh`.
-- Tests locaux : `583 passed, 162 skipped`, couverture Python mesurée `84 %`.
-- Évaluation dépôt : **16/20** historique ; candidat local **18/20** sous réserve de CI verte après push.
+- Vérifications vertes : CI GitHub Actions, `ci-static-smoke.sh`, `security-smoke.sh`, `verify-assets-prefix.sh`, `npm run build`.
+- Tests : `590 passed, 162 skipped`, couverture Python mesurée `84 %`.
+- Restes non bloquants : refactor `tab-voices.js`, `routers/voices.py`, `core/omnivoice_client.py`, audit RGAA approfondi.
 
 ## Objectifs qualité (non négociables)
 
@@ -70,8 +70,8 @@ Voir `CLAUDE.md` (12 commandes exactes).
 | Doc | Usage |
 |-----|-------|
 | `CLAUDE.md` | Protocole agent 6 blocs |
-| `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` v1.8 | Décisions produit + Phase 10 qualité dépôt 18/20 |
-| `todo.md` | Plan court terme exécutable pour atteindre 18/20 |
+| `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` v1.8.2 | Décisions produit + Phase 10 qualité dépôt 18/20 |
+| `todo.md` | Clôture Phase 10 + restes non bloquants |
 | `.claude/session-context.md` | Passation pour la prochaine session |
 | `RUNBOOK-DEPLOYMENT.md` | Funnel, Keycloak, assets |
 | `documentation/md/ARCHITECTURE.md` | Architecture technique (hérité + différences omnistudio) |

@@ -1,6 +1,6 @@
-# TODO — montée qualité dépôt 18/20
+# TODO — Phase 10 clôturée, restes non bloquants
 
-Source de vérité : [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md), Phase 10 v1.8.
+Source de vérité : [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md), Phase 10 v1.8.2.
 
 ## État de départ
 
@@ -11,15 +11,19 @@ Source de vérité : [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](PRD/PRD-MIGRAT
 - Coverage Python : `78 %`.
 - Ops verts : `scripts/monitor.sh`, `scripts/test-smoke.sh`, `scripts/verify-assets-prefix.sh`.
 
-## État local après reprise
+## État courant après lots Phase 10
 
-- Venv local `.venv` créé et dépendances CI installées.
-- Suite complète locale : `583 passed / 162 skipped / 0 failed`.
-- Coverage Python local : `84 %` (`routers/export.py` 89 %, `routers/voices.py` 85 %).
+- CI GitHub Actions verte sur `main`.
+- Suite complète : `590 passed / 162 skipped / 0 failed`.
+- Coverage Python : `84 %` (`routers/export.py` 89 %, `routers/voices.py` 88 %).
+- Build frontend reproductible : `package.json`, `package-lock.json`, `npm ci`, `npm run build`, `esbuild` local verrouillé.
+- Garde-fous ajoutés : `root_path` forcé vide, uploads audio bornés, garde-chemins `Path.resolve().is_relative_to(...)`, paramètres avancés bornés, stub front sans `innerHTML` ni logs console.
+- Scan sécurité final : `scripts/security-smoke.sh`, branché dans la CI.
+- Statut qualité : **16/20** historique ; **18/20 atteint** en Phase 10.
 
-## Prochaine session
+## Lots Phase 10
 
-1. [x] Créer la CI GitHub Actions (créée localement, à valider verte sur `main` après push) :
+1. [x] Créer la CI GitHub Actions :
    - install Python 3.12 ;
    - installer `omnistudio/requirements.txt`, `tests/requirements-test.txt`, `tests/e2e/requirements.txt` ;
    - lancer `python -m pytest tests -q --timeout=120` ;
@@ -39,13 +43,14 @@ Source de vérité : [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](PRD/PRD-MIGRAT
    - `routers/voices.py` ;
    - `core/subtitle_client.py` ;
    - `routers/auth_routes.py`.
-5. [ ] Refactor progressif :
+5. [ ] Refactor progressif (non bloquant, post-18/20) :
    - extraire des helpers depuis `tab-voices.js` ;
    - extraire services/helpers depuis `routers/voices.py` ;
    - isoler les branches testables de `core/omnivoice_client.py`.
-6. [ ] Sécurité et dépendances :
-   - ajouter scan secrets/patterns dangereux ;
-   - déclarer le build frontend (`esbuild`) dans un toolchain versionné.
+6. [x] Sécurité et dépendances :
+   - [x] ajouter scan secrets/patterns dangereux ;
+   - [x] déclarer le build frontend (`esbuild`) dans un toolchain versionné.
+   - [x] préparer GitHub Actions au runtime Node 24.
 
 ## Critères de sortie
 
@@ -57,4 +62,12 @@ Source de vérité : [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](PRD/PRD-MIGRAT
 - Coverage global ≥ 82 %, cible 85 % (`84 %` local atteint).
 - Skips E2E justifiés et documentés.
 - Aucun artefact runtime/audit inutile dans `git ls-files`.
-- Réévaluation dépôt ≥ **18/20**.
+- Réévaluation dépôt : **18/20 atteint**.
+
+## Restes non bloquants
+
+- Refactor progressif de `omnistudio/frontend/out/js/tab-voices.js`.
+- Extraction de services/helpers depuis `omnistudio/routers/voices.py`.
+- Isolation de branches testables dans `omnistudio/core/omnivoice_client.py`.
+- Audit RGAA approfondi avant exposition publique plus large que le Funnel interne.
+- Réduction progressive des usages historiques de `innerHTML` dans le frontend principal, en conservant les cas DSFR contrôlés ou échappés.

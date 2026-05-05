@@ -10,10 +10,10 @@ Fork de [voice-num/voxstudio](https://github.com/Alexmacapple/voice-num) devenu 
 |-----|------|
 | Exploitation | Locale + Funnel public `/omni` validés |
 | Services | Keycloak `8082`, OmniVoice `8070`, OmniStudio `7870` |
-| Tests locaux | `583 passed / 162 skipped / 0 failed` |
-| Coverage Python | `84 %` global, cible Phase 10 `82-85 %` atteinte localement |
-| CI | GitHub Actions ajoutée dans `.github/workflows/ci.yml` |
-| Qualité dépôt | `16/20` historique ; candidat local `18/20`, CI distante à confirmer |
+| Tests locaux | `590 passed / 162 skipped / 0 failed` |
+| Coverage Python | `84 %` global, cible Phase 10 `82-85 %` atteinte |
+| CI | GitHub Actions verte sur `main` avec tests Python, build frontend, smokes assets et sécurité |
+| Qualité dépôt | `16/20` historique ; **18/20 atteint** en Phase 10, refactors restants non bloquants |
 
 <!-- CAUSAL:BEGIN — sections générées par readme-causal, ne pas éditer manuellement -->
 ## Anamèse [IC]
@@ -42,9 +42,9 @@ Le projet ne cherche pas à rendre OmniVoice multi-user en interne : OmniVoice r
 
 ## Résidu [IC]
 
-La Phase 10 est atteinte localement sur les axes à fort levier : CI ajoutée, hygiène Git nettoyée, E2E reproductibles documentés, suite complète verte et coverage global à `84 %`. Le dernier verrou formel reste d'observer la CI verte sur `main` après push. Une partie des E2E reste skippée sans secret Keycloak ou sans fixture voix custom pour `omni-e2e`, ce qui est documenté plutôt que masqué.
+La Phase 10 est clôturée sur les axes à fort levier : CI ajoutée et verte sur `main`, hygiène Git nettoyée, E2E reproductibles documentés, suite complète verte et coverage global à `84 %`. Le build frontend est reproductible via `package-lock.json` et `esbuild` local, la CI est préparée au runtime GitHub Actions Node 24 et un smoke sécurité bloque les secrets accidentels et les patterns dangereux non attendus. Une partie des E2E reste skippée sans secret Keycloak ou sans fixture voix custom pour `omni-e2e`, ce qui est documenté plutôt que masqué.
 
-Certaines exclusions sont assumées : l'auto-segmentation de dialogues est reportée, Voice Design reste composé en anglais côté backend parce qu'OmniVoice rejette le français sur `/design`, et les modèles Whisper sont téléchargés au premier usage dans `data/models/`. Le projet est donc exploitable aujourd'hui, avec une candidature locale crédible à `18/20` ; la clôture formelle dépend encore de la CI verte distante et de la réévaluation après push.
+Certaines exclusions sont assumées : l'auto-segmentation de dialogues est reportée, Voice Design reste composé en anglais côté backend parce qu'OmniVoice rejette le français sur `/design`, et les modèles Whisper sont téléchargés au premier usage dans `data/models/`. Le projet est donc exploitable aujourd'hui avec un **18/20 Phase 10 atteint**. Les prochains sujets sont des améliorations non bloquantes : refactor de modules volumineux, audit RGAA approfondi et réduction progressive des usages historiques de `innerHTML` dans le frontend principal.
 <!-- CAUSAL:END -->
 
 ---
@@ -124,8 +124,8 @@ Exposition publique : `https://mac-studio-alex.tail0fc408.ts.net/omni/` (Funnel 
 |-----|-------|
 | [`CLAUDE.md`](./CLAUDE.md) | Protocole agent (6 blocs) |
 | [`AGENTS.md`](./AGENTS.md) | Directives spécifiques omnistudio |
-| [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](./PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md) v1.8 | PRD complet + Phase 10 qualité dépôt 18/20 |
-| [`todo.md`](./todo.md) | Plan court terme pour passer le dépôt de 16/20 à 18/20 |
+| [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](./PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md) v1.8.2 | PRD complet + Phase 10 qualité dépôt 18/20 |
+| [`todo.md`](./todo.md) | Clôture Phase 10 et restes non bloquants |
 | [`RUNBOOK-DEPLOYMENT.md`](./RUNBOOK-DEPLOYMENT.md) | Funnel, Keycloak, `<base href>`, troubleshooting |
 | [`documentation/md/RUNBOOK-KEYCLOAK-USERS.md`](./documentation/md/RUNBOOK-KEYCLOAK-USERS.md) | Comptes Keycloak, mapper audience JWT, compte E2E |
 | [`documentation/md/ARCHITECTURE.md`](./documentation/md/ARCHITECTURE.md) | Architecture technique couche par couche |
@@ -147,12 +147,14 @@ Exposition publique : `https://mac-studio-alex.tail0fc408.ts.net/omni/` (Funnel 
 
 ## Qualité
 
-- CI : workflow GitHub Actions dans `.github/workflows/ci.yml`, validation distante à confirmer après push.
+- CI : workflow GitHub Actions dans `.github/workflows/ci.yml`, verte sur `main`.
 - Services opérationnels : Keycloak, OmniVoice, OmniStudio et Funnel `/omni` validés par `scripts/monitor.sh`.
 - Smoke test production : `scripts/test-smoke.sh` vert, assets minifiés servis en HTTP 200.
-- Tests automatisés locaux : **583 passed / 162 skipped / 0 failed**.
-- Couverture Python mesurée : **84 %** ; cible Phase 10 **82-85 %** atteinte localement, avec `routers/export.py` à **89 %** et `routers/voices.py` à **85 %**.
-- Évaluation dépôt 2026-05-05 : **16/20** historique ; cible PRD v1.8 **18/20** atteignable après push + CI verte.
+- Build frontend : `npm ci` + `npm run build`, `esbuild` verrouillé dans `package-lock.json`, plus audit `scripts/verify-assets-prefix.sh`.
+- Scan sécurité : `scripts/security-smoke.sh` cherche secrets accidentels, clés privées, tokens haute confiance, `eval`/`exec`, `document.write`, `root_path="/omni"`, `OMNISTUDIO_ROOT_PATH`, dépendance à `esbuild` global et régression du stub front.
+- Tests automatisés : **590 passed / 162 skipped / 0 failed**.
+- Couverture Python mesurée : **84 %** ; cible Phase 10 **82-85 %** atteinte, avec `routers/export.py` à **89 %** et `routers/voices.py` à **88 %**.
+- Évaluation dépôt 2026-05-05 : **16/20** historique ; **18/20 atteint** après CI, hygiène Git, E2E documentés, coverage, build reproductible et smoke sécurité.
 
 Commande de validation locale complète :
 
@@ -165,5 +167,5 @@ PYTHONPATH=omnistudio .venv/bin/python -m pytest tests -q --timeout=120 \
 ---
 
 **Version** : v1.0 en exploitation locale/publique Funnel
-**PRD de référence** : v1.8
+**PRD de référence** : v1.8.2
 **Licence** : MIT (alignée avec voice-num)
