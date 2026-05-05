@@ -15,6 +15,7 @@ Prérequis :
     - Keycloak actif (port 8082)
 
 Usage :
+    E2E_PASSWORD=Alex1234 ./scripts/setup-e2e-user.sh
     E2E_PASSWORD=Alex1234 pytest tests/e2e/test_parcours_complet.py -v --timeout=600
     E2E_PASSWORD=Alex1234 E2E_HEADLESS=0 E2E_SLOW_MO=300 pytest tests/e2e/test_parcours_complet.py -v
 

@@ -9,6 +9,7 @@ Ce test simule un utilisateur qui :
 6. Exporte le ZIP (optionnel si generation skippee)
 
 Usage :
+    E2E_PASSWORD=monmotdepasse ./scripts/setup-e2e-user.sh
     E2E_PASSWORD=monmotdepasse pytest tests/e2e/ -v
     E2E_PASSWORD=monmotdepasse E2E_HEADLESS=0 pytest tests/e2e/ -v    # Voir le navigateur
     E2E_PASSWORD=monmotdepasse E2E_SKIP_TTS=1 pytest tests/e2e/ -v    # Sans generation TTS

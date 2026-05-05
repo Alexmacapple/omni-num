@@ -10,6 +10,7 @@ Strategie de mock :
 - LLM : mock de LLMClient (pas d'API Albert)
 """
 import copy
+import json
 import os
 import shutil
 import sys
@@ -92,6 +93,17 @@ FAKE_USER = {"user_id": "test-user-123", "username": "testuser"}
 FAKE_THREAD_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
 
+def _extract_sse_event_data(body: str, event_name: str) -> dict:
+    """Retourne le premier payload JSON associe a un event SSE."""
+    lines = body.strip().split("\n")
+    for i, line in enumerate(lines):
+        if line.strip() == f"event: {event_name}" and i + 1 < len(lines):
+            data_line = lines[i + 1]
+            assert data_line.startswith("data: ")
+            return json.loads(data_line[6:])
+    raise AssertionError(f"event SSE introuvable: {event_name}")
+
+
 @pytest.fixture(autouse=True)
 def reset_mocks():
     """Reinitialise les mocks entre chaque test (deepcopy pour les objets imbriques)."""
@@ -103,6 +115,8 @@ def reset_mocks():
     _deps._cleaning_locks.clear()
     _deps._generating_locks.clear()
     _deps._exporting_locks.clear()
+    if hasattr(server.app.state, "limiter") and hasattr(server.app.state.limiter, "reset"):
+        server.app.state.limiter.reset()
     yield
 
 
@@ -191,6 +205,16 @@ def auth_headers():
 class TestAuthRouter:
     """POST /api/auth/login, /api/auth/token/refresh, /api/auth/logout"""
 
+    def _mock_async_client(self, response=None, side_effect=None):
+        mock_client = AsyncMock()
+        if side_effect is not None:
+            mock_client.post.side_effect = side_effect
+        else:
+            mock_client.post.return_value = response
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        return mock_client
+
     def test_login_keycloak_unavailable(self, client):
         """Login avec Keycloak indisponible retourne une erreur AUTH_REQUIRED."""
         resp = client.post("/api/auth/login", json={"username": "test", "password": "test"})
@@ -198,6 +222,44 @@ class TestAuthRouter:
         assert resp.status_code in (401, 503)
         body = resp.json()
         assert body["error"]["code"] == "AUTH_REQUIRED"
+
+    def test_login_success(self, client):
+        """Login relaie les tokens Keycloak valides."""
+        import routers.auth_routes as auth_routes
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            "access_token": "access",
+            "refresh_token": "refresh",
+            "expires_in": 123,
+        }
+        mock_client = self._mock_async_client(response=response)
+
+        with patch.object(auth_routes.httpx, "AsyncClient", return_value=mock_client):
+            resp = client.post("/api/auth/login", json={"username": "test", "password": "Password1"})
+
+        assert resp.status_code == 200
+        assert resp.json()["data"] == {
+            "access_token": "access",
+            "refresh_token": "refresh",
+            "expires_in": 123,
+        }
+
+    def test_login_keycloak_json_invalide(self, client):
+        """Une réponse 200 non JSON de Keycloak retourne 502."""
+        import routers.auth_routes as auth_routes
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.side_effect = ValueError("not json")
+        mock_client = self._mock_async_client(response=response)
+
+        with patch.object(auth_routes.httpx, "AsyncClient", return_value=mock_client):
+            resp = client.post("/api/auth/login", json={"username": "test", "password": "Password1"})
+
+        assert resp.status_code == 502
+        assert resp.json()["error"]["code"] == "AUTH_REQUIRED"
 
     def test_logout(self, client):
         """Logout retourne toujours 200 (best-effort)."""
@@ -212,6 +274,40 @@ class TestAuthRouter:
         assert resp.status_code in (401, 503)
         body = resp.json()
         assert body["error"]["code"] == "AUTH_REQUIRED"
+
+    def test_refresh_success_fallback_refresh_token(self, client):
+        """Refresh conserve l'ancien refresh_token si Keycloak n'en renvoie pas."""
+        import routers.auth_routes as auth_routes
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {"access_token": "new-access", "expires_in": 456}
+        mock_client = self._mock_async_client(response=response)
+
+        with patch.object(auth_routes.httpx, "AsyncClient", return_value=mock_client):
+            resp = client.post("/api/auth/token/refresh", json={"refresh_token": "old-refresh"})
+
+        assert resp.status_code == 200
+        assert resp.json()["data"] == {
+            "access_token": "new-access",
+            "refresh_token": "old-refresh",
+            "expires_in": 456,
+        }
+
+    def test_refresh_keycloak_json_invalide(self, client):
+        """Une réponse refresh 200 non JSON de Keycloak retourne 502."""
+        import routers.auth_routes as auth_routes
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.side_effect = ValueError("not json")
+        mock_client = self._mock_async_client(response=response)
+
+        with patch.object(auth_routes.httpx, "AsyncClient", return_value=mock_client):
+            resp = client.post("/api/auth/token/refresh", json={"refresh_token": "old-refresh"})
+
+        assert resp.status_code == 502
+        assert resp.json()["error"]["code"] == "AUTH_REQUIRED"
 
 
 # ---------------------------------------------------------------------------
@@ -567,6 +663,30 @@ class TestVoicesRouter:
         assert "total" in data
         assert data["total"] >= 2  # Au moins Lea + Jean
 
+    def test_list_voices_filters_custom_ownership(self, client, auth_headers, monkeypatch):
+        """Les voix custom visibles sont celles de l'utilisateur ou system=true."""
+        import routers.voices as voices_mod
+
+        monkeypatch.setattr(_mock_vox_client, "get_voices", MagicMock(return_value=[
+            {"name": "voix-alex", "type": "custom", "source": "design"},
+            {"name": "voix-systeme", "type": "custom", "description": "Partagee"},
+            {"name": "voix-bob", "type": "custom"},
+            {"name": "Lea", "type": "native", "gender": "female"},
+        ]))
+        monkeypatch.setattr(voices_mod, "_read_voice_meta", lambda name: {
+            "voix-alex": {"owner": FAKE_USER["user_id"], "system": False, "description": "Perso"},
+            "voix-systeme": {"owner": None, "system": True, "source": "design"},
+            "voix-bob": {"owner": "other-user", "system": False},
+        }.get(name, {}))
+
+        resp = client.get("/api/voices", headers=auth_headers)
+
+        assert resp.status_code == 200
+        voices = resp.json()["data"]["voices"]
+        names = {v["name"] for v in voices}
+        assert names == {"voix-alex", "voix-systeme", "Lea"}
+        assert next(v for v in voices if v["name"] == "voix-systeme")["owner"] is None
+
     def test_list_voice_templates(self, client, auth_headers):
         resp = client.get("/api/voices/templates", headers=auth_headers)
         assert resp.status_code == 200
@@ -629,6 +749,49 @@ class TestVoicesRouter:
         data = resp.json()["data"]
         assert "voice_instruct" in data
 
+    def test_voices_design_flow_fallback_direct(self, client, auth_headers, monkeypatch):
+        """Si le sous-graphe design echoue, le fallback generate_voice_instruct prend le relais."""
+        import routers.voices as voices_mod
+
+        monkeypatch.setattr(_mock_design_app, "invoke", MagicMock(side_effect=RuntimeError("boom")))
+        monkeypatch.setattr(voices_mod, "generate_voice_instruct", MagicMock(return_value={
+            "voice_instruct": "female, middle-aged, warm voice",
+            "iteration": 2,
+        }))
+        monkeypatch.setattr(_mock_vox_client, "design", MagicMock(return_value="/tmp/fallback.wav"))
+
+        resp = client.post(
+            "/api/voices/design-flow",
+            json={"brief": {"tone": "warm"}, "test_text": "Test.", "language": "fr"},
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["audio_url"] == "/api/audio/fallback.wav"
+        assert data["iteration"] == 2
+
+    def test_voices_design_flow_reuses_wav_path(self, client, auth_headers, tmp_path, monkeypatch):
+        """Un WAV produit par le sous-graphe est copie dans le dossier de session."""
+        source_wav = tmp_path / "design.wav"
+        source_wav.write_bytes(b"RIFF....WAVE")
+        monkeypatch.setattr(_mock_design_app, "invoke", MagicMock(return_value={
+            "voice_instruct": "female, young adult, clear voice",
+            "wav_paths": [str(source_wav)],
+            "iteration": 3,
+        }))
+
+        resp = client.post(
+            "/api/voices/design-flow",
+            json={"brief": {"tone": "clear"}, "test_text": "Test.", "language": "fr"},
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["audio_url"] == "/api/audio/design.wav"
+        assert data["iteration"] == 3
+
     def test_voices_explore(self, client, auth_headers):
         """POST /api/voices/explore regenere un audio volatile."""
         _mock_vox_client.design.return_value = None
@@ -641,6 +804,58 @@ class TestVoicesRouter:
         data = resp.json()["data"]
         assert "voice_instruct" in data
 
+    def test_voices_explore_regenerate_history_and_subtitles(
+        self, client, auth_headers, tmp_path, monkeypatch
+    ):
+        """Explore couvre regeneration instruct, purge des anciens WAV et SRT optionnel."""
+        import sys as _sys
+        import types
+        import routers.voices as voices_mod
+
+        output_dir = Path("data/voices") / FAKE_THREAD_ID
+        output_dir.mkdir(parents=True, exist_ok=True)
+        old_wav = output_dir / "explore_old.wav"
+        old_wav.write_bytes(b"old")
+        new_wav = tmp_path / "explore_new.wav"
+        new_wav.write_bytes(b"RIFF....WAVE")
+
+        _mock_state.values["brief"] = {"tone": "pose"}
+        _mock_state.values["iteration"] = 4
+        _mock_state.values["wav_paths"] = [str(new_wav)]
+        monkeypatch.setattr(voices_mod, "generate_voice_instruct", MagicMock(return_value={
+            "voice_instruct": "female, calm, clear voice",
+        }))
+        monkeypatch.setattr(_mock_vox_client, "design", MagicMock(return_value=str(new_wav)))
+
+        class FakeSubtitleClient:
+            def transcribe(self, path, language):
+                return [{"start": 0.0, "end": 1.0, "text": "Bonjour"}]
+
+            def generate_srt(self, segments):
+                return "1\n00:00:00,000 --> 00:00:01,000\nBonjour\n"
+
+        fake_module = types.SimpleNamespace(SubtitleClient=lambda: FakeSubtitleClient())
+        monkeypatch.setitem(_sys.modules, "core.subtitle_client", fake_module)
+
+        resp = client.post(
+            "/api/voices/explore",
+            json={
+                "voice_instruct": "Voix douce",
+                "test_text": "Test.",
+                "regenerate_instruct": True,
+                "want_subtitles": True,
+            },
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["voice_instruct"] == "female, calm, clear voice"
+        assert data["audio_url"] == "/api/audio/explore_new.wav"
+        assert data["srt_url"] == "/api/audio/explore_new.srt"
+        assert data["history"] == ["/api/audio/explore_new.wav"]
+        assert not old_wav.exists()
+
     def test_voices_preview(self, client, auth_headers):
         """POST /api/voices/preview genere un audio de pre-ecoute."""
         _mock_vox_client.preset.return_value = "/tmp/test.wav"
@@ -652,6 +867,32 @@ class TestVoicesRouter:
         assert resp.status_code == 200
         data = resp.json()["data"]
         assert "audio_url" in data
+
+    def test_voices_preview_busy_timeout_and_empty(self, client, auth_headers, monkeypatch):
+        """Preview traduit les erreurs OmniVoice en erreurs API stables."""
+        from core.omnivoice_client import OmniVoiceBusyError, OmniVoiceTimeoutError
+
+        cases = [
+            (OmniVoiceBusyError("busy"), 503, "TTS_BUSY"),
+            (OmniVoiceTimeoutError("timeout"), 504, "TTS_TIMEOUT"),
+            (None, 502, "OMNIVOICE_ERROR"),
+        ]
+        for side_effect_or_value, status, code in cases:
+            preset = MagicMock()
+            if isinstance(side_effect_or_value, Exception):
+                preset.side_effect = side_effect_or_value
+            else:
+                preset.return_value = side_effect_or_value
+            monkeypatch.setattr(_mock_vox_client, "preset", preset)
+
+            resp = client.post(
+                "/api/voices/preview",
+                json={"voice": "Lea", "text": "Test preview.", "language": "fr"},
+                headers=auth_headers,
+            )
+
+            assert resp.status_code == status
+            assert resp.json()["error"]["code"] == code
 
     def test_voices_import_zip(self, client, auth_headers):
         """POST /api/voices/import accepte un ZIP."""
@@ -672,6 +913,40 @@ class TestVoicesRouter:
         assert "imported" in data
         assert data["count"] == 0  # ZIP vide, 0 voix importees
 
+    def test_voices_import_zip_owner_and_overwrite(self, client, auth_headers, tmp_path):
+        """L'import ignore les dossiers invalides et injecte owner sur les voix valides."""
+        import io
+
+        voices_root = tmp_path / "voices"
+        existing = voices_root / "custom" / "voix-existante"
+        existing.mkdir(parents=True)
+        (existing / "meta.json").write_text('{"owner": "old"}', encoding="utf-8")
+        (existing / "prompt.pt").write_bytes(b"old")
+
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            zf.writestr("../evil/meta.json", "{}")
+            zf.writestr("incomplete/meta.json", "{}")
+            zf.writestr("voix-valide/meta.json", '{"system": false}')
+            zf.writestr("voix-valide/prompt.pt", b"prompt")
+            zf.writestr("voix-existante/meta.json", '{"owner": "other", "system": false}')
+            zf.writestr("voix-existante/prompt.pt", b"new")
+        buf.seek(0)
+
+        with patch("routers.voices.OMNIVOICE_VOICES_DIR", str(voices_root)):
+            resp = client.post(
+                "/api/voices/import",
+                files={"file": ("voix.zip", buf, "application/zip")},
+                headers={"Authorization": "Bearer fake"},
+            )
+
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["imported"] == ["voix-valide"]
+        meta = json.loads((voices_root / "custom" / "voix-valide" / "meta.json").read_text())
+        assert meta["owner"] == FAKE_USER["user_id"]
+        assert meta["system"] is False
+
     def test_voices_rename_not_found(self, client, auth_headers):
         """Renommer une voix inexistante retourne 404."""
         resp = client.post(
@@ -682,6 +957,30 @@ class TestVoicesRouter:
         assert resp.status_code == 404
         body = resp.json()
         assert body["error"]["code"] == "VOICE_NOT_FOUND"
+
+    def test_voices_rename_invalid_and_exists(self, client, auth_headers, tmp_path):
+        """Rename valide le nouveau nom et refuse une destination deja presente."""
+        old_dir = tmp_path / "custom" / "ancienne"
+        new_dir = tmp_path / "custom" / "nouvelle"
+        old_dir.mkdir(parents=True)
+        new_dir.mkdir(parents=True)
+
+        with patch("routers.voices.OMNIVOICE_VOICES_DIR", str(tmp_path)):
+            invalid = client.post(
+                "/api/voices/ancienne/rename",
+                json={"new_name": "A"},
+                headers=auth_headers,
+            )
+            exists = client.post(
+                "/api/voices/ancienne/rename",
+                json={"new_name": "nouvelle"},
+                headers=auth_headers,
+            )
+
+        assert invalid.status_code == 400
+        assert invalid.json()["error"]["code"] == "INVALID_NAME"
+        assert exists.status_code == 409
+        assert exists.json()["error"]["code"] == "VOICE_EXISTS"
 
     def test_voices_clone_missing_fields(self, client, auth_headers):
         """Clone sans champs requis retourne 400/422."""
@@ -708,6 +1007,50 @@ class TestVoicesRouter:
         assert data["name"] == "narrateur-v1"
         assert data["status"] == "locked"
 
+    def test_voices_lock_existing_and_omnivoice_error(self, client, auth_headers, monkeypatch):
+        """Lock refuse une voix existante puis relaie une erreur de sauvegarde OmniVoice."""
+        monkeypatch.setattr(_mock_vox_client, "get_custom_voice_details", MagicMock(return_value={"name": "deja"}))
+        resp = client.post(
+            "/api/voices/lock",
+            json={"name": "narrateur-v2", "voice_instruct": "Voix grave", "test_text": "Test."},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 409
+        assert resp.json()["error"]["code"] == "VOICE_EXISTS"
+
+        monkeypatch.setattr(_mock_vox_client, "get_custom_voice_details", MagicMock(return_value=None))
+        monkeypatch.setattr(_mock_vox_client, "save_custom_voice", MagicMock(return_value={
+            "ok": False,
+            "detail": "erreur upstream",
+        }))
+        resp = client.post(
+            "/api/voices/lock",
+            json={"name": "narrateur-v3", "voice_instruct": "Voix grave", "test_text": "Test."},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 502
+        assert resp.json()["error"]["code"] == "OMNIVOICE_ERROR"
+
+    def test_voices_lock_uses_last_exploration_wav(self, client, auth_headers, fake_wav_file, monkeypatch):
+        """Lock clone depuis le dernier WAV explore quand il existe."""
+        _mock_state.values["wav_paths"] = [fake_wav_file]
+        monkeypatch.setattr(_mock_vox_client, "get_custom_voice_details", MagicMock(return_value=None))
+        save_custom_voice = MagicMock(return_value={"ok": True})
+        monkeypatch.setattr(_mock_vox_client, "save_custom_voice", save_custom_voice)
+        monkeypatch.setattr(_mock_vox_client, "preset", MagicMock(return_value="/tmp/locked.wav"))
+
+        resp = client.post(
+            "/api/voices/lock",
+            json={"name": "narrateur-v4", "voice_instruct": "Voix grave", "test_text": "Test."},
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"]["source"] == "clone"
+        _, kwargs = save_custom_voice.call_args
+        assert kwargs["source"] == "clone"
+        assert kwargs["audio_path"] == fake_wav_file
+
     def test_voices_delete_success(self, client, auth_headers):
         """Supprimer une voix custom non assignee reussit."""
         # La voix "custom-a-supprimer" n'est pas dans assignments
@@ -715,6 +1058,33 @@ class TestVoicesRouter:
         _mock_vox_client.reload_custom_voices.return_value = True
         resp = client.delete("/api/voices/custom-a-supprimer", headers=auth_headers)
         assert resp.status_code == 200
+
+    def test_voices_delete_owner_in_use_and_upstream_failure(self, client, auth_headers, monkeypatch):
+        """Delete protege ownership, assignations actives et erreurs OmniVoice."""
+        import routers.voices as voices_mod
+
+        monkeypatch.setattr(voices_mod, "_read_voice_meta", MagicMock(return_value={
+            "owner": "other-user",
+            "system": False,
+        }))
+        resp = client.delete("/api/voices/voix-bob", headers=auth_headers)
+        assert resp.status_code == 403
+        assert resp.json()["error"]["code"] == "VOICE_NOT_OWNER"
+
+        monkeypatch.setattr(voices_mod, "_read_voice_meta", MagicMock(return_value={
+            "owner": FAKE_USER["user_id"],
+            "system": False,
+        }))
+        _mock_state.values["assignments"] = {"1": "voix-alex", "99": "voix-alex"}
+        resp = client.delete("/api/voices/voix-alex", headers=auth_headers)
+        assert resp.status_code == 409
+        assert resp.json()["error"]["code"] == "VOICE_IN_USE"
+
+        _mock_state.values["assignments"] = {}
+        monkeypatch.setattr(_mock_vox_client, "delete_custom_voice", MagicMock(return_value=False))
+        resp = client.delete("/api/voices/voix-alex", headers=auth_headers)
+        assert resp.status_code == 502
+        assert resp.json()["error"]["code"] == "OMNIVOICE_ERROR"
 
     def test_voices_rename_success(self, client, auth_headers, tmp_path):
         """Renommer une voix custom existante reussit."""
@@ -734,6 +1104,45 @@ class TestVoicesRouter:
         assert resp.status_code == 200
         data = resp.json()["data"]
         assert data["new_name"] == "nouvelle"
+
+    def test_voices_metadata_routes_and_transcribe(self, client, auth_headers, monkeypatch):
+        """Routes OmniStudio tags, attributs et transcription audio."""
+        monkeypatch.setattr(_mock_vox_client, "get_tags", MagicMock(return_value=["[laugh]", "[sigh]"]))
+        monkeypatch.setattr(_mock_vox_client, "get_design_attributes", MagicMock(return_value={
+            "gender": ["female"],
+            "age": ["young adult"],
+        }))
+        monkeypatch.setattr(_mock_vox_client, "transcribe_audio", MagicMock(return_value="Texte transcrit"))
+
+        tags = client.get("/api/voices/tags", headers=auth_headers)
+        attrs = client.get("/api/voices/design-attributes", headers=auth_headers)
+        transcribe = client.post(
+            "/api/voices/transcribe",
+            files={"audio": ("sample.wav", b"RIFF....WAVE", "audio/wav")},
+            data={"language": "fr"},
+            headers={"Authorization": "Bearer fake"},
+        )
+
+        assert tags.status_code == 200
+        assert tags.json()["data"]["count"] == 2
+        assert attrs.status_code == 200
+        assert attrs.json()["data"]["gender"] == ["female"]
+        assert transcribe.status_code == 200
+        assert transcribe.json()["data"]["text"] == "Texte transcrit"
+
+    def test_voices_transcribe_failure(self, client, auth_headers, monkeypatch):
+        """Une transcription vide cote OmniVoice devient TRANSCRIBE_FAILED."""
+        monkeypatch.setattr(_mock_vox_client, "transcribe_audio", MagicMock(return_value=None))
+
+        resp = client.post(
+            "/api/voices/transcribe",
+            files={"audio": ("sample.wav", b"RIFF....WAVE", "audio/wav")},
+            data={"language": "fr"},
+            headers={"Authorization": "Bearer fake"},
+        )
+
+        assert resp.status_code == 500
+        assert resp.json()["error"]["code"] == "TRANSCRIBE_FAILED"
 
 
 # ---------------------------------------------------------------------------
@@ -969,6 +1378,122 @@ class TestExportRouter:
         text = resp.text
         assert "event: progress" in text or "event: done" in text
 
+    def test_export_sse_mp3_unique_subtitles_and_skips(self, client, auth_headers, fake_wav_file, tmp_path):
+        """Export couvre MP3, narration unique, SRT par etape/global et fichiers manquants."""
+        import routers.export as export_mod
+
+        missing_wav = tmp_path / "missing.wav"
+        _mock_state.values["steps"] = [
+            {"step_id": "A1", "text_original": "Texte alpha.", "text_tts": "",
+             "cleaning_status": "validated", "language_override": None, "speed_factor": 1.0},
+            {"step_id": "2", "text_original": "Original deux.", "text_tts": "Texte deux nettoye.",
+             "cleaning_status": "validated", "language_override": "fr", "speed_factor": 1.2},
+        ]
+        _mock_state.values["generated_files"] = [
+            {"step_id": "A1", "filename": "alpha.wav", "voice_name": "Lea",
+             "wav_path": str(missing_wav), "status": "done"},
+            {"step_id": "2", "filename": "deux.wav", "voice_name": "Lea",
+             "wav_path": fake_wav_file, "status": "done"},
+            {"step_id": "999", "filename": "orphelin.wav", "voice_name": "Lea",
+             "wav_path": fake_wav_file, "status": "done"},
+        ]
+        _mock_state.values["assignments"] = {"A1": {"language": "en"}, "2": "Lea"}
+        _mock_state.values["instructions"] = {"2": "Plus souriant"}
+        _mock_state.values["cleaning_log"] = [{
+            "step_id": "2",
+            "llm_provider": "Albert",
+            "temperature": 0.2,
+            "timestamp": "2026-05-05T12:00:00",
+        }]
+
+        class FakeSubtitleClient:
+            def __init__(self):
+                self.transcriptions = []
+
+            def transcribe(self, path, language):
+                self.transcriptions.append((Path(path).name, language))
+                return [{"start": 0.0, "end": 1.0, "text": "Bonjour"}]
+
+            def generate_srt(self, segments):
+                return "1\n00:00:00,000 --> 00:00:01,000\nBonjour\n"
+
+            def generate_word_srt(self, segments):
+                return self.generate_srt(segments)
+
+            def generate_shorts_srt(self, segments):
+                return self.generate_srt(segments)
+
+            def generate_multiline_srt(self, segments):
+                return self.generate_srt(segments)
+
+        fake_subtitles = FakeSubtitleClient()
+
+        def fake_process_audio(src, dst, cfg):
+            shutil.copy2(src, dst)
+
+        def fake_convert_to_mp3(src, dst):
+            Path(dst).write_bytes(Path(src).read_bytes())
+            return True
+
+        def fake_concatenate_audio(files, dst, silence_duration, cfg):
+            Path(dst).write_bytes(b"RIFF....WAVE")
+
+        with patch.object(export_mod, "process_audio", side_effect=fake_process_audio), \
+             patch.object(export_mod, "convert_to_mp3", side_effect=fake_convert_to_mp3), \
+             patch.object(export_mod, "concatenate_audio", side_effect=fake_concatenate_audio), \
+             patch.object(export_mod, "_get_subtitle_client", return_value=fake_subtitles):
+            resp = client.post(
+                "/api/export",
+                json={
+                    "normalize": True,
+                    "stereo": True,
+                    "output_format": "mp3",
+                    "make_unique": True,
+                    "include_subtitles": True,
+                    "unique_srt": True,
+                    "subtitle_format": "format-inconnu",
+                },
+                headers=auth_headers,
+            )
+
+        assert resp.status_code == 200
+        assert "event: sous-titres-global" not in resp.text
+        done = _extract_sse_event_data(resp.text, "done")
+        assert done["files_count"] == 1
+        assert done["skipped"] == ["A1"]
+        assert done["unique_audio_url"] == "api/export/audio/narration-complete.mp3"
+        assert done["global_subtitle_url"] == "api/export/audio/narration-complete.srt"
+        assert ("etape-02-texte-deux-nettoye.mp3", "fr") in fake_subtitles.transcriptions
+        assert ("narration-complete.mp3", "auto") in fake_subtitles.transcriptions
+
+    def test_export_subtitle_client_singleton_and_import_error(self, monkeypatch):
+        """_get_subtitle_client cache l'instance et degrade proprement si l'import echoue."""
+        import builtins
+        import routers.export as export_mod
+
+        sentinel = object()
+        monkeypatch.setattr(export_mod, "_subtitle_client", sentinel)
+        assert export_mod._get_subtitle_client() is sentinel
+
+        monkeypatch.setattr(export_mod, "_subtitle_client", None)
+        original_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "core.subtitle_client":
+                raise ImportError("missing faster-whisper")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+        assert export_mod._get_subtitle_client() is None
+
+    def test_download_requires_auth_and_valid_thread(self, client):
+        """Download refuse les appels sans token et les thread_id invalides."""
+        no_token = client.get("/api/export/download")
+        invalid_tid = client.get("/api/export/download?token=fake&tid=bad!")
+
+        assert no_token.status_code == 401
+        assert invalid_tid.status_code == 400
+
     def test_download_valid_zip(self, client, auth_headers, tmp_path):
         """Download avec ZIP existant retourne 200."""
         # Creer un ZIP factice au bon emplacement
@@ -985,6 +1510,31 @@ class TestExportRouter:
             assert "application/zip" in resp.headers.get("content-type", "")
         finally:
             zip_path.unlink(missing_ok=True)
+
+    def test_serve_export_audio_auth_thread_and_media_types(self, client):
+        """L'audio exporte gere auth hybride, validation thread et types de medias."""
+        audio_dir = Path("export") / FAKE_THREAD_ID / "audio"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        (audio_dir / "narration-complete.wav").write_bytes(b"RIFF....WAVE")
+        (audio_dir / "narration-complete.mp3").write_bytes(b"ID3")
+        (audio_dir / "narration-complete.srt").write_text("1\nBonjour\n", encoding="utf-8")
+
+        no_token = client.get("/api/export/audio/narration-complete.wav")
+        invalid_tid = client.get("/api/export/audio/narration-complete.wav?token=fake&tid=bad!")
+        missing = client.get(f"/api/export/audio/missing.wav?token=fake&tid={FAKE_THREAD_ID}")
+        wav = client.get(f"/api/export/audio/narration-complete.wav?token=fake&tid={FAKE_THREAD_ID}")
+        mp3 = client.get(f"/api/export/audio/narration-complete.mp3?token=fake&tid={FAKE_THREAD_ID}")
+        srt = client.get(f"/api/export/audio/narration-complete.srt?token=fake&tid={FAKE_THREAD_ID}")
+
+        assert no_token.status_code == 401
+        assert invalid_tid.status_code == 400
+        assert missing.status_code == 404
+        assert wav.status_code == 200
+        assert "audio/wav" in wav.headers.get("content-type", "")
+        assert mp3.status_code == 200
+        assert "audio/mpeg" in mp3.headers.get("content-type", "")
+        assert srt.status_code == 200
+        assert "text/plain" in srt.headers.get("content-type", "")
 
 
 # ---------------------------------------------------------------------------

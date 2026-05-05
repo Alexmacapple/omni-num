@@ -3,11 +3,12 @@
 Prerequis :
     pip install -r tests/e2e/requirements.txt
     playwright install chromium
-    ./start.sh  (serveur OmniStudio + Keycloak + OmniVoice)
+    ./scripts/start.sh  (serveur OmniStudio + Keycloak + OmniVoice)
+    E2E_PASSWORD=<secret> ./scripts/setup-e2e-user.sh
 
 Variables d'environnement :
     E2E_BASE_URL   : URL OmniStudio (defaut: http://localhost:7870)
-    E2E_USERNAME   : Identifiant Keycloak (defaut: alex)
+    E2E_USERNAME   : Identifiant Keycloak (defaut: omni-e2e)
     E2E_PASSWORD   : Mot de passe Keycloak (requis)
     E2E_HEADLESS   : 0 pour voir le navigateur (defaut: 1)
     E2E_SLOW_MO    : Ralentir les actions en ms (defaut: 0)
@@ -23,7 +24,7 @@ from playwright.sync_api import Playwright, Browser, BrowserContext, Page
 # Configuration
 # ---------------------------------------------------------------------------
 BASE_URL = os.getenv("E2E_BASE_URL", "http://localhost:7870")
-USERNAME = os.getenv("E2E_USERNAME", "alex")
+USERNAME = os.getenv("E2E_USERNAME", "omni-e2e")
 PASSWORD = os.getenv("E2E_PASSWORD", "")
 HEADLESS = os.getenv("E2E_HEADLESS", "1") == "1"
 SLOW_MO = int(os.getenv("E2E_SLOW_MO", "0"))

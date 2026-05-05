@@ -4,7 +4,7 @@
 
 - Fork de `voice-num/voxstudio/` branché sur OmniVoice (k2-fsa, 646 langues) au lieu de VoxQwen.
 - Stack : FastAPI + DSFR 1.11.2 + LangGraph + OmniVoice (port 8070) + Keycloak (client `omnistudio`, realm `harmonia`).
-- Statut : Phases 1-9 largement livrées, prod minifiée active, Funnel `/omni` OK, commit `beca4b6` poussé sur `origin/main`. Évaluation dépôt 2026-05-05 : **16/20** ; objectif PRD v1.8 : **18/20** via CI, hygiène Git, E2E authentifiés, coverage ciblée et refactor progressif.
+- Statut : Phases 1-9 largement livrées, prod minifiée active, Funnel `/omni` OK, HEAD poussé `b41fbfa docs: Prépare la phase qualité 18 sur 20` sur `origin/main` ; socle technique testé `beca4b6 Stabilise routage Omni et tests E2E`. Évaluation dépôt 2026-05-05 : **16/20** historique ; candidat local **18/20** après CI, hygiène Git, E2E authentifiés et coverage `84 %`, sous réserve de CI verte distante après push.
 
 ## Comment je travaille
 

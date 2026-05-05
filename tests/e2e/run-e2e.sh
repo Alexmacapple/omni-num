@@ -1,10 +1,11 @@
 #!/bin/bash
-# run-e2e.sh — Lance les tests E2E VoxStudio (Playwright)
+# run-e2e.sh — Lance les tests E2E OmniStudio (Playwright)
 #
 # Prerequis :
 #   pip install -r tests/e2e/requirements.txt
 #   playwright install chromium
-#   ./start.sh  (serveur VoxStudio actif)
+#   ./scripts/start.sh  (serveur OmniStudio actif)
+#   E2E_PASSWORD=<secret> ./scripts/setup-e2e-user.sh
 #
 # Usage :
 #   ./tests/e2e/run-e2e.sh                    # Headless (defaut)
@@ -19,7 +20,7 @@ ROOT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # Mot de passe Keycloak (demander si pas defini)
 if [ -z "${E2E_PASSWORD:-}" ]; then
-    echo -n "Mot de passe Keycloak (utilisateur ${E2E_USERNAME:-alex}) : "
+    echo -n "Mot de passe Keycloak (utilisateur ${E2E_USERNAME:-omni-e2e}) : "
     read -s E2E_PASSWORD
     echo ""
     export E2E_PASSWORD
@@ -43,7 +44,7 @@ fi
 
 echo "=== Tests E2E OmniStudio ==="
 echo "URL   : ${E2E_BASE_URL:-http://localhost:7870}"
-echo "User  : ${E2E_USERNAME:-alex}"
+echo "User  : ${E2E_USERNAME:-omni-e2e}"
 echo "Mode  : $([ "${E2E_HEADLESS:-1}" = "1" ] && echo "headless" || echo "headed")"
 echo ""
 

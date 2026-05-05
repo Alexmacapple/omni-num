@@ -126,8 +126,23 @@ curl http://localhost:8070/health
 
 ### Tests E2E (avec serveur actif)
 ```bash
+E2E_PASSWORD=<mot_de_passe_policy_ok> ./scripts/setup-e2e-user.sh
 E2E_USERNAME=omni-e2e E2E_PASSWORD=<mot_de_passe> python3 -m pytest tests/e2e/ -v
 ```
+
+Le script `setup-e2e-user.sh` est idempotent : il crée ou réactive le compte
+`omni-e2e`, active le ROPC sur le client public `omnistudio`, vérifie le mapper
+d'audience JWT et refuse de fonctionner sans `E2E_PASSWORD` fourni par
+l'environnement.
+
+Skips E2E attendus et justifiés :
+- Sans `E2E_PASSWORD`, les modules Playwright sont importés puis skippés : la CI
+  sans secret reste verte et signale explicitement l'absence d'authentification.
+- Avec `E2E_SKIP_TTS=1`, `test_parcours_complet.py` est skippé : ce test exige
+  OmniVoice GPU et Albert.
+- Le test de renommage de voix custom est skippé si aucune voix custom n'existe
+  pour `omni-e2e`. C'est acceptable tant que la fixture voix custom n'est pas
+  automatisée.
 
 ## Backup et restauration
 

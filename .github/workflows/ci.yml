@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python tests and static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      PYTHONPATH: omnistudio
+      OMNISTUDIO_MINIFY: "false"
+      OMNISTUDIO_PRELOAD_MODEL: "false"
+      OMNISTUDIO_ROOT_PATH: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            omnistudio/requirements.txt
+            tests/requirements-test.txt
+            tests/e2e/requirements.txt
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg sox
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            -r omnistudio/requirements.txt \
+            -r tests/requirements-test.txt \
+            -r tests/e2e/requirements.txt
+
+      - name: Static smoke
+        run: ./scripts/ci-static-smoke.sh
+
+      - name: Audit asset prefixes
+        run: ./scripts/verify-assets-prefix.sh
+
+      - name: Run tests with coverage
+        run: |
+          python -m pytest tests -q --timeout=120 \
+            --cov=omnistudio \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-python
+          path: |
+            coverage.xml
+            htmlcov/
+          if-no-files-found: ignore

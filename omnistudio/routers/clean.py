@@ -133,6 +133,13 @@ async def clean_steps(req: CleanRequest, request: Request, user=Depends(get_curr
     steps = state.values.get("steps", []) if state and state.values else []
 
     async def event_generator():
+        pending = [s for s in steps if s.get("cleaning_status") != "validated"]
+        total = len(pending)
+        if total == 0:
+            await asyncio.to_thread(graph_app.update_state, config, {"steps": steps, "iteration_count": 1})
+            yield {"event": "done", "data": json.dumps({"cleaned": 0, "fallback": 0})}
+            return
+
         llm = LLMClient(
             provider=LLM_PROVIDER,
             api_key=LLM_API_KEY,
@@ -142,8 +149,6 @@ async def clean_steps(req: CleanRequest, request: Request, user=Depends(get_curr
         sys_tpl = Template(CLEANING_SYSTEM_PROMPT)
         system_prompt = sys_tpl.render(glossary=req.glossary)
 
-        pending = [s for s in steps if s.get("cleaning_status") != "validated"]
-        total = len(pending)
         llm_call_count = 0
         fallback_count = 0
 

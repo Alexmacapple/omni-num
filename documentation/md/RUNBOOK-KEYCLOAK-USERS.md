@@ -141,6 +141,7 @@ Le endpoint `/api/auth/login` est limité à **5 requêtes/minute** par IP. Si u
 | Username | Accès | Notes |
 |----------|-------|-------|
 | alex     | Admin OmniStudio + VoxStudio | Mot de passe dans `CLAUDE.local.md` |
+| omni-e2e | Tests E2E OmniStudio | Préparé par `E2E_PASSWORD=<secret> ./scripts/setup-e2e-user.sh` ; mot de passe jamais versionné |
 | miweb    | Utilisateur standard | Mdp court (policy suspendue lors de la création) |
 | vlad, agnes, loic | Utilisateurs standard | Voir realm-export.json |
 

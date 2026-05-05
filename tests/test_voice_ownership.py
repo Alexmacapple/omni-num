@@ -13,6 +13,8 @@ Règles :
 - Voix system: true ne sont jamais supprimables
 - Export scope owner, Import force owner = user.sub
 """
+import json
+
 import pytest
 
 
@@ -129,3 +131,80 @@ class TestInjectionAutomatique:
     def test_post_voices_custom_injecte_owner_jwt_sub(self):
         """POST /api/voices/custom : user.sub est injecté comme owner."""
         pytest.skip("Intégration FastAPI — Phase 3")
+
+
+class TestVoicesRouterHelpers:
+    def test_validate_voice_name_obligatoire(self):
+        from routers.voices import _validate_voice_name
+        assert _validate_voice_name("") == "Le nom est obligatoire"
+
+    def test_read_voice_meta_absent_et_malforme(self, tmp_path, monkeypatch):
+        import routers.voices as voices
+        monkeypatch.setattr(voices, "OMNIVOICE_VOICES_DIR", str(tmp_path))
+
+        assert voices._read_voice_meta("VoixAbsente") == {}
+
+        meta_dir = tmp_path / "custom" / "VoixCassée"
+        meta_dir.mkdir(parents=True)
+        (meta_dir / "meta.json").write_text("{ json invalide", encoding="utf-8")
+
+        assert voices._read_voice_meta("VoixCassée") == {}
+
+    def test_read_voice_meta_valide(self, tmp_path, monkeypatch):
+        import routers.voices as voices
+        monkeypatch.setattr(voices, "OMNIVOICE_VOICES_DIR", str(tmp_path))
+
+        meta_dir = tmp_path / "custom" / "VoixAlex"
+        meta_dir.mkdir(parents=True)
+        (meta_dir / "meta.json").write_text(
+            json.dumps({"owner": ALEX_SUB, "system": False}),
+            encoding="utf-8",
+        )
+
+        assert voices._read_voice_meta("VoixAlex")["owner"] == ALEX_SUB
+
+    def test_inject_owner_meta_absent_retourne_false(self, tmp_path, monkeypatch):
+        import routers.voices as voices
+        monkeypatch.setattr(voices, "OMNIVOICE_VOICES_DIR", str(tmp_path))
+
+        assert voices._inject_owner_in_meta("VoixAbsente", ALEX_SUB) is False
+
+    def test_inject_owner_preserve_system_true(self, tmp_path, monkeypatch):
+        import routers.voices as voices
+        monkeypatch.setattr(voices, "OMNIVOICE_VOICES_DIR", str(tmp_path))
+
+        meta_dir = tmp_path / "custom" / "Marianne"
+        meta_dir.mkdir(parents=True)
+        meta_file = meta_dir / "meta.json"
+        meta_file.write_text(json.dumps({"system": True, "owner": None}), encoding="utf-8")
+
+        assert voices._inject_owner_in_meta("Marianne", ALEX_SUB) is False
+        assert json.loads(meta_file.read_text(encoding="utf-8"))["owner"] is None
+
+    def test_inject_owner_meta_malforme_repare(self, tmp_path, monkeypatch):
+        import routers.voices as voices
+        monkeypatch.setattr(voices, "OMNIVOICE_VOICES_DIR", str(tmp_path))
+
+        meta_dir = tmp_path / "custom" / "VoixAlex"
+        meta_dir.mkdir(parents=True)
+        meta_file = meta_dir / "meta.json"
+        meta_file.write_text("{ json invalide", encoding="utf-8")
+
+        assert voices._inject_owner_in_meta("VoixAlex", ALEX_SUB) is True
+        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        assert meta["owner"] == ALEX_SUB
+        assert meta["system"] is False
+
+    def test_inject_owner_necrase_pas_owner_existant(self, tmp_path, monkeypatch):
+        import routers.voices as voices
+        monkeypatch.setattr(voices, "OMNIVOICE_VOICES_DIR", str(tmp_path))
+
+        meta_dir = tmp_path / "custom" / "VoixBob"
+        meta_dir.mkdir(parents=True)
+        meta_file = meta_dir / "meta.json"
+        meta_file.write_text(json.dumps({"owner": BOB_SUB}), encoding="utf-8")
+
+        assert voices._inject_owner_in_meta("VoixBob", ALEX_SUB) is True
+        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        assert meta["owner"] == BOB_SUB
+        assert meta["system"] is False

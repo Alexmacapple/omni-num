@@ -12,11 +12,12 @@ Auth : Keycloak JWT (realm `harmonia` partagé avec Harmonia et voxstudio, clien
 
 ## État courant (2026-05-05)
 
-- Dernier commit poussé : `beca4b6 Stabilise routage Omni et tests E2E`.
+- Dernier commit poussé : `b41fbfa docs: Prépare la phase qualité 18 sur 20`.
+- Dernier commit technique testé : `beca4b6 Stabilise routage Omni et tests E2E`.
 - Services validés : Keycloak `8082`, OmniVoice `8070`, OmniStudio `7870`, Funnel public `/omni`.
 - Vérifications vertes : `monitor.sh`, `test-smoke.sh`, `verify-assets-prefix.sh`.
-- Tests : `548 passed, 163 skipped`, couverture Python mesurée `78 %`.
-- Évaluation dépôt : **16/20**. Objectif actif : **18/20** via PRD v1.8 Phase 10 et `todo.md`.
+- Tests locaux : `583 passed, 162 skipped`, couverture Python mesurée `84 %`.
+- Évaluation dépôt : **16/20** historique ; candidat local **18/20** sous réserve de CI verte après push.
 
 ## Objectifs qualité (non négociables)
 

@@ -3,6 +3,9 @@
 Spécification : PRD v1.5 décision 16 + annexe K (4 formats + chunking).
 Code cible : omnistudio/core/subtitle_client.py
 """
+import builtins
+import types
+
 import pytest
 
 
@@ -27,7 +30,94 @@ class TestTranscription:
 
     def test_langue_non_supportee_retourne_none_et_log(self):
         """Langue hors des ~99 Whisper : retour None, log info (pas d'erreur)."""
-        pytest.skip("Nécessite modèle — Phase 3")
+        from core.subtitle_client import SubtitleClient
+        client = SubtitleClient()
+        assert client.transcribe("/tmp/fake.wav", language="haw") is None
+
+    def test_langue_auto_et_locale_whisper_supportees(self):
+        from core.subtitle_client import SubtitleClient
+        client = SubtitleClient()
+        assert client.is_language_supported("auto") is True
+        assert client.is_language_supported("") is True
+        assert client.is_language_supported("fr-FR") is True
+        assert client.is_language_supported("haw") is False
+
+    def test_transcribe_fichier_absent_retourne_none(self, monkeypatch):
+        from core.subtitle_client import SubtitleClient
+        client = SubtitleClient()
+        monkeypatch.setattr(client, "_load_model", lambda: (_ for _ in ()).throw(AssertionError("model should not load")))
+        assert client.transcribe("/tmp/omnistudio-fichier-absent.wav", language="fr") is None
+
+    def test_transcribe_avec_modele_fake_retourne_segments(self, tmp_path, monkeypatch):
+        from core.subtitle_client import SubtitleClient
+
+        class Word:
+            word = "Bonjour"
+            start = 0.0
+            end = 0.4
+
+        class Segment:
+            start = 0.0
+            end = 1.2
+            text = " Bonjour "
+            words = [Word()]
+
+        class FakeModel:
+            def transcribe(self, wav_path, language, word_timestamps):
+                assert language == "fr"
+                assert word_timestamps is True
+                return iter([Segment()]), types.SimpleNamespace(language="fr")
+
+        wav = tmp_path / "sample.wav"
+        wav.write_bytes(b"RIFF")
+        client = SubtitleClient()
+        monkeypatch.setattr(client, "_load_model", lambda: setattr(client, "_model", FakeModel()))
+
+        segments = client.transcribe(str(wav), language="fr")
+
+        assert segments == [{
+            "start": 0.0,
+            "end": 1.2,
+            "text": "Bonjour",
+            "words": [{"word": "Bonjour", "start": 0.0, "end": 0.4}],
+        }]
+
+    def test_transcribe_exception_modele_retourne_none(self, tmp_path, monkeypatch):
+        from core.subtitle_client import SubtitleClient
+
+        class FailingModel:
+            def transcribe(self, *args, **kwargs):
+                raise RuntimeError("boom")
+
+        wav = tmp_path / "sample.wav"
+        wav.write_bytes(b"RIFF")
+        client = SubtitleClient()
+        monkeypatch.setattr(client, "_load_model", lambda: setattr(client, "_model", FailingModel()))
+
+        assert client.transcribe(str(wav), language="auto") is None
+
+    def test_load_model_deja_charge_ne_reimporte_pas(self, monkeypatch):
+        from core.subtitle_client import SubtitleClient
+        client = SubtitleClient()
+        client._model = object()
+        monkeypatch.setattr(builtins, "__import__", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("import inutile")))
+        client._load_model()
+
+    def test_load_model_import_error_remonte(self, monkeypatch):
+        from core.subtitle_client import SubtitleClient
+
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "faster_whisper":
+                raise ImportError("missing faster-whisper")
+            return real_import(name, *args, **kwargs)
+
+        client = SubtitleClient()
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+
+        with pytest.raises(ImportError):
+            client._load_model()
 
 
 class Test4FormatsSRT:
@@ -68,6 +158,13 @@ class Test4FormatsSRT:
         for block in multi.split("\n\n"):
             lines = [l for l in block.split("\n") if l and "-->" not in l and not l.strip().isdigit()]
             assert len(lines) <= 2
+
+    def test_generate_multiline_mot_trop_long_coupe_sans_espace(self):
+        from core.subtitle_client import SubtitleClient
+        client = SubtitleClient()
+        segments = [{"start": 0.0, "end": 2.0, "text": "SupercalifragilisticexpialidociousSansEspace"}]
+        multi = client.generate_multiline_srt(segments)
+        assert "Supercalifragilisticexpialidocious" in multi
 
 
 class TestTXTJSON:

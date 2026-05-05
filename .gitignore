@@ -14,6 +14,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 venv/
 .venv/
@@ -21,6 +22,8 @@ venv/
 # Node (esbuild, playwright)
 node_modules/
 npm-debug.log*
+playwright-report/
+test-results/
 
 # OmniVoice (dépôt Git séparé, github.com/Alexmacapple/OmniVoice)
 OmniVoice/
@@ -50,6 +53,10 @@ temp/
 # Logs
 logs/
 *.log
+
+# Résultats générés localement
+.code-audit-results/
+omnistudio/frontend/out/js/e2e-tests/_results/
 
 # Brouillons de commit (voir git-rules.md)
 .commit-drafts/

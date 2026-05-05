@@ -18,3 +18,7 @@ Les sous-onglets gérés nativement par DSFR (ex : Bibliothèque/Créer/Cloner) 
 ## CSP et bookmarklets d'audit a11y (2026-04-20)
 
 La CSP strict bloque axe-core et autres bookmarklets d'audit. Solution : flag `OMNISTUDIO_CSP_DEV=true` dans `.env` (gitignored) relâche la CSP uniquement en dev — jamais en prod. Chargé via `python-dotenv` dans `config.py` et via `start.sh`.
+
+## Flags Codex (2026-05-05)
+
+Dans `~/.codex/config.toml`, les feature flags doivent être déclarés sous `[features]`. Un `goals = true` au niveau racine est présent dans le fichier mais ignoré par Codex. Toujours vérifier l'état effectif avec `codex features list | rg '^goals\s'`.
