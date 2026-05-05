@@ -1,5 +1,5 @@
 # Contexte de session — omni-num
-> Dernière sauvegarde : 2026-05-05 23:27 CEST
+> Dernière sauvegarde : 2026-05-05 23:35 CEST
 > Reprendre en lisant ce fichier puis `todo.md`
 
 ## INVARIANTS
@@ -13,8 +13,8 @@
 - Invariant Funnel : FastAPI doit rester sans `root_path="/omni"` ; `<base href="/omni/">` reste dans `index.html`
 - Ne pas toucher : `OmniVoice/`, `data/voices-system/`, `data/models/`
 - Préférence utilisateur : français, pragmatique, exécuter plutôt que proposer, commits/push quand demandé explicitement
-- Dernier socle fonctionnel poussé avant clôture : `ecd1325 chore: Clôture Phase 10 qualité`
-- Dernière CI confirmée verte : GitHub Actions run `25401904572`
+- Dernier commit poussé avant cette sauvegarde : `9c9029b chore: Sauvegarde clôture session`
+- Dernière CI confirmée verte : GitHub Actions run `25403342115`
 
 ## ETAT
 
@@ -36,14 +36,16 @@
   - 1 événement direct routé
   - 0 contradiction
   - 0 connaissance cristallisée à injecter dans `CLAUDE.md` / `AGENTS.md`
+- [x] Premortem production réalisée en conversation : risque principal = confondre dépôt prêt et service opérable
+- [x] `postmortem.md` créé avec une gate prod en 10 points pour prod contrôlée/interne
 
 ### En cours
 
-- [~] Commit/push final de clôture : passation + artefacts Insight Forge versionnables
+- [~] Commit/push final de clôture : `postmortem.md` + passation
 
 ### A faire
 
-- [ ] Après push, surveiller la CI du commit final de passation
+- [ ] Après push, surveiller la CI du commit final
 - [ ] Si CI verte, considérer la session close sans autre action
 
 ### Bloqué
@@ -56,6 +58,7 @@
 2. **18/20 sans grand refactor** - Objectif Phase 10 atteint par garde-fous reproductibles : CI, coverage, E2E documentés, build front verrouillé, smokes assets/sécurité.
 3. **Refactors reportés** - `tab-voices.js`, `routers/voices.py` et `omnivoice_client.py` restent à découper progressivement, sans bloquer la clôture Phase 10.
 4. **Insight Forge versionné sans cache brut** - Les synthèses `.insight-forge/logic`, `trace`, `staging`, `proposals` et README sont utiles pour la reprise. Le cache `.insight-forge/.cache/` est généré depuis les sessions et reste ignoré.
+5. **Prod interne = gate d'exploitation** - Pour une prod contrôlée/interne, le blocage n'est plus prioritairement le code mais la preuve opérationnelle : stack, auth, Funnel, parcours complet, charge/mémoire, backup/restore, sécurité, accessibilité, runbook/rollback.
 
 ## ARTEFACTS
 
@@ -68,16 +71,19 @@
 - `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` : version 1.8.2 + changelog de clôture
 - `.claude/session-context.md` : cette passation
 - `.insight-forge/.gitignore` : ignore le cache brut généré
+- `postmortem.md` : premortem production + gate prod en 10 points
 
 ### Créés
 
 - `scripts/security-smoke.sh` : scan statique sécurité sans services externes
 - `.insight-forge/` : base de connaissance Insight Forge initialisée
 - `.insight-forge/proposals/2026-05-05T21-15-32Z.md` : proposition vide, aucune connaissance cristallisée pour l'instant
+- `postmortem.md` : checklist go/no-go pour prod contrôlée/interne et prod publique large
 
 ### Mémoire hors dépôt
 
 - `~/.claude/projects/-Users-alex-Claude/memory/feedback_security_smoke_baseline.md` : leçon sur scans sécurité ciblés
+- `~/.claude/projects/-Users-alex-Claude/memory/feedback_prod_gate_operability.md` : leçon sur la distinction qualité dépôt / opérabilité prod
 - `~/.claude/projects/-Users-alex-Claude/memory/MEMORY.md` : index mémoire mis à jour
 
 ## ERREURS CORRIGEES
@@ -101,10 +107,15 @@
    - Correct : versionner les synthèses et ignorer `.cache/`
    - Pourquoi : le cache est reconstructible et contient du matériau brut de session inutile en revue de code
 
+5. **Confusion dépôt prêt / prod prête**
+   - Mauvais : répondre seulement avec CI, tests et note dépôt
+   - Correct : poser une gate d'exploitation à preuves concrètes
+   - Pourquoi : la prod peut échouer sur Keycloak, Funnel, mémoire, backup ou parcours réel malgré une CI verte
+
 ## SUITE
 
-1. Committer la passation finale avec un message du type `chore: Sauvegarde clôture session`.
+1. Committer `postmortem.md` et la passation avec un message du type `docs: Ajoute gate prod interne`.
 2. Pousser `main`.
 3. Surveiller la CI GitHub Actions du commit final.
-4. Si CI verte, répondre à Alex : session clôturée, Phase 10 fermée, 18/20 atteint.
-5. Prochaine vraie tâche non bloquante : choisir entre refactor `tab-voices.js`, extraction helpers `routers/voices.py`, audit RGAA approfondi ou réduction progressive des `innerHTML` historiques.
+4. Si CI verte, répondre à Alex : session clôturée, `postmortem.md` poussé, Phase 10 fermée, 18/20 atteint.
+5. Prochaine action utile : exécuter la gate prod en 10 points et remplir les preuves dans `postmortem.md`.
