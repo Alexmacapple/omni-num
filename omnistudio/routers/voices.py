@@ -53,6 +53,8 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 ALLOWED_AUDIO_EXT = (".wav", ".mp3", ".flac", ".ogg")
+MAX_AUDIO_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 Mo
+AUDIO_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1 Mo
 
 RESERVED_VOICE_NAMES = {
     "vivian", "serena", "uncle-fu", "uncle_fu", "dylan", "eric",
@@ -70,6 +72,76 @@ def _validate_voice_name(name: str) -> Optional[str]:
         return "Le nom doit contenir 3-50 caracteres (minuscules, chiffres, tirets)"
     if name in RESERVED_VOICE_NAMES:
         return f"Le nom '{name}' est reserve (voix native)"
+    return None
+
+
+def _validate_audio_magic(filename: str, header: bytes) -> bool:
+    """Valide les magic bytes des formats audio acceptes."""
+    ext = os.path.splitext(filename or "")[1].lower()
+    if ext == ".wav":
+        return len(header) >= 12 and header[:4] == b"RIFF" and header[8:12] == b"WAVE"
+    if ext == ".mp3":
+        return header.startswith(b"ID3") or (
+            len(header) >= 2 and header[0] == 0xFF and (header[1] & 0xE0) == 0xE0
+        )
+    if ext == ".flac":
+        return header.startswith(b"fLaC")
+    if ext == ".ogg":
+        return header.startswith(b"OggS")
+    return False
+
+
+async def _save_limited_audio_upload(audio: UploadFile, dest_path: str):
+    """Sauvegarde un upload audio en chunks avec limite taille + magic bytes."""
+    filename = audio.filename or ""
+    if not filename.lower().endswith(ALLOWED_AUDIO_EXT):
+        return api_response(
+            error={
+                "code": "INVALID_FORMAT",
+                "message": f"Format audio non supporte. Acceptes : {', '.join(ALLOWED_AUDIO_EXT)}",
+            },
+            status_code=400,
+        )
+
+    total = 0
+    header = bytearray()
+    max_upload_mb = max(1, MAX_AUDIO_UPLOAD_SIZE // (1024 * 1024))
+    try:
+        with open(dest_path, "wb") as f:
+            while True:
+                chunk = await audio.read(AUDIO_UPLOAD_CHUNK_SIZE)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_AUDIO_UPLOAD_SIZE:
+                    return api_response(
+                        error={
+                            "code": "FILE_TOO_LARGE",
+                            "message": f"Fichier audio trop volumineux (max {max_upload_mb} Mo)",
+                        },
+                        status_code=400,
+                    )
+                if len(header) < 16:
+                    header.extend(chunk[:16 - len(header)])
+                f.write(chunk)
+    except OSError as e:
+        logger.warning("Ecriture upload audio echouee : %s", e)
+        return api_response(
+            error={
+                "code": "UPLOAD_FAILED",
+                "message": "Impossible de sauvegarder le fichier audio.",
+            },
+            status_code=500,
+        )
+
+    if total == 0 or not _validate_audio_magic(filename, bytes(header)):
+        return api_response(
+            error={
+                "code": "INVALID_FILE",
+                "message": "Le contenu du fichier ne correspond pas au format audio annonce.",
+            },
+            status_code=400,
+        )
     return None
 
 
@@ -499,20 +571,16 @@ async def voices_clone(
     if err:
         return api_response(error={"code": "INVALID_NAME", "message": err}, status_code=400)
 
-    if not audio.filename or not audio.filename.lower().endswith(ALLOWED_AUDIO_EXT):
-        return api_response(error={"code": "INVALID_FORMAT",
-            "message": f"Format audio non supporte. Acceptes : {', '.join(ALLOWED_AUDIO_EXT)}"}, status_code=400)
-
     upload_dir = f"data/voices/{thread_id}"
     os.makedirs(upload_dir, exist_ok=True)
-    ext = os.path.splitext(audio.filename)[1]
+    ext = os.path.splitext(audio.filename or "")[1].lower()
     ref_path = os.path.join(upload_dir, f"ref_{name}{ext}")
 
-    with open(ref_path, "wb") as f:
-        content = await audio.read()
-        f.write(content)
-
     try:
+        upload_error = await _save_limited_audio_upload(audio, ref_path)
+        if upload_error:
+            return upload_error
+
         result = await asyncio.to_thread(
             vox_client.save_custom_voice,
             name=name, source="clone", audio_path=ref_path,
@@ -817,12 +885,15 @@ async def transcribe_endpoint(
 
     Utilisé par l'onglet 3 Clone pour remplir automatiquement reference_text (PRD décision 5).
     """
-    temp_path = f"temp/transcribe_{user['user_id']}_{int(asyncio.get_running_loop().time()*1000)}.wav"
+    ext = os.path.splitext(audio.filename or "")[1].lower()
+    temp_path = f"temp/transcribe_{user['user_id']}_{int(asyncio.get_running_loop().time()*1000)}{ext or '.wav'}"
     os.makedirs("temp", exist_ok=True)
-    with open(temp_path, "wb") as f:
-        f.write(await audio.read())
 
     try:
+        upload_error = await _save_limited_audio_upload(audio, temp_path)
+        if upload_error:
+            return upload_error
+
         text = await asyncio.to_thread(vox_client.transcribe_audio, temp_path, language)
         if text is None:
             return api_error("TRANSCRIBE_FAILED", "Transcription impossible", status_code=500)

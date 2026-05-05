@@ -24,7 +24,6 @@ jobs:
       PYTHONPATH: omnistudio
       OMNISTUDIO_MINIFY: "false"
       OMNISTUDIO_PRELOAD_MODEL: "false"
-      OMNISTUDIO_ROOT_PATH: ""
 
     steps:
       - name: Checkout

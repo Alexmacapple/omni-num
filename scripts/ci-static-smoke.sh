@@ -7,6 +7,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/omnistudio/frontend/out"
 INDEX_HTML="$FRONTEND_DIR/index.html"
 SERVER_PY="$ROOT_DIR/omnistudio/server.py"
+STUB_SERVER_PY="$ROOT_DIR/omnistudio/stub_server.py"
 
 ok() { echo "  [OK] $*"; }
 fail() { echo "  [FAIL] $*"; exit 1; }
@@ -15,15 +16,27 @@ echo "=== Smoke statique CI OmniStudio ==="
 
 [ -f "$INDEX_HTML" ] || fail "index.html absent: $INDEX_HTML"
 [ -f "$SERVER_PY" ] || fail "server.py absent: $SERVER_PY"
+[ -f "$STUB_SERVER_PY" ] || fail "stub_server.py absent: $STUB_SERVER_PY"
 
 grep -q '<base href="/omni/">' "$INDEX_HTML" \
     && ok '<base href="/omni/"> present' \
     || fail '<base href="/omni/"> manquant dans index.html'
 
-if grep -Eq 'root_path\s*=\s*["'\'']/omni/?["'\'']' "$SERVER_PY"; then
-    fail 'root_path="/omni" detecte dans FastAPI()'
-fi
-ok 'FastAPI sans root_path="/omni" statique'
+for app_file in "$SERVER_PY" "$STUB_SERVER_PY"; do
+    if grep -Eq 'root_path\s*=\s*["'\'']/omni/?["'\'']' "$app_file"; then
+        fail "root_path=\"/omni\" detecte dans $app_file"
+    fi
+    if grep -Eq 'root_path\s*=\s*os\.getenv' "$app_file"; then
+        fail "root_path configurable par environnement detecte dans $app_file"
+    fi
+    if grep -q 'OMNISTUDIO_ROOT_PATH' "$app_file"; then
+        fail "OMNISTUDIO_ROOT_PATH ne doit pas piloter FastAPI: $app_file"
+    fi
+    if ! grep -Eq 'root_path\s*=\s*["'\'']{2}' "$app_file"; then
+        fail "root_path vide explicite absent dans $app_file"
+    fi
+done
+ok 'FastAPI root_path force a vide'
 
 FRONTEND_DIR="$FRONTEND_DIR" python3 - <<'PY'
 import os

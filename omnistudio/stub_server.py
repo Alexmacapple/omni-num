@@ -29,7 +29,8 @@ app = FastAPI(
     description="Stub Phase 0bis — architecture check",
     docs_url="/docs",
     redoc_url="/redoc",
-    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", ""),
+    # Tailscale Funnel strippe /omni avant FastAPI : le stub aussi reste a la racine interne.
+    root_path="",
 )
 
 _BASE = os.path.dirname(os.path.abspath(__file__))

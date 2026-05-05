@@ -15,6 +15,9 @@ FRONTEND_OUT = os.path.abspath(
 FRONTEND_DIST = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "omnistudio", "frontend", "out-dist")
 )
+OMNISTUDIO_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "omnistudio")
+)
 
 
 def _list_files(base_dir: str, pattern: str):
@@ -58,6 +61,26 @@ class TestHTMLSansCheminsAbsolus:
         for f in files:
             content = open(f).read()
             assert '<base href="/omni/">' in content, f"<base> manquant dans {f}"
+
+
+class TestFastAPIRootPath:
+    def test_root_path_est_force_a_vide(self):
+        """FastAPI doit rester a la racine interne : /omni est gere par Funnel + <base>."""
+        for filename in ("server.py", "stub_server.py"):
+            path = os.path.join(OMNISTUDIO_DIR, filename)
+            content = open(path).read()
+            assert "OMNISTUDIO_ROOT_PATH" not in content, (
+                f"{filename} ne doit plus lire OMNISTUDIO_ROOT_PATH"
+            )
+            assert not re.search(r"root_path\s*=\s*os\.getenv", content), (
+                f"{filename} ne doit pas rendre root_path configurable"
+            )
+            assert not re.search(r'root_path\s*=\s*["\']/omni/?["\']', content), (
+                f"{filename} ne doit jamais configurer root_path=/omni"
+            )
+            assert re.search(r'root_path\s*=\s*["\']{2}', content), (
+                f"{filename} doit fixer root_path a une chaine vide explicite"
+            )
 
 
 class TestJSSansFetchAbsolu:

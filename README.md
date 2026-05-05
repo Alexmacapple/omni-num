@@ -157,7 +157,7 @@ Exposition publique : `https://mac-studio-alex.tail0fc408.ts.net/omni/` (Funnel 
 Commande de validation locale complète :
 
 ```bash
-OMNISTUDIO_MINIFY=false OMNISTUDIO_PRELOAD_MODEL=false OMNISTUDIO_ROOT_PATH='' \
+OMNISTUDIO_MINIFY=false OMNISTUDIO_PRELOAD_MODEL=false \
 PYTHONPATH=omnistudio .venv/bin/python -m pytest tests -q --timeout=120 \
   --cov=omnistudio --cov-report=term-missing --cov-report=xml --cov-report=html
 ```

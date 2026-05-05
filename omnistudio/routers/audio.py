@@ -16,6 +16,11 @@ from dependencies import THREAD_ID_RE, _verify_session_owner
 router = APIRouter()
 
 
+def _is_safe_child_path(file_path: Path, base_dir: Path) -> bool:
+    """Retourne True uniquement si file_path reste sous base_dir."""
+    return file_path.is_relative_to(base_dir)
+
+
 @router.get("/api/audio/{filename:path}")
 async def serve_audio(
     filename: str,
@@ -46,7 +51,7 @@ async def serve_audio(
     file_path = (base_dir / filename).resolve()
 
     # Protection path traversal
-    if not str(file_path).startswith(str(base_dir)):
+    if not _is_safe_child_path(file_path, base_dir):
         raise HTTPException(status_code=403, detail="Chemin non autorisé")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Fichier audio introuvable")

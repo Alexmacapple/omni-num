@@ -1014,6 +1014,41 @@ class TestVoicesRouter:
         # Validation Pydantic/FastAPI : 400 ou 422
         assert resp.status_code in (400, 422)
 
+    def test_voices_clone_rejects_audio_too_large(self, client, auth_headers, monkeypatch):
+        """Clone refuse un audio qui depasse la limite avant appel OmniVoice."""
+        import routers.voices as voices_mod
+
+        monkeypatch.setattr(voices_mod, "MAX_AUDIO_UPLOAD_SIZE", 8)
+        save_custom_voice = MagicMock(return_value={"ok": True})
+        monkeypatch.setattr(_mock_vox_client, "save_custom_voice", save_custom_voice)
+
+        resp = client.post(
+            "/api/voices/clone",
+            files={"audio": ("reference.wav", b"RIFF....WAVE", "audio/wav")},
+            data={"name": "clone-gros", "transcription": "Bonjour.", "model": "1.7B"},
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "FILE_TOO_LARGE"
+        save_custom_voice.assert_not_called()
+
+    def test_voices_clone_rejects_magic_mismatch(self, client, auth_headers, monkeypatch):
+        """Clone refuse un fichier dont le contenu ne correspond pas a son extension."""
+        save_custom_voice = MagicMock(return_value={"ok": True})
+        monkeypatch.setattr(_mock_vox_client, "save_custom_voice", save_custom_voice)
+
+        resp = client.post(
+            "/api/voices/clone",
+            files={"audio": ("reference.wav", b"not a wav payload", "audio/wav")},
+            data={"name": "clone-invalide", "transcription": "Bonjour.", "model": "1.7B"},
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "INVALID_FILE"
+        save_custom_voice.assert_not_called()
+
     def test_voices_lock_success(self, client, auth_headers):
         """Lock d'une voix volatile reussit quand la voix n'existe pas encore."""
         _mock_vox_client.get_custom_voice_details.return_value = None
@@ -1165,6 +1200,35 @@ class TestVoicesRouter:
 
         assert resp.status_code == 500
         assert resp.json()["error"]["code"] == "TRANSCRIBE_FAILED"
+
+    def test_voices_transcribe_rejects_large_and_bad_magic(self, client, monkeypatch):
+        """Transcription refuse les uploads trop gros et les faux WAV."""
+        import routers.voices as voices_mod
+
+        transcribe_audio = MagicMock(return_value="Texte transcrit")
+        monkeypatch.setattr(_mock_vox_client, "transcribe_audio", transcribe_audio)
+        monkeypatch.setattr(voices_mod, "MAX_AUDIO_UPLOAD_SIZE", 8)
+
+        too_large = client.post(
+            "/api/voices/transcribe",
+            files={"audio": ("sample.wav", b"RIFF....WAVE", "audio/wav")},
+            data={"language": "fr"},
+            headers={"Authorization": "Bearer fake"},
+        )
+
+        monkeypatch.setattr(voices_mod, "MAX_AUDIO_UPLOAD_SIZE", 50 * 1024 * 1024)
+        bad_magic = client.post(
+            "/api/voices/transcribe",
+            files={"audio": ("sample.wav", b"not a wav payload", "audio/wav")},
+            data={"language": "fr"},
+            headers={"Authorization": "Bearer fake"},
+        )
+
+        assert too_large.status_code == 400
+        assert too_large.json()["error"]["code"] == "FILE_TOO_LARGE"
+        assert bad_magic.status_code == 400
+        assert bad_magic.json()["error"]["code"] == "INVALID_FILE"
+        transcribe_audio.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -1572,7 +1636,7 @@ class TestAudioRouter:
         assert resp.status_code == 401
 
     def test_audio_path_traversal(self, client):
-        """Path traversal bloque par resolve() + startswith()."""
+        """Path traversal bloque par resolve() + is_relative_to()."""
         # Le TestClient normalise les .. dans l'URL, donc on teste aussi
         # via un chemin relatif qui pourrait echapper au base_dir
         resp = client.get(

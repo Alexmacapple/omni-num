@@ -136,6 +136,18 @@ class TestCORS:
 class TestPathTraversal:
     """Protection contre le path traversal sur /api/audio."""
 
+    def test_audio_guard_rejects_sibling_prefix_directory(self, tmp_path):
+        """data/voices/thread-evil ne doit pas passer pour un enfant de data/voices/thread."""
+        from routers.audio import _is_safe_child_path
+
+        base_dir = (tmp_path / "thread").resolve()
+        sibling_file = (tmp_path / "thread-evil" / "secret.wav").resolve()
+        base_dir.mkdir()
+        sibling_file.parent.mkdir()
+
+        assert _is_safe_child_path(base_dir / "preview.wav", base_dir) is True
+        assert _is_safe_child_path(sibling_file, base_dir) is False
+
     def test_double_dot(self, client):
         resp = client.get(
             "/api/audio/../../etc/passwd",

@@ -49,9 +49,15 @@ omnistudio/data/*.sqlite-*
 voice/
 export/
 temp/
+omnistudio/voice/
+omnistudio/export/
+omnistudio/temp/
+omnistudio/data/voices/
+omnistudio/data/uploads/
 
 # Logs
 logs/
+omnistudio/logs/
 *.log
 
 # Résultats générés localement

@@ -179,7 +179,8 @@ app = FastAPI(
     description="API de production vocale — Import, préparation, design voix, génération TTS et export.",
     version="1.0.0",
     lifespan=lifespan,
-    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", ""),
+    # Tailscale Funnel strippe /omni avant FastAPI : l'app doit rester a la racine interne.
+    root_path="",
 )
 app.state.limiter = limiter
 app.add_exception_handler(Exception, _unhandled_exception_handler)
