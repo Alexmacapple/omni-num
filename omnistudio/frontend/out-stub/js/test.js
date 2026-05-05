@@ -10,22 +10,28 @@
     statusEl.classList.add('ok');
   }
 
+  function setJsCheck(message, codeText) {
+    const jsCheck = document.getElementById('js-check');
+    if (!jsCheck) {
+      return;
+    }
+
+    jsCheck.replaceChildren(document.createTextNode(message));
+    if (codeText) {
+      const code = document.createElement('code');
+      code.textContent = codeText;
+      jsCheck.append(document.createTextNode(' '), code);
+    }
+  }
+
   // Test fetch relatif vers /api/health
   // Sous /omni/, le fetch("api/health") doit résoudre vers /omni/api/health
   fetch('api/health')
     .then((r) => r.json())
     .then((data) => {
-      console.log('Health check OK:', data);
-      const jsCheck = document.getElementById('js-check');
-      if (jsCheck) {
-        jsCheck.innerHTML = `✓ fetch relatif OK — <code>root_path="${data.root_path}"</code>`;
-      }
+      setJsCheck('✓ fetch relatif OK —', `root_path="${data.root_path || ''}"`);
     })
     .catch((err) => {
-      console.error('Health check KO:', err);
-      const jsCheck = document.getElementById('js-check');
-      if (jsCheck) {
-        jsCheck.innerHTML = `✗ fetch relatif KO : ${err.message}`;
-      }
+      setJsCheck(`✗ fetch relatif KO : ${err.message || 'erreur inconnue'}`);
     });
 })();

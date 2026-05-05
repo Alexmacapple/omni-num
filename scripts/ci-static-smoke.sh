@@ -6,6 +6,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/omnistudio/frontend/out"
 INDEX_HTML="$FRONTEND_DIR/index.html"
+STUB_JS="$ROOT_DIR/omnistudio/frontend/out-stub/js/test.js"
 SERVER_PY="$ROOT_DIR/omnistudio/server.py"
 STUB_SERVER_PY="$ROOT_DIR/omnistudio/stub_server.py"
 PACKAGE_JSON="$ROOT_DIR/package.json"
@@ -18,6 +19,7 @@ fail() { echo "  [FAIL] $*"; exit 1; }
 echo "=== Smoke statique CI OmniStudio ==="
 
 [ -f "$INDEX_HTML" ] || fail "index.html absent: $INDEX_HTML"
+[ -f "$STUB_JS" ] || fail "test.js stub absent: $STUB_JS"
 [ -f "$SERVER_PY" ] || fail "server.py absent: $SERVER_PY"
 [ -f "$STUB_SERVER_PY" ] || fail "stub_server.py absent: $STUB_SERVER_PY"
 [ -f "$PACKAGE_JSON" ] || fail "package.json absent: $PACKAGE_JSON"
@@ -73,6 +75,11 @@ fi
 grep -q 'node_modules/.bin/esbuild' "$BUILD_FRONTEND" \
     && ok 'build frontend utilise esbuild local' \
     || fail 'build-frontend.sh ne référence pas node_modules/.bin/esbuild'
+
+if grep -Eq '\.innerHTML\s*=|console\.(log|debug|info|warn|error)' "$STUB_JS"; then
+    fail "stub frontend contient innerHTML ou logs console: $STUB_JS"
+fi
+ok 'stub frontend sans innerHTML ni logs console'
 
 FRONTEND_DIR="$FRONTEND_DIR" python3 - <<'PY'
 import os
