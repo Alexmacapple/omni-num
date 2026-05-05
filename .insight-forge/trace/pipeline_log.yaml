@@ -1,0 +1,12 @@
+runs:
+- candidates: 2056
+  contradictions: 0
+  crystallized: 0
+  direct: 1
+  run_id: '2026-05-05T21:15:32+00:00'
+  sessions_processed:
+  - 019da793
+  - 019dab2c
+  - 019df8a0
+  - 019df907
+  staged: 0

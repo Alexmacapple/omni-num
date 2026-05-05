@@ -1,5 +1,5 @@
 # Contexte de session — omni-num
-> Dernière sauvegarde : 2026-05-05 22:15
+> Dernière sauvegarde : 2026-05-05 23:27 CEST
 > Reprendre en lisant ce fichier puis `todo.md`
 
 ## INVARIANTS
@@ -13,6 +13,8 @@
 - Invariant Funnel : FastAPI doit rester sans `root_path="/omni"` ; `<base href="/omni/">` reste dans `index.html`
 - Ne pas toucher : `OmniVoice/`, `data/voices-system/`, `data/models/`
 - Préférence utilisateur : français, pragmatique, exécuter plutôt que proposer, commits/push quand demandé explicitement
+- Dernier socle fonctionnel poussé avant clôture : `ecd1325 chore: Clôture Phase 10 qualité`
+- Dernière CI confirmée verte : GitHub Actions run `25401904572`
 
 ## ETAT
 
@@ -28,15 +30,21 @@
 - [x] Stub front nettoyé : plus de `innerHTML`, plus de logs console
 - [x] Scan sécurité final ajouté : `scripts/security-smoke.sh`, branché dans `.github/workflows/ci.yml`
 - [x] Docs mises à jour : `README.md`, `AGENTS.md`, `todo.md`, PRD v1.8.2
+- [x] Insight Forge lancé :
+  - 4 sessions Codex traitées
+  - 2056 candidats extraits
+  - 1 événement direct routé
+  - 0 contradiction
+  - 0 connaissance cristallisée à injecter dans `CLAUDE.md` / `AGENTS.md`
 
 ### En cours
 
-- [~] Commit/push du lot de clôture demandé par Alex : docs + scan sécurité + passation
+- [~] Commit/push final de clôture : passation + artefacts Insight Forge versionnables
 
 ### A faire
 
-- [ ] Après push, surveiller la CI du commit de clôture
-- [ ] Si CI verte, considérer Phase 10 fermée côté dépôt
+- [ ] Après push, surveiller la CI du commit final de passation
+- [ ] Si CI verte, considérer la session close sans autre action
 
 ### Bloqué
 
@@ -47,6 +55,7 @@
 1. **Smoke sécurité ciblé plutôt que scan naïf global** - Le frontend principal contient des `innerHTML` historiques, souvent échappés ou DSFR contrôlés. Le scan bloque les secrets et les patterns critiques, mais garde le refactor `innerHTML` principal comme backlog non bloquant.
 2. **18/20 sans grand refactor** - Objectif Phase 10 atteint par garde-fous reproductibles : CI, coverage, E2E documentés, build front verrouillé, smokes assets/sécurité.
 3. **Refactors reportés** - `tab-voices.js`, `routers/voices.py` et `omnivoice_client.py` restent à découper progressivement, sans bloquer la clôture Phase 10.
+4. **Insight Forge versionné sans cache brut** - Les synthèses `.insight-forge/logic`, `trace`, `staging`, `proposals` et README sont utiles pour la reprise. Le cache `.insight-forge/.cache/` est généré depuis les sessions et reste ignoré.
 
 ## ARTEFACTS
 
@@ -58,10 +67,13 @@
 - `todo.md` : Phase 10 clôturée, backlog post-18/20
 - `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` : version 1.8.2 + changelog de clôture
 - `.claude/session-context.md` : cette passation
+- `.insight-forge/.gitignore` : ignore le cache brut généré
 
 ### Créés
 
 - `scripts/security-smoke.sh` : scan statique sécurité sans services externes
+- `.insight-forge/` : base de connaissance Insight Forge initialisée
+- `.insight-forge/proposals/2026-05-05T21-15-32Z.md` : proposition vide, aucune connaissance cristallisée pour l'instant
 
 ### Mémoire hors dépôt
 
@@ -84,10 +96,15 @@
    - Mauvais : figer le dernier commit dans tous les docs de statut, puis le rendre obsolète au commit suivant
    - Correct : documenter la CI verte sur `main` et les critères, sans dépendre d'un hash dans chaque section
 
+4. **Cache Insight Forge**
+   - Mauvais : committer `.insight-forge/.cache/normalized.jsonl`
+   - Correct : versionner les synthèses et ignorer `.cache/`
+   - Pourquoi : le cache est reconstructible et contient du matériau brut de session inutile en revue de code
+
 ## SUITE
 
-1. Committer tout le lot avec un message du type `chore: Clôture Phase 10 qualité`.
+1. Committer la passation finale avec un message du type `chore: Sauvegarde clôture session`.
 2. Pousser `main`.
-3. Surveiller la CI GitHub Actions du commit de clôture.
-4. Si CI verte, répondre à Alex : Phase 10 clôturée, 18/20 atteint.
+3. Surveiller la CI GitHub Actions du commit final.
+4. Si CI verte, répondre à Alex : session clôturée, Phase 10 fermée, 18/20 atteint.
 5. Prochaine vraie tâche non bloquante : choisir entre refactor `tab-voices.js`, extraction helpers `routers/voices.py`, audit RGAA approfondi ou réduction progressive des `innerHTML` historiques.
