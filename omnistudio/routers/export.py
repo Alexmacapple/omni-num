@@ -440,14 +440,14 @@ async def download_export(
         _verify_session_owner(thread_id, user["user_id"])
 
     # Construction sécurisée du chemin ZIP (thread_id validé par regex ci-dessus)
-    export_dir = os.path.abspath("export")
-    os.makedirs(export_dir, exist_ok=True)
+    export_dir = Path("export").resolve()
+    export_dir.mkdir(parents=True, exist_ok=True)
     zip_name = f"OmniStudio_Export_{thread_id[:8]}.zip"
-    zip_path = os.path.join(export_dir, zip_name)
+    zip_path = (export_dir / zip_name).resolve()
     # Vérifier que le chemin reste dans export/
-    if not os.path.abspath(zip_path).startswith(export_dir):
+    if not zip_path.is_relative_to(export_dir):
         raise HTTPException(status_code=403, detail="Accès au répertoire refusé")
-    if not os.path.exists(zip_path):
+    if not zip_path.exists():
         return api_response(
             error={"code": "NOT_FOUND",
                    "message": "ZIP introuvable. Lancez l'export d'abord."},
@@ -455,7 +455,7 @@ async def download_export(
         )
 
     return FileResponse(
-        zip_path,
+        str(zip_path),
         media_type="application/zip",
         filename=f"OmniStudio_Export_{thread_id[:8]}.zip"
     )
@@ -485,18 +485,18 @@ async def serve_export_audio(
     if user and user.get("user_id"):
         _verify_session_owner(thread_id, user["user_id"])
 
-    base_dir = os.path.abspath(f"export/{thread_id}/audio")
-    file_path = os.path.abspath(os.path.join(base_dir, filename))
-    if not file_path.startswith(base_dir + os.sep):
+    base_dir = (Path("export") / thread_id / "audio").resolve()
+    file_path = (base_dir / filename).resolve()
+    if not file_path.is_relative_to(base_dir):
         raise HTTPException(status_code=403, detail="Accès au répertoire refusé")
-    if not os.path.exists(file_path):
+    if not file_path.exists():
         raise HTTPException(status_code=404, detail="Fichier audio introuvable")
 
-    ext = os.path.splitext(filename)[1].lower()
+    ext = file_path.suffix.lower()
     if ext == ".mp3":
         media_type = "audio/mpeg"
     elif ext == ".srt":
         media_type = "text/plain; charset=utf-8"
     else:
         media_type = "audio/wav"
-    return FileResponse(file_path, media_type=media_type, headers={"Cache-Control": "private, no-cache"})
+    return FileResponse(str(file_path), media_type=media_type, headers={"Cache-Control": "private, no-cache"})

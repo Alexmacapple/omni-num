@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
 from auth import get_current_user
@@ -151,18 +151,18 @@ async def _save_limited_audio_upload(audio: UploadFile, dest_path: str):
 
 class AdvancedDesignParams(BaseModel):
     """12 paramètres avancés acceptés par OmniVoice /design."""
-    num_step: Optional[int] = None
-    speed: Optional[float] = None
-    guidance_scale: Optional[float] = None
-    duration: Optional[float] = None
+    num_step: Optional[int] = Field(None, ge=4, le=64)
+    speed: Optional[float] = Field(None, ge=0.5, le=2.0)
+    guidance_scale: Optional[float] = Field(None, ge=0.0, le=4.0)
+    duration: Optional[float] = Field(None, ge=0.1, le=600.0)
     denoise: Optional[bool] = None
-    t_shift: Optional[float] = None
-    position_temperature: Optional[float] = None
-    class_temperature: Optional[float] = None
-    layer_penalty_factor: Optional[float] = None
+    t_shift: Optional[float] = Field(None, ge=0.0, le=1.0)
+    position_temperature: Optional[float] = Field(None, ge=0.0, le=20.0)
+    class_temperature: Optional[float] = Field(None, ge=0.0, le=5.0)
+    layer_penalty_factor: Optional[float] = Field(None, ge=0.0, le=20.0)
     postprocess_output: Optional[bool] = None
-    audio_chunk_duration: Optional[float] = None
-    audio_chunk_threshold: Optional[float] = None
+    audio_chunk_duration: Optional[float] = Field(None, ge=1.0, le=60.0)
+    audio_chunk_threshold: Optional[float] = Field(None, ge=5.0, le=120.0)
 
 
 class DesignFlowRequest(BaseModel):

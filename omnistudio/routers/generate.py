@@ -10,9 +10,10 @@ import json
 import os
 import re
 import time
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
 from auth import get_current_user
@@ -45,17 +46,17 @@ class AdvancedParams(BaseModel):
 
     Tous optionnels : si None, OmniVoice applique ses valeurs par défaut.
     """
-    num_step: int | None = None           # 4-64, default 32
-    speed: float | None = None            # 0.5-2.0, default 1.0
-    guidance_scale: float | None = None   # 0-4, default 2.0 (design uniquement)
-    t_shift: float | None = None          # 0-1, default 0.1
-    position_temperature: float | None = None  # default 5.0
-    class_temperature: float | None = None     # default 0.0
-    layer_penalty_factor: float | None = None  # default 5.0
-    audio_chunk_duration: float | None = None  # default 15.0
-    audio_chunk_threshold: float | None = None # default 30.0
-    denoise: bool | None = None                # default True
-    postprocess_output: bool | None = None     # default True
+    num_step: int | None = Field(None, ge=4, le=64)                    # default 32
+    speed: float | None = Field(None, ge=0.5, le=2.0)                  # default 1.0
+    guidance_scale: float | None = Field(None, ge=0.0, le=4.0)         # default 2.0
+    t_shift: float | None = Field(None, ge=0.0, le=1.0)                # default 0.1
+    position_temperature: float | None = Field(None, ge=0.0, le=20.0)  # default 5.0
+    class_temperature: float | None = Field(None, ge=0.0, le=5.0)      # default 0.0
+    layer_penalty_factor: float | None = Field(None, ge=0.0, le=20.0)  # default 5.0
+    audio_chunk_duration: float | None = Field(None, ge=1.0, le=60.0)  # default 15.0
+    audio_chunk_threshold: float | None = Field(None, ge=5.0, le=120.0)  # default 30.0
+    denoise: bool | None = None                                        # default True
+    postprocess_output: bool | None = None                             # default True
 
 
 class GenerateRequest(BaseModel):
@@ -500,11 +501,11 @@ async def save_random_voice(
     if existing:
         return api_error("VOICE_EXISTS", f"La voix '{req.name}' existe déjà.", status_code=409)
 
-    random_path = os.path.abspath(f"data/voices/{thread_id}/random/{req.filename}")
-    random_root = os.path.abspath(f"data/voices/{thread_id}/random")
-    if not random_path.startswith(random_root + os.sep):
+    random_root = (Path("data") / "voices" / thread_id / "random").resolve()
+    random_path = (random_root / req.filename).resolve()
+    if not random_path.is_relative_to(random_root):
         return api_error("INVALID_FILENAME", "Chemin non autorisé.", status_code=400)
-    if not os.path.isfile(random_path):
+    if not random_path.is_file():
         return api_error("FILE_NOT_FOUND",
                          "Fichier audio aléatoire introuvable. Régénérez la voix puis réessayez.",
                          status_code=404)
@@ -513,7 +514,7 @@ async def save_random_voice(
     result = await asyncio.to_thread(
         vox_client.save_custom_voice,
         name=req.name, source="clone",
-        audio_path=random_path, transcription=transcription,
+        audio_path=str(random_path), transcription=transcription,
     )
     if not result.get("ok"):
         return api_error("OMNIVOICE_ERROR", result.get("detail", "Erreur OmniVoice"), status_code=502)

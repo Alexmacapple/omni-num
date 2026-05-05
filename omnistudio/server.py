@@ -1,6 +1,7 @@
 """OmniStudio DSFR — Assembleur FastAPI (PRD-013)."""
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -221,14 +222,14 @@ else:
 @app.api_route("/js/{path:path}", methods=["GET", "HEAD"])
 async def serve_js(path: str):
     """Servir les fichiers JS — cache gere par CacheControlMiddleware (PRD-028)."""
-    js_dir = os.path.join(ACTIVE_FRONTEND, "js")
-    file_path = os.path.join(js_dir, path)
+    js_dir = (Path(ACTIVE_FRONTEND) / "js").resolve()
+    file_path = (js_dir / path).resolve()
     # Sécurité : vérifier que file_path est bien dans js_dir (prévention directory traversal)
-    if not os.path.abspath(file_path).startswith(os.path.abspath(js_dir)):
+    if not file_path.is_relative_to(js_dir):
         raise HTTPException(status_code=403, detail="Acces refuse")
-    if not os.path.isfile(file_path):
+    if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Fichier non trouve")
-    return FileResponse(file_path)
+    return FileResponse(str(file_path))
 
 
 @app.api_route("/favicon.svg", methods=["GET", "HEAD"])

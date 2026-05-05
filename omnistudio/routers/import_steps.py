@@ -10,6 +10,7 @@ import asyncio
 import os
 import re
 import shutil
+from pathlib import Path
 from typing import List
 
 from slugify import slugify
@@ -114,8 +115,8 @@ async def import_file(
         return api_error("INVALID_FILE", f"Le contenu du fichier ne correspond pas au format {ext}.", 400)
 
     # Sauvegarder le fichier (nom nettoyé — PRD-029)
-    upload_dir = os.path.abspath(f"data/uploads/{thread_id}")
-    os.makedirs(upload_dir, exist_ok=True)
+    upload_dir = (Path("data") / "uploads" / thread_id).resolve()
+    upload_dir.mkdir(parents=True, exist_ok=True)
 
     # Nettoyer et valider le nom de fichier
     try:
@@ -126,9 +127,9 @@ async def import_file(
     name_part, ext_part = os.path.splitext(safe_name)
     safe_name = f"{slugify(name_part, lowercase=False)}{ext_part}"
 
-    file_path = os.path.join(upload_dir, safe_name)
+    file_path = (upload_dir / safe_name).resolve()
     # Vérifier que le chemin résultant reste dans upload_dir (sécurité supplémentaire)
-    if not os.path.abspath(file_path).startswith(upload_dir):
+    if not file_path.is_relative_to(upload_dir):
         return api_error("INVALID_PATH", "Le chemin de fichier dépasse le répertoire autorisé", 403)
 
     with open(file_path, "wb") as f:
@@ -145,7 +146,7 @@ async def import_file(
     # Appeler le parser
     config = {"configurable": {"thread_id": thread_id}}
     initial_state = {
-        "source_file": os.path.abspath(file_path),
+        "source_file": str(file_path),
         "source_format": ext.lstrip("."),
         "excel_sheet": sheet,
         "steps": [],

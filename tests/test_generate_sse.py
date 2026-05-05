@@ -116,6 +116,23 @@ class TestGenerateSSE:
         assert "event: batch_start" in text or "event: progress" in text
         assert "event: done" in text
 
+    def test_generate_rejects_invalid_advanced_params(self, client, auth_headers):
+        """Les paramètres avancés hors bornes ne lancent pas la génération."""
+        resp = client.post(
+            "/api/generate",
+            json={
+                "fidelity": "quality",
+                "advanced": {
+                    "speed": 0.1,
+                    "audio_chunk_threshold": 999,
+                },
+            },
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 422
+        assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
+
     def test_generate_sse_resume_skips(self, client, auth_headers, tmp_path):
         """Resume=True skip les etapes deja dans generated_files."""
         _mock_state.values["generated_files"] = [

@@ -826,6 +826,25 @@ class TestVoicesRouter:
         data = resp.json()["data"]
         assert "voice_instruct" in data
 
+    def test_voices_explore_rejects_invalid_advanced_params(self, client, auth_headers):
+        """Les paramètres avancés hors bornes sont rejetés avant OmniVoice."""
+        resp = client.post(
+            "/api/voices/explore",
+            json={
+                "voice_instruct": "Voix douce",
+                "test_text": "Test.",
+                "advanced": {
+                    "num_step": 999,
+                    "duration": -1,
+                    "guidance_scale": 9,
+                },
+            },
+            headers=auth_headers,
+        )
+
+        assert resp.status_code == 422
+        assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
+
     def test_voices_explore_regenerate_history_and_subtitles(
         self, client, auth_headers, tmp_path, monkeypatch
     ):
@@ -1608,6 +1627,9 @@ class TestExportRouter:
         no_token = client.get("/api/export/audio/narration-complete.wav")
         invalid_tid = client.get("/api/export/audio/narration-complete.wav?token=fake&tid=bad!")
         missing = client.get(f"/api/export/audio/missing.wav?token=fake&tid={FAKE_THREAD_ID}")
+        traversal = client.get(
+            f"/api/export/audio/..%2Fsecret.wav?token=fake&tid={FAKE_THREAD_ID}"
+        )
         wav = client.get(f"/api/export/audio/narration-complete.wav?token=fake&tid={FAKE_THREAD_ID}")
         mp3 = client.get(f"/api/export/audio/narration-complete.mp3?token=fake&tid={FAKE_THREAD_ID}")
         srt = client.get(f"/api/export/audio/narration-complete.srt?token=fake&tid={FAKE_THREAD_ID}")
@@ -1615,6 +1637,7 @@ class TestExportRouter:
         assert no_token.status_code == 401
         assert invalid_tid.status_code == 400
         assert missing.status_code == 404
+        assert traversal.status_code in (403, 404)
         assert wav.status_code == 200
         assert "audio/wav" in wav.headers.get("content-type", "")
         assert mp3.status_code == 200
