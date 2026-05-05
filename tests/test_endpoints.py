@@ -121,13 +121,26 @@ def reset_mocks():
 
 
 @pytest.fixture(autouse=True)
-def mock_session_db():
+def mock_session_db(tmp_path):
     """Mock des fonctions session SQLite pour eviter les 404 SESSION_NOT_FOUND.
 
     Patch sur tous les modules qui importent ces fonctions (D6) :
     server.py, dependencies.py, et chaque routeur extrait.
     """
     import dependencies as _deps
+    from routers import sessions as _sessions_mod
+
+    # CI part d'un checkout frais sans base runtime. Les endpoints /api/session
+    # exercent volontairement SQLite : on leur donne une DB temporaire hermetique.
+    sessions_db = tmp_path / "sessions.db"
+    path_patches = [
+        patch.object(_deps, "_sessions_db_path", str(sessions_db)),
+        patch.object(_sessions_mod, "_sessions_db_path", str(sessions_db)),
+    ]
+    for p in path_patches:
+        p.start()
+    _deps._init_sessions_db()
+
     _targets = [server, _deps]
     # Ajouter dynamiquement les routeurs qui importent ces fonctions
     for mod_name in ["routers.import_steps", "routers.sessions", "routers.clean",
@@ -150,6 +163,8 @@ def mock_session_db():
         p.start()
     yield
     for p in patches:
+        p.stop()
+    for p in path_patches:
         p.stop()
 
 
@@ -715,13 +730,20 @@ class TestVoicesRouter:
         body = resp.json()
         assert body["error"]["code"] == "INVALID_NAME"
 
-    def test_delete_voice_system_protected(self, client, auth_headers):
+    def test_delete_voice_system_protected(self, client, auth_headers, monkeypatch):
         """Supprimer une voix système retourne 403 (PRD v1.5 décision 7).
 
         Lea est une voix système, non-supprimable par design. L'ownership
         check PRD-032 lève 403 VOICE_SYSTEM_PROTECTED en amont avant même
         la vérification VOICE_IN_USE.
         """
+        import routers.voices as voices_mod
+
+        monkeypatch.setattr(voices_mod, "_read_voice_meta", MagicMock(return_value={
+            "system": True,
+            "owner": None,
+        }))
+
         resp = client.delete("/api/voices/Lea", headers=auth_headers)
         assert resp.status_code == 403
         body = resp.json()
