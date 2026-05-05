@@ -281,7 +281,13 @@ class TestP4ConvertToMp3:
             b"data" + (0).to_bytes(4, "little")
         )
         mp3_path = tmp_path / "test.mp3"
-        result = convert_to_mp3(str(wav_path), str(mp3_path))
+
+        def fake_audio_tool(cmd, **kwargs):
+            Path(cmd[-1]).write_bytes(b"ID3")
+
+        with patch("core.audio.subprocess.run", side_effect=fake_audio_tool):
+            result = convert_to_mp3(str(wav_path), str(mp3_path))
+
         assert result is True
         assert mp3_path.exists()
 
