@@ -1,7 +1,7 @@
 # PRD-MIGRATION-001 : Fork OmniStudio depuis VoxStudio
 
-**Version** : 1.5
-**Statut** : Validé (prêt pour Phase 0)
+**Version** : 1.8
+**Statut** : En exploitation ; Phase 10 qualité dépôt 18/20 ouverte
 **Priorité** : P1 (projet de création)
 **Date** : 2026-04-18
 **Auteur** : Alex + Claude
@@ -12,7 +12,7 @@
 - avocat-du-diable : 7 préoccupations (3 Critique, 2 Haute, 2 Moyenne) — recoupent les 3 bloquants
 - **codex-rescue (3e avis indépendant)** : 5 points nouveaux dont 4 non couverts par les 2 précédentes revues
 
-Les 3 bloquants critiques + 5 points Codex sont tous résolus dans cette v1.5.
+Les 3 bloquants critiques + 5 points Codex sont résolus. La v1.8 ajoute la trajectoire d'industrialisation du dépôt après l'évaluation du 2026-05-05.
 
 ---
 
@@ -336,9 +336,40 @@ Ajoutée après le smoke test de Phase 8 pour corriger les écarts UX détectés
 - La Phase 9 suppose Phases 1-8 livrées (smoke test OK).
 - Le ticket RGAA ≥ 90 % est **bloquant** avant toute ouverture publique au-delà de Tailscale Funnel interne (décret n° 2019-768).
 
+### Phase 10 — Qualité dépôt 18/20 (v1.8, ouverte 2026-05-05)
+
+Déclenchée après l'évaluation globale du dépôt : **16/20**. Objectif : atteindre **18/20** sans grand refactor risqué, en privilégiant les garde-fous reproductibles.
+
+**État de départ mesuré** :
+
+- Dernier commit poussé : `beca4b6 Stabilise routage Omni et tests E2E`.
+- Services verts : Keycloak `8082`, OmniVoice `8070`, OmniStudio `7870`, Funnel public `/omni`.
+- Vérifications vertes : `scripts/monitor.sh`, `WARN_AS_ERROR=1 scripts/test-smoke.sh`, `scripts/verify-assets-prefix.sh`.
+- Tests : `548 passed / 163 skipped / 0 failed`.
+- Couverture Python : `78 %`.
+
+**Plan d'implémentation** :
+
+1. **CI reproductible** : ajouter GitHub Actions pour deps Python, tests, coverage, audit assets et smoke statique.
+2. **Hygiène Git** : retirer du suivi les artefacts d'audit `.code-audit-results/`, exclure les résultats générés et clarifier ce qui doit rester versionné.
+3. **E2E authentifiés** : documenter le compte `omni-e2e`, fournir un script de préparation non interactif et réduire les skips évitables.
+4. **Coverage ciblée** : remonter en priorité `routers/export.py`, `routers/voices.py`, `core/subtitle_client.py`, `routers/auth_routes.py`.
+5. **Complexité maintenabilité** : extraire progressivement des helpers testables depuis `tab-voices.js`, `routers/voices.py` et `core/omnivoice_client.py`.
+6. **Sécurité et dépendances** : ajouter un scan de secrets/patterns dangereux et verrouiller le build frontend pour ne plus dépendre d'un `esbuild` global.
+
+**Critères de sortie Phase 10** :
+
+- CI verte sur `main` après push.
+- `python -m pytest tests` vert en environnement frais.
+- Coverage global ≥ 82 % minimum, cible 85 %.
+- Skips E2E documentés ; aucun skip dû à une configuration inconnue ou implicite.
+- `git ls-files` ne contient plus d'artefacts runtime/audit non nécessaires.
+- `scripts/monitor.sh`, `scripts/test-smoke.sh` et `scripts/verify-assets-prefix.sh` verts.
+- Évaluation dépôt révisée ≥ 18/20.
+
 ---
 
-## Critères de validation (30 critères)
+## Critères de validation (36 critères)
 
 Inchangé v1.4 + :
 
@@ -346,6 +377,12 @@ Inchangé v1.4 + :
 |---|---------|-------|
 | **29** (amendé) | **memory_pressure macOS < 0.5** | Avec omnistudio + OmniVoice + faster-whisper simultanés, via `monitor.sh` |
 | **30** (nouveau) | **Assets statiques sous `/omni`** | 100 % des requêtes assets JS/CSS/img retournent 200 OK via Funnel |
+| **31** (nouveau v1.8) | **CI reproductible** | GitHub Actions verte sur `main` |
+| **32** (nouveau v1.8) | **Hygiène Git** | Aucun artefact runtime/audit inutile dans `git ls-files` |
+| **33** (nouveau v1.8) | **E2E authentifiés documentés** | Compte `omni-e2e` + script de préparation + skips justifiés |
+| **34** (nouveau v1.8) | **Coverage dépôt** | ≥ 82 % minimum, cible 85 % |
+| **35** (nouveau v1.8) | **Build frontend reproductible** | `esbuild` disponible via dépendance déclarée, pas seulement global |
+| **36** (nouveau v1.8) | **Score qualité dépôt** | Réévaluation finale ≥ 18/20 |
 
 Les critères 1-28 restent inchangés.
 
@@ -357,7 +394,7 @@ Inchangé v1.4. + Note : PRD-EVOLUTION-003 (auto-segmentation dialogue) ajouté 
 
 ---
 
-## Risques et mitigations (**20 risques**, v1.5 + 2)
+## Risques et mitigations (**21 risques**, v1.8)
 
 | # | Risque | Impact | Mitigation |
 |---|--------|--------|------------|
@@ -381,6 +418,7 @@ Inchangé v1.4. + Note : PRD-EVOLUTION-003 (auto-segmentation dialogue) ajouté 
 | 18 (amendé v1.5) | Charge mémoire cumulée | OOM macOS | **`memory_pressure < 0.5`, test simultanéité Phase 8** |
 | **19 (nouveau v1.5)** | **Parser multi-voix : injection XSS dans nom de voix** | **Vulnérabilité sécurité** | **Regex stricte `[a-zA-Z][a-zA-Z0-9_-]{2,49}` + 20 tests cas limites** |
 | **20 (nouveau v1.5)** | **Chunking SRT manquant** | **Subtitles illisibles sur audios longs** | **`chunk_subtitles()` avec contraintes max 3 lignes / max 8 s, test audio 10 min** |
+| **21 (nouveau v1.8)** | **Régression silencieuse hors machine locale** | **Dépôt vert localement mais cassé après pull/CI** | **GitHub Actions + dépendances déclarées + E2E documentés + coverage gate** |
 
 ---
 
@@ -527,6 +565,7 @@ Script `scripts/verify-assets-prefix.sh` parcourt `frontend/out/` et liste tous 
 
 ## Changelog du PRD
 
+- **v1.8 (2026-05-05)** : **Phase 10 qualité dépôt 18/20 ouverte** après évaluation globale à 16/20. État mesuré : commit `beca4b6` poussé sur `origin/main`, services verts (`monitor.sh`, `test-smoke.sh`, `verify-assets-prefix.sh`), tests `548 passed / 163 skipped / 0 failed`, coverage Python `78 %`. Ajout du plan CI reproductible, hygiène Git, E2E authentifiés, coverage ciblée, réduction de complexité, sécurité/dépendances. Nouveaux critères #31-#36 et risque #21.
 - **v1.7 (2026-04-20)** : **Correctifs UX/RGAA + feature Alterner les voix (commit `f722bd5`)**. (1) Onglet Assignation : bouton « Alterner les voix » (round-robin A/B strict, Voix 1 = étapes impaires, Voix 2 = paires) + bouton « Inverser » swap. Selects pré-remplis avec voix[0]/voix[1] au chargement, verrou anti-double-clic, feedback succès/erreur. (2) Onglet Voix : exclusivité mutuelle segment sélectionné ↔ textarea texte libre — sélection d'un segment vide le textarea ; saisie dans le textarea désélectionne le segment. (3) Correction SRT global : condition `req.unique_srt or req.include_subtitles` (l'init sync JS seul ne suffisait pas — le flag côté serveur n'était pas transmis). (4) Corrections RGAA 4.1.2 critère 1.3 : suppression `aria-label` sur les 6 badges `<p>.fr-badge` (attribut interdit sur `role="paragraph"`) ; label clone-audio visible (retrait `fr-sr-only` + `aria-labelledby` redondant) ; badge « Obligatoire » sur champ clone-name. (5) Runbook Keycloak créé (`documentation/md/RUNBOOK-KEYCLOAK-USERS.md`) : création comptes, policy mot de passe, mapper audience JWT. Nouveaux tests : `TestGenerateGlobalSrtCondition` (6 cas paramétrés), `TestAlternanceVoix` (3 cas e2e Playwright), `TestVoicesExclusivite` (2 cas e2e), `test_badges_etape_sans_aria_label` (1 cas ARIA).
 - **v1.6 (2026-04-19)** : **Phase 9 UX post-livraison ajoutée** suite à l'audit `/ux-checklist` parallèle sur les 6 onglets (Import, Clean, Voix, Assign, Generate, Export). Verdict initial unanime « À corriger ». P1 et P2 livrés dans 8 commits (`d372f3c` → `c085289`) : refonte Voix/Design (3 parcours + stepper), Voix/Clone (MediaRecorder + stepper + cap 30 s), modale rename, pagination Clean, tiroir preview Assign, hiérarchie boutons Generate, paramètres Export scindés, badges d'étape cross-onglets, retrait des résidus VoxQwen (sélecteurs Fidélité et Modèle 1.7B/0.6B), classifieur LLM strict calé sur `/design/attributes` (whitelist 6 catégories). Ajout des helpers `describe_instruct_fr()` et `fetch_design_attributes()`. 31 nouveaux tests anti-régression dans `tests/test_voice_helpers.py`. **Reste à faire** : audit RGAA 4.1.2 détaillé (est. 6 h, bloquant ouverture publique) + focus-visible cohérent sur composants custom (est. 2 h, WCAG 2.4.7).
 - **v1.5 (2026-04-18)** : **Intégration des 5 points Codex (3e avis indépendant)**. (1) Nouvelle **Phase 0bis — Architecture check (2 h)** : stub FastAPI sans `root_path` + audit assets sous `/omni` + Keycloak redirects + Funnel path-based. Économise 3-5 h debug Phase 3-4. (2) Critère #29 amendé : `memory_pressure < 0.5` (macOS native) au lieu de RAM < 80 %. (3) Nouvelle **Annexe M** : matrice 20 cas limites parser multi-voix dont injection XSS (regex `^[a-zA-Z][a-zA-Z0-9_-]{2,49}$`). Nouveau risque **#19** sécurité parser. (4) Nouvelle doc `ARCHITECTURE-LANGGRAPH-OMNI.md` en Phase 1 : décision Option B extension graphe. (5) Spec chunking SRT en Phase 3ter : max 3 lignes / max 8 s, par format. Nouveau risque **#20** chunking. Nouveaux tests : `test_tag_explicite.py` enrichi (20 cas), `test_assets_prefix.py`. Nouveau script `verify-assets-prefix.sh`. Nouveau RUNBOOK `RUNBOOK-DEPLOYMENT.md`. 20 risques (vs 18), 30 critères (vs 29). Estimation ~33 h → **~37 h best-case / ~52 h planifié (buffer 40 %)**. ROI positif : +4 h investis économisent 3-5 h de debug et ferment un trou de sécurité XSS.

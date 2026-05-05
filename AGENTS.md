@@ -1,7 +1,7 @@
 # AGENTS.md — omnistudio
 
 Ce fichier complète `CLAUDE.md` (protocole agent 6 blocs) et le PRD.
-**Ne pas répéter** ce qui est déjà dans `CLAUDE.md` ou dans le PRD v1.5.
+**Ne pas répéter** ce qui est déjà dans `CLAUDE.md` ou dans le PRD v1.8.
 
 ## Vue d'ensemble
 
@@ -9,6 +9,14 @@ OmniStudio — studio de production vocale branché sur OmniVoice (k2-fsa, 646 l
 Fork de voxstudio avec isolation multi-user, multi-voix par étape via tags explicites,
 sous-titres SRT, tags émotionnels, accents/dialectes, paramètres avancés.
 Auth : Keycloak JWT (realm `harmonia` partagé avec Harmonia et voxstudio, client `omnistudio`).
+
+## État courant (2026-05-05)
+
+- Dernier commit poussé : `beca4b6 Stabilise routage Omni et tests E2E`.
+- Services validés : Keycloak `8082`, OmniVoice `8070`, OmniStudio `7870`, Funnel public `/omni`.
+- Vérifications vertes : `monitor.sh`, `test-smoke.sh`, `verify-assets-prefix.sh`.
+- Tests : `548 passed, 163 skipped`, couverture Python mesurée `78 %`.
+- Évaluation dépôt : **16/20**. Objectif actif : **18/20** via PRD v1.8 Phase 10 et `todo.md`.
 
 ## Objectifs qualité (non négociables)
 
@@ -21,8 +29,9 @@ Auth : Keycloak JWT (realm `harmonia` partagé avec Harmonia et voxstudio, clien
 | Couverture 25 routes OmniVoice | 100 % (cf. PRD Annexe C et TAGS-SRT-SUBTITLES.md) |
 | Lighthouse (4 axes) | 100 % |
 | Zéro bug | 100 % |
-| Tests | 349 hérités + ~130 nouveaux, 0 FAILED |
+| Tests | Suite complète verte, 0 FAILED |
 | Mémoire cumulée | `memory_pressure < 0.5` sous charge (cf. RUNBOOK-DEPLOYMENT.md) |
+| Qualité dépôt | 18/20 cible Phase 10 : CI + hygiène Git + E2E + coverage + refactor |
 
 ## Spécificités omnistudio (vs voxstudio)
 
@@ -60,7 +69,9 @@ Voir `CLAUDE.md` (12 commandes exactes).
 | Doc | Usage |
 |-----|-------|
 | `CLAUDE.md` | Protocole agent 6 blocs |
-| `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` v1.5 | Décisions produit + plan d'exécution |
+| `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` v1.8 | Décisions produit + Phase 10 qualité dépôt 18/20 |
+| `todo.md` | Plan court terme exécutable pour atteindre 18/20 |
+| `.claude/session-context.md` | Passation pour la prochaine session |
 | `RUNBOOK-DEPLOYMENT.md` | Funnel, Keycloak, assets |
 | `documentation/md/ARCHITECTURE.md` | Architecture technique (hérité + différences omnistudio) |
 | `documentation/md/ARCHITECTURE-LANGGRAPH-OMNI.md` | Multi-voix, schéma State, parser |

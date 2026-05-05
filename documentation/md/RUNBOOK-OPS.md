@@ -4,13 +4,13 @@
 
 ### Démarrage normal
 ```bash
-./start.sh
+./scripts/start.sh
 # Ouvrir http://localhost:7870
 ```
 
 ### Démarrage supervisé (restart automatique)
 ```bash
-SUPERVISED=1 ./start.sh
+SUPERVISED=1 ./scripts/start.sh
 ```
 
 ### Démarrage manuel (composant par composant)
@@ -32,7 +32,7 @@ OmniStudio a deux modes de fonctionnement contrôlés par `OMNISTUDIO_MINIFY` :
 | Mode | Variable | Assets servis | Cache | Console navigateur |
 |------|----------|--------------|-------|-------------------|
 | **Développement** | `OMNISTUDIO_MINIFY=false` | `frontend/out/` (14 modules JS sources) | no-cache sur JS/CSS/HTML | `DÉVELOPPEMENT (sources)` |
-| **Production** | `OMNISTUDIO_MINIFY=true` (défaut de `./start.sh`) | `frontend/out-dist/` (1 bundle JS minifié) | 7 jours JS/CSS, 1 an DSFR | `PRODUCTION (minifié)` |
+| **Production** | `OMNISTUDIO_MINIFY=true` (défaut de `./scripts/start.sh`) | `frontend/out-dist/` (1 bundle JS minifié) | 7 jours JS/CSS, 1 an DSFR | `PRODUCTION (minifié)` |
 
 ### Passer en production
 
@@ -41,21 +41,21 @@ OmniStudio a deux modes de fonctionnement contrôlés par `OMNISTUDIO_MINIFY` :
 ./scripts/build-frontend.sh
 
 # 2. Démarrer en mode production
-./start.sh
+./scripts/start.sh
 ```
 
 Ou pour un serveur déjà en cours :
 
 ```bash
-./stop.sh
-OMNISTUDIO_MINIFY=true ./start.sh
+./scripts/stop.sh
+OMNISTUDIO_MINIFY=true ./scripts/start.sh
 ```
 
 ### Passer en développement
 
 ```bash
-./stop.sh
-OMNISTUDIO_MINIFY=false ./start.sh
+./scripts/stop.sh
+OMNISTUDIO_MINIFY=false ./scripts/start.sh
 ```
 
 ### Basculement rapide
@@ -67,7 +67,7 @@ OMNISTUDIO_MINIFY=false ./start.sh
 
 ### Vérifier le mode actuel
 
-- **Logs serveur** : `OmniStudio DSFR démarre sur le port 7860 — mode PRODUCTION (minifié)`
+- **Logs serveur** : `OmniStudio DSFR démarre sur le port 7870 — mode PRODUCTION (minifié)`
 - **Console navigateur** (F12) : badge `OmniStudio PRODUCTION` ou `DÉVELOPPEMENT`
 - **Modale État des services** (pied de page) : première ligne `Mode → Production` ou `Développement`
 
@@ -98,7 +98,7 @@ Les fichiers DSFR (`frontend/out/dsfr/`) sont copiés tels quels dans `out-dist/
 
 ### Arrêt normal
 ```bash
-./stop.sh
+./scripts/stop.sh
 ```
 
 ### Arrêt du superviseur
@@ -110,7 +110,7 @@ kill $(cat /tmp/omnistudio-supervisor.pid)
 
 ### Smoke test rapide
 ```bash
-./test-smoke.sh
+WARN_AS_ERROR=1 ./scripts/test-smoke.sh
 ```
 
 ### Health check
@@ -126,7 +126,7 @@ curl http://localhost:8070/health
 
 ### Tests E2E (avec serveur actif)
 ```bash
-E2E_PASSWORD=<mot_de_passe> python3 -m pytest tests/e2e/ -v
+E2E_USERNAME=omni-e2e E2E_PASSWORD=<mot_de_passe> python3 -m pytest tests/e2e/ -v
 ```
 
 ## Backup et restauration
@@ -143,9 +143,9 @@ E2E_PASSWORD=<mot_de_passe> python3 -m pytest tests/e2e/ -v
 
 ### Restaurer un backup
 ```bash
-./stop.sh
+./scripts/stop.sh
 ./scripts/restore-db.sh 20260320-0300
-./start.sh
+./scripts/start.sh
 ```
 
 ### Installer le cron backup quotidien
@@ -187,7 +187,7 @@ curl http://localhost:7870/api/health
 
 ## Troubleshooting
 
-### OmniStudio ne répond pas (port 7860)
+### OmniStudio ne répond pas (port 7870)
 1. Vérifier le processus : `lsof -i :7870`
 2. Si absent, relancer : `cd omnistudio && ./venv/bin/python3 server.py`
 3. Si présent mais ne répond pas, tuer et relancer :
@@ -215,12 +215,12 @@ curl http://localhost:7870/api/health
 Note (PRD-UX-030) : les batches sont découpés en chunks de 20 textes max pour éviter les timeouts sur voix clonées (~15s/texte). Le timeout preview est de 90s (voix clonées avec chargement lazy du modèle).
 
 ### Base de données corrompue
-1. Arrêter OmniStudio : `./stop.sh`
+1. Arrêter OmniStudio : `./scripts/stop.sh`
 2. Tester la DB : `sqlite3 omnistudio/data/omnistudio_checkpoint.db "PRAGMA integrity_check;"`
 3. Si "ok", problème ailleurs
 4. Si erreur, restaurer depuis backup :
    `./scripts/restore-db.sh <date>`
-5. Relancer : `./start.sh`
+5. Relancer : `./scripts/start.sh`
 
 ### Disque plein
 1. Vérifier : `df -h /`

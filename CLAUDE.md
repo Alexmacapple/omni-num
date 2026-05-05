@@ -4,7 +4,7 @@
 
 - Fork de `voice-num/voxstudio/` branché sur OmniVoice (k2-fsa, 646 langues) au lieu de VoxQwen.
 - Stack : FastAPI + DSFR 1.11.2 + LangGraph + OmniVoice (port 8070) + Keycloak (client `omnistudio`, realm `harmonia`).
-- Statut : Phases 1-8 livrées, UX P1+P2 livrée 19-20 avril (commits `d372f3c` → `c085289`). Phase 9 ouverte, reste RGAA détaillé + focus-visible (voir PRD v1.6). PRD-MIGRATION-001 v1.6.
+- Statut : Phases 1-9 largement livrées, prod minifiée active, Funnel `/omni` OK, commit `beca4b6` poussé sur `origin/main`. Évaluation dépôt 2026-05-05 : **16/20** ; objectif PRD v1.8 : **18/20** via CI, hygiène Git, E2E authentifiés, coverage ciblée et refactor progressif.
 
 ## Comment je travaille
 
@@ -12,13 +12,13 @@
 - **Phase 0bis obligatoire** avant code applicatif : stub FastAPI sans `root_path` + audit assets + Keycloak + Funnel. Critères de sortie stricts.
 - Commits en français, conventionnels. Pas de `--no-verify`.
 - Contenu > 30 lignes → fichier, jamais le chat.
-- Suivi : PRD comme source de vérité, `todo.md` pour session, `/sauvegarde-git` inter-session.
+- Suivi : PRD comme source de vérité, `todo.md` pour le plan court terme, `.claude/session-context.md` pour la passation inter-session.
 
 ## Playbooks
 
-- **Démarrer le site** : `./start.sh` (lance Keycloak + OmniVoice:8070 + seed si vide + omnistudio:7870).
-- **Arrêter** : `./stop.sh`.
-- **Smoke test** : `./test-smoke.sh`.
+- **Démarrer le site** : `./scripts/start.sh` (lance Keycloak + OmniVoice:8070 + seed si vide + omnistudio:7870).
+- **Arrêter** : `./scripts/stop.sh`.
+- **Smoke test** : `WARN_AS_ERROR=1 ./scripts/test-smoke.sh`.
 - **Build prod** : `OMNISTUDIO_MINIFY=true ./scripts/build-frontend.sh`.
 - **Audit assets sous `/omni`** : `./scripts/verify-assets-prefix.sh`.
 - **Exposer en 5G** : `tailscale funnel --https=443 --set-path=/omni http://localhost:7870`.
@@ -53,17 +53,20 @@
 - Avant un changement touchant `graph/` ou `routers/` : lire `documentation/md/ARCHITECTURE-LANGGRAPH-OMNI.md` — décision Option B (extension du graphe voxstudio).
 - Avant d'ajouter un test : vérifier qu'il n'existe pas déjà dans `tests/` (27 fichiers adaptés + 14 nouveaux).
 - Alex dit « commit et push » = faire exactement ça, rien de plus.
+- Alex dit « viser 18/20 » = suivre `todo.md` + PRD v1.8 Phase 10, en commençant par CI reproductible et hygiène Git avant les refactors.
 - Fin de session : `/sauvegarde-git` puis clôture, pas de suggestions de tâches suivantes.
 
 ## Références
 
 | Ressource | Fichier |
 |-----------|---------|
-| PRD actif | `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` (v1.5, 30 critères, 20 risques) |
-| Architecture LangGraph | `documentation/md/ARCHITECTURE-LANGGRAPH-OMNI.md` *(à créer en Phase 1)* |
-| Déploiement (Funnel, root_path) | `RUNBOOK-DEPLOYMENT.md` *(à créer en Phase 0bis)* |
-| Ops (start, backup, monitor) | `documentation/md/RUNBOOK-OPS.md` *(à créer en Phase 1)* |
-| Tags, SRT, accents, dialectes | `documentation/md/TAGS-SRT-SUBTITLES.md` *(à créer en Phase 1)* |
+| PRD actif | `PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md` (v1.8, Phase 10 qualité dépôt 18/20) |
+| Plan court terme | `todo.md` |
+| Passation session | `.claude/session-context.md` |
+| Architecture LangGraph | `documentation/md/ARCHITECTURE-LANGGRAPH-OMNI.md` |
+| Déploiement (Funnel, root_path) | `RUNBOOK-DEPLOYMENT.md` |
+| Ops (start, backup, monitor) | `documentation/md/RUNBOOK-OPS.md` |
+| Tags, SRT, accents, dialectes | `documentation/md/TAGS-SRT-SUBTITLES.md` |
 | Parser multi-voix (20 cas limites) | PRD Annexe M |
 | Catalogue 6 voix système | `data/voices-system/` + `data/default_voices.json` |
 | Dépôt front | `git@github.com:Alexmacapple/omni-num.git` |

@@ -10,8 +10,8 @@ Fork de [voice-num/voxstudio](https://github.com/Alexmacapple/voice-num) avec **
 
 ```bash
 # 1. Lancer tous les services (Keycloak + OmniVoice + omnistudio)
-#    Par défaut, ./start.sh sert le build production minifié.
-./start.sh
+#    Par défaut, scripts/start.sh sert le build production minifié.
+./scripts/start.sh
 
 # 2. Ouvrir
 open http://localhost:7870              # local
@@ -20,9 +20,9 @@ open https://mac-studio-alex.tail0fc408.ts.net/omni/   # public 5G
 # 3. Login Keycloak (compte existant réutilisé du realm harmonia)
 ```
 
-Arrêter : `./stop.sh`. Smoke test : `./test-smoke.sh`.
+Arrêter : `./scripts/stop.sh`. Smoke test : `WARN_AS_ERROR=1 ./scripts/test-smoke.sh`.
 
-Mode développement front : `OMNISTUDIO_MINIFY=false ./start.sh`.
+Mode développement front : `OMNISTUDIO_MINIFY=false ./scripts/start.sh`.
 
 ---
 
@@ -53,7 +53,7 @@ Exposition publique : `https://mac-studio-alex.tail0fc408.ts.net/omni/` (Funnel 
 
 ## Différenciation vs voxstudio
 
-10 axes de supériorité (cf. PRD v1.5) :
+10 axes de supériorité (cf. PRD v1.8) :
 
 - Isolation multi-user des voix custom (owner + system)
 - Multi-voix par étape via tags `[voice:X]`
@@ -74,7 +74,8 @@ Exposition publique : `https://mac-studio-alex.tail0fc408.ts.net/omni/` (Funnel 
 |-----|-------|
 | [`CLAUDE.md`](./CLAUDE.md) | Protocole agent (6 blocs) |
 | [`AGENTS.md`](./AGENTS.md) | Directives spécifiques omnistudio |
-| [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](./PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md) v1.5 | PRD complet (17 décisions, 30 critères, 20 risques) |
+| [`PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md`](./PRD/PRD-MIGRATION-001-FORK-OMNISTUDIO.md) v1.8 | PRD complet + Phase 10 qualité dépôt 18/20 |
+| [`todo.md`](./todo.md) | Plan court terme pour passer le dépôt de 16/20 à 18/20 |
 | [`RUNBOOK-DEPLOYMENT.md`](./RUNBOOK-DEPLOYMENT.md) | Funnel, Keycloak, `<base href>`, troubleshooting |
 | [`documentation/md/ARCHITECTURE.md`](./documentation/md/ARCHITECTURE.md) | Architecture technique couche par couche |
 | [`documentation/md/ARCHITECTURE-LANGGRAPH-OMNI.md`](./documentation/md/ARCHITECTURE-LANGGRAPH-OMNI.md) | Multi-voix, parser, schéma State |
@@ -95,14 +96,14 @@ Exposition publique : `https://mac-studio-alex.tail0fc408.ts.net/omni/` (Funnel 
 
 ## Qualité
 
-- Lighthouse 100/100 (4 axes)
-- 0 violation axe-core (RGAA 2.1 AA)
-- 349 tests unitaires + 25 E2E + 81 Gherkin + 130 nouveaux (voice_ownership, multi_voix, session_stale, tags, accents, subtitles, transcribe, auth_hybride_audio)
-- Couverture ≥ 85 %
-- `memory_pressure < 0.5` sous charge
+- Services opérationnels : Keycloak, OmniVoice, OmniStudio et Funnel `/omni` validés par `scripts/monitor.sh`.
+- Smoke test production : `scripts/test-smoke.sh` vert, assets minifiés servis en HTTP 200.
+- Tests automatisés : **548 passed / 163 skipped / 0 failed**.
+- Couverture Python mesurée : **78 %** ; cible Phase 10 : **82-85 %** avec focus `routers/export.py`, `routers/voices.py`, `core/subtitle_client.py`, `routers/auth_routes.py`.
+- Évaluation dépôt 2026-05-05 : **16/20** ; cible PRD v1.8 : **18/20**.
 
 ---
 
-**Version** : v1.0 (en cours d'implémentation — Phase 1 Documentation terminée le 2026-04-18)
-**PRD de référence** : v1.5
+**Version** : v1.0 en exploitation locale/publique Funnel
+**PRD de référence** : v1.8
 **Licence** : MIT (alignée avec voice-num)
