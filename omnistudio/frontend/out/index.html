@@ -47,7 +47,7 @@
                                 </p>
                             </div>
                             <div class="fr-header__navbar">
-                                <button class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="header-menu-modal" aria-haspopup="menu" id="header-menu-btn" title="Menu">
+                                <button class="fr-btn--menu fr-btn" type="button" data-fr-opened="false" aria-controls="header-menu-modal" aria-haspopup="menu" id="header-menu-btn" title="Menu">
                                     Menu
                                 </button>
                             </div>
@@ -67,6 +67,7 @@
                                             aria-controls="fr-theme-modal" data-fr-opened="false"
                                             type="button" title="Paramètres d'affichage"
                                             aria-label="Paramètres d'affichage">
+                                        <span class="fr-sr-only">Paramètres d'affichage</span>
                                     </button>
                                 </li>
                                 <li class="fr-ml-2w ov-header-separator">
@@ -81,7 +82,9 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <button id="ov-logout-btn" class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-logout-box-r-line" type="button" title="Se déconnecter" aria-label="Se déconnecter"></button>
+                                    <button id="ov-logout-btn" class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline fr-icon-logout-box-r-line" type="button" title="Se déconnecter" aria-label="Se déconnecter">
+                                        <span class="fr-sr-only">Se déconnecter</span>
+                                    </button>
                                 </li>
                             </ul>
                         </div>
@@ -92,7 +95,7 @@
         <!-- Menu mobile (requis par DSFR header-links JS pour copier les tools-links) -->
         <div class="fr-header__menu fr-modal" id="header-menu-modal" role="dialog" aria-modal="true" aria-label="Menu de navigation">
             <div class="fr-container">
-                <button class="fr-link--close fr-link" aria-controls="header-menu-modal">Fermer</button>
+                <button class="fr-link--close fr-link" type="button" aria-controls="header-menu-modal">Fermer</button>
                 <div class="fr-header__menu-links"></div>
             </div>
         </div>
@@ -136,7 +139,7 @@
             <section id="ov-app-screen" hidden aria-label="Application OmniStudio">
 
                 <!-- Fil d'Ariane DSFR -->
-                <nav role="navigation" class="fr-breadcrumb fr-mb-2w" aria-label="vous êtes ici :">
+                <nav class="fr-breadcrumb fr-mb-2w" aria-label="vous êtes ici :">
                     <button class="fr-breadcrumb__button" aria-expanded="false" aria-controls="ov-breadcrumb">Voir le fil d'Ariane</button>
                     <div class="fr-collapse" id="ov-breadcrumb">
                         <ol class="fr-breadcrumb__list" id="ov-breadcrumb-list">
@@ -464,12 +467,9 @@
                                     </div>
                                 </div>
                                 <div class="fr-col-auto">
-                                    <div class="fr-input-group">
-                                        <label class="fr-label" aria-hidden="true">&nbsp;</label>
-                                        <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-add-line" id="clean-add-btn" type="button">
-                                            Ajouter
-                                        </button>
-                                    </div>
+                                    <button class="fr-btn fr-btn--secondary fr-btn--sm fr-btn--icon-left fr-icon-add-line" id="clean-add-btn" type="button">
+                                        Ajouter
+                                    </button>
                                 </div>
                             </div>
                         </fieldset>
@@ -521,7 +521,7 @@
                                 <p class="fr-hint-text fr-mb-1w">
                                     Cliquez un tag pour l'insérer à la position du curseur dans le dernier segment édité.
                                 </p>
-                                <div id="clean-tag-palette" aria-label="Palette de marqueurs émotionnels"></div>
+                                <div id="clean-tag-palette" role="group" aria-label="Palette de marqueurs émotionnels"></div>
                             </div>
                         </div>
 
@@ -549,7 +549,7 @@
                                 <tbody></tbody>
                             </table>
                         </div>
-                        <nav role="navigation" class="fr-pagination fr-mb-3w" aria-label="Pagination du tableau des segments" id="clean-pagination" hidden>
+                        <nav class="fr-pagination fr-mb-3w" aria-label="Pagination du tableau des segments" id="clean-pagination" hidden>
                             <p class="fr-text--sm fr-text--mention-grey fr-mb-1w" id="clean-pagination-summary"></p>
                             <ul class="fr-pagination__list" id="clean-pagination-list"></ul>
                         </nav>
@@ -1033,7 +1033,7 @@
                                         </h4>
                                         <div class="fr-collapse" id="design-tag-palette-panel">
                                             <p class="fr-hint-text fr-mb-1w">Cliquez un tag pour l'insérer dans le texte de test. La voix intercalera un rire, un soupir, etc. à cet endroit précis lors de la régénération.</p>
-                                            <div id="design-tag-palette" aria-label="Palette de marqueurs émotionnels design"></div>
+                                            <div id="design-tag-palette" role="group" aria-label="Palette de marqueurs émotionnels design"></div>
                                         </div>
                                     </div>
 
@@ -1214,7 +1214,7 @@
                                     <div class="fr-col-12 fr-col-md-6">
                                         <div class="fr-input-group">
                                             <label class="fr-label" for="clone-name">
-                                                Nom de la voix <span class="fr-badge fr-badge--sm fr-badge--error" aria-label="champ obligatoire">Obligatoire</span>
+                                                Nom de la voix <span class="fr-badge fr-badge--sm fr-badge--error">Obligatoire</span>
                                                 <span class="fr-hint-text">3-50 caractères, minuscules non accentuées, chiffres et tirets</span>
                                             </label>
                                             <input class="fr-input" type="text" id="clone-name"
@@ -1940,13 +1940,13 @@
     </main>
 
     <!-- Paramètres d'affichage DSFR (composant natif fr-display) -->
-    <div id="fr-theme-modal" class="fr-modal" role="dialog" aria-labelledby="fr-theme-modal-title">
+    <div id="fr-theme-modal" class="fr-modal" role="dialog" aria-modal="true" aria-labelledby="fr-theme-modal-title">
         <div class="fr-container fr-container--fluid fr-container-md">
             <div class="fr-grid-row fr-grid-row--center">
                 <div class="fr-col-12 fr-col-md-6 fr-col-lg-4">
                     <div class="fr-modal__body">
                         <div class="fr-modal__header">
-                            <button class="fr-btn--close fr-btn" aria-controls="fr-theme-modal" title="Fermer">Fermer</button>
+                            <button class="fr-btn--close fr-btn" type="button" aria-controls="fr-theme-modal" title="Fermer">Fermer</button>
                         </div>
                         <div class="fr-modal__content">
                             <h2 id="fr-theme-modal-title" class="fr-modal__title">
@@ -2047,12 +2047,12 @@
 
     <!-- Modale etat des services -->
     <!-- Modale confirmation nouvelle session -->
-    <dialog id="ov-new-session-dialog" class="ov-dialog" role="alertdialog" aria-modal="true" aria-labelledby="ov-new-session-title">
+    <dialog id="ov-new-session-dialog" class="ov-dialog" role="alertdialog" aria-modal="true" aria-labelledby="ov-new-session-title" aria-describedby="ov-new-session-desc">
         <div class="fr-container fr-py-4w">
             <div class="fr-grid-row fr-grid-row--center">
                 <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
                     <h2 id="ov-new-session-title" class="fr-h5 fr-mb-2w">Nouvelle session</h2>
-                    <p class="fr-text--sm fr-mb-3w">
+                    <p class="fr-text--sm fr-mb-3w" id="ov-new-session-desc">
                         Les données de la session en cours (étapes importées, assignations,
                         fichiers générés) ne seront plus accessibles.
                     </p>
@@ -2068,7 +2068,7 @@
     </dialog>
 
     <!-- Modale etat des services -->
-    <dialog id="ov-status-dialog" class="ov-dialog" role="dialog" aria-modal="true" aria-labelledby="ov-status-title">
+    <dialog id="ov-status-dialog" class="ov-dialog" aria-modal="true" aria-labelledby="ov-status-title">
         <div class="fr-container fr-py-4w">
             <div class="fr-grid-row fr-grid-row--center">
                 <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
@@ -2077,7 +2077,7 @@
                             <h2 id="ov-status-title" class="fr-h4 fr-mb-0">État des services</h2>
                         </div>
                         <div class="fr-col-auto">
-                            <button class="fr-btn--close fr-btn" id="ov-status-close" type="button" aria-label="Fermer la fenêtre État des services">Fermer</button>
+                            <button class="fr-btn--close fr-btn" id="ov-status-close" type="button" aria-controls="ov-status-dialog" aria-label="Fermer la fenêtre État des services">Fermer</button>
                         </div>
                     </div>
                     <div id="ov-status-content" class="fr-mb-2w" aria-live="polite" aria-atomic="true">
@@ -2092,7 +2092,7 @@
     <div id="ov-toast-container" role="status" aria-live="polite" aria-label="Notifications"></div>
 
     <!-- Modale de renommage des voix custom (remplace prompt() natif) -->
-    <dialog id="rename-voice-modal" class="ov-modal" aria-labelledby="rename-modal-title">
+    <dialog id="rename-voice-modal" class="ov-modal" aria-modal="true" aria-labelledby="rename-modal-title">
         <form method="dialog" class="ov-modal__body">
             <h2 id="rename-modal-title" class="fr-h5 fr-mb-1w">Renommer la voix</h2>
             <p class="fr-text--sm fr-mb-2w">

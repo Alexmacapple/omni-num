@@ -9,7 +9,7 @@
 ## Comment je travaille
 
 - **TDD strict** : documentation d'abord (Phase 1), tests rouges (Phase 2), code pour passer au vert (Phase 3+), ajustements après.
-- **Phase 0bis obligatoire** avant code applicatif : stub FastAPI `root_path="/omni"` + audit assets + Keycloak + Funnel. Critères de sortie stricts.
+- **Phase 0bis obligatoire** avant code applicatif : stub FastAPI sans `root_path` + audit assets + Keycloak + Funnel. Critères de sortie stricts.
 - Commits en français, conventionnels. Pas de `--no-verify`.
 - Contenu > 30 lignes → fichier, jamais le chat.
 - Suivi : PRD comme source de vérité, `todo.md` pour session, `/sauvegarde-git` inter-session.

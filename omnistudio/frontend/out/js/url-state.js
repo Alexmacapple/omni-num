@@ -35,6 +35,7 @@ const SUB_HASH_TO_TAB = {
 const SUB_TAB_TO_HASH = Object.fromEntries(
     Object.entries(SUB_HASH_TO_TAB).map(([h, t]) => [t, h])
 );
+const SUB_TAB_IDS = Object.values(SUB_HASH_TO_TAB);
 
 const DEFAULT_HASH = 'import';
 const DEFAULT_SUB_HASH = 'library';
@@ -84,12 +85,26 @@ function buildHash(tabId, subTabId) {
     return base;
 }
 
-/** Active un sous-onglet DSFR par clic. */
+function switchSubTab(subTabId) {
+    if (!SUB_TAB_IDS.includes(subTabId)) return;
+    SUB_TAB_IDS.forEach(tid => {
+        const btn = document.getElementById(tid);
+        if (!btn) return;
+        const selected = tid === subTabId;
+        btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+        btn.setAttribute('tabindex', selected ? '0' : '-1');
+        const panelId = btn.getAttribute('aria-controls');
+        const panel = panelId ? document.getElementById(panelId) : null;
+        if (panel) {
+            panel.classList.toggle('fr-tabs__panel--selected', selected);
+        }
+    });
+    syncSubTabToHash(subTabId);
+}
+
+/** Active un sous-onglet voix sans dépendre du listener DSFR. */
 function activateSubTab(subTabId) {
-    const btn = document.getElementById(subTabId);
-    if (btn && btn.getAttribute('aria-selected') !== 'true') {
-        btn.click();
-    }
+    switchSubTab(subTabId);
 }
 
 /** Retourne l'ID du sous-onglet voix actuellement actif. */
@@ -195,6 +210,18 @@ function observeSubTabs() {
     subTabs.forEach(t => observer.observe(t, { attributes: true, attributeFilter: ['aria-selected'] }));
 }
 
+function initSubTabClickNav() {
+    const subTabs = document.querySelectorAll('#panel-voices .fr-tabs__tab');
+    subTabs.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            btn.focus();
+            switchSubTab(btn.id);
+        }, true);
+    });
+}
+
 /**
  * Met a jour le fil d'Ariane DSFR en fonction de l'onglet actif.
  */
@@ -236,6 +263,7 @@ export function initUrlState() {
 
     // Observer les sous-onglets voix
     observeSubTabs();
+    initSubTabClickNav();
 
     // Etat initial : si un hash est present, naviguer ; sinon activer le defaut
     const parsed = parseHash();

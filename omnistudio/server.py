@@ -135,6 +135,22 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class OmniPrefixMiddleware(BaseHTTPMiddleware):
+    """Accepte les requêtes publiques sous /omni sans configurer root_path.
+
+    Certains proxies strippent /omni avant d'appeler le backend, d'autres non.
+    L'application reste montée à la racine en interne, mais sait normaliser le
+    préfixe public quand il arrive jusqu'à FastAPI.
+    """
+    async def dispatch(self, request, call_next):
+        path = request.scope.get("path", "")
+        if path == "/omni":
+            request.scope["path"] = "/"
+        elif path.startswith("/omni/"):
+            request.scope["path"] = path[5:]
+        return await call_next(request)
+
+
 # ---------------------------------------------------------------------------
 # Lifespan (PRD-012)
 # ---------------------------------------------------------------------------
@@ -163,7 +179,7 @@ app = FastAPI(
     description="API de production vocale — Import, préparation, design voix, génération TTS et export.",
     version="1.0.0",
     lifespan=lifespan,
-    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", "/omni"),
+    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", ""),
 )
 app.state.limiter = limiter
 app.add_exception_handler(Exception, _unhandled_exception_handler)
@@ -181,6 +197,7 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=500)
+app.add_middleware(OmniPrefixMiddleware)
 register_all(app)
 
 # Repertoire frontend actif (PRD-028)
@@ -208,6 +225,15 @@ async def serve_js(path: str):
     # Sécurité : vérifier que file_path est bien dans js_dir (prévention directory traversal)
     if not os.path.abspath(file_path).startswith(os.path.abspath(js_dir)):
         raise HTTPException(status_code=403, detail="Acces refuse")
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="Fichier non trouve")
+    return FileResponse(file_path)
+
+
+@app.api_route("/favicon.svg", methods=["GET", "HEAD"])
+async def serve_favicon():
+    """Servir le favicon racine référence par index.html."""
+    file_path = os.path.join(ACTIVE_FRONTEND, "favicon.svg")
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="Fichier non trouve")
     return FileResponse(file_path)

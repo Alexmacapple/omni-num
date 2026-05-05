@@ -51,15 +51,37 @@ fi
 
 # 3. Assets statiques (cause historique des 404 sous /omni)
 echo "  --- Assets ---"
-# Localhost direct (sans /omni/ prefix car root_path retiré)
-for path in "" "js/app.js" "css/app.css" "dsfr/dsfr/dsfr.min.css"; do
+INDEX_HTML=$(curl -s "http://localhost:${OMNISTUDIO_PORT}/" || true)
+ASSET_PATHS=$(
+    INDEX_HTML="$INDEX_HTML" python3 - <<'PY'
+import os
+import re
+
+html = os.environ.get("INDEX_HTML", "")
+paths = []
+for attr in ("href", "src"):
+    paths.extend(re.findall(rf'{attr}="([^"#?]+)(?:\?[^"]*)?"', html))
+for path in paths:
+    if path.startswith(("http://", "https://", "data:", "#")):
+        continue
+    if path.endswith((".css", ".js", ".svg", ".woff", ".woff2")):
+        print(path.lstrip("/"))
+PY
+)
+
+if [ -z "$ASSET_PATHS" ]; then
+    warn "aucun asset détecté dans index.html"
+fi
+
+while IFS= read -r path; do
+    [ -z "$path" ] && continue
     code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${OMNISTUDIO_PORT}/${path}")
     if [ "$code" = "200" ]; then
         ok "/${path} HTTP ${code}"
     else
         warn "/${path} HTTP ${code}"
     fi
-done
+done <<< "$ASSET_PATHS"
 
 # 4. Voix système seedées
 echo "  --- Voix système ---"

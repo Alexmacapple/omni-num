@@ -53,18 +53,35 @@ submit_launchctl_job() {
     launchctl submit -l "$label" -o "$log_file" -e "$log_file" -- /bin/bash -lc "$command"
 }
 
-# 0. Clé Albert (LLM pour voice design) — source unique : config-claude/credentials.json
-CRED_FILE="$HOME/Claude/config-claude/credentials.json"
-if [ -z "${OPENAI_API_KEY:-}" ] && [ -f "$CRED_FILE" ]; then
+# 0. Clé Albert (LLM pour voice design)
+# Source historique : config-claude/credentials.json. Fallback : workflow/credentials.json
+# si config-claude pointe vers un ancien emplacement.
+if [ -z "${OPENAI_API_KEY:-}" ]; then
+    CRED_FILE=""
+    for candidate in \
+        "$HOME/Claude/config-claude/credentials.json" \
+        "$HOME/Claude/workflow/credentials.json" \
+        "$HOME/Claude/workflow/council-credentials.json"
+    do
+        if [ -f "$candidate" ]; then
+            CRED_FILE="$candidate"
+            break
+        fi
+    done
+fi
+if [ -z "${OPENAI_API_KEY:-}" ] && [ -n "${CRED_FILE:-}" ]; then
     ALBERT_KEY=$("$VENV_PY" -c "import json; d=json.load(open('$CRED_FILE')); print(d.get('albert',{}).get('api_key',''))" 2>/dev/null || echo "")
     if [ -n "$ALBERT_KEY" ]; then
         export OPENAI_API_KEY="$ALBERT_KEY"
-        echo "Clé Albert chargée depuis credentials.json."
+        echo "Clé Albert chargée depuis $CRED_FILE."
     else
-        echo "ATTENTION : clé Albert absente dans credentials.json (section 'albert.api_key')."
+        echo "ATTENTION : clé Albert absente dans $CRED_FILE (section 'albert.api_key')."
         echo "  → voice design retombera sur normalize_voice_instruct (fallback parser, sans LLM)."
         echo "  → ajouter la clé avec : jq '.albert.api_key = \"sk-...\"' credentials.json"
     fi
+elif [ -z "${OPENAI_API_KEY:-}" ]; then
+    echo "ATTENTION : aucun fichier credentials.json trouvé pour charger la clé Albert."
+    echo "  → voice design retombera sur normalize_voice_instruct (fallback parser, sans LLM)."
 fi
 
 # 1. Keycloak (Docker partagé avec voice-num / harmonia)

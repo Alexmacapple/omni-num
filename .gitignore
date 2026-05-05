@@ -32,6 +32,15 @@ data/models/
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/*.db-journal
+data/*.sqlite
+data/*.sqlite-*
+omnistudio/data/*.db
+omnistudio/data/*.db-wal
+omnistudio/data/*.db-shm
+omnistudio/data/*.db-journal
+omnistudio/data/*.sqlite
+omnistudio/data/*.sqlite-*
 
 # Audio généré et exports temporaires
 voice/

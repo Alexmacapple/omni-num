@@ -7,7 +7,7 @@
 // les navigateurs continuent d'utiliser l'ancien tab-voices.js même si
 // app.js est re-téléchargé (les imports statiques sont cachés indépendamment).
 const _v = '20260420b';
-import { isAuthenticated, login, logout, scheduleTokenRefresh, onAuthStateChange } from './auth.js?v=20260420b';
+import { isAuthenticated, getAccessToken, login, logout, scheduleTokenRefresh, onAuthStateChange } from './auth.js?v=20260420b';
 import { apiGet, apiPost } from './api-client.js?v=20260420b';
 import { escapeHtml } from './dom-utils.js?v=20260420b';
 import { showError, showSuccess, showWarning } from './toast.js?v=20260420b';
@@ -199,6 +199,19 @@ function observeTabChanges() {
 
 }
 
+function initTabClickNav() {
+    TAB_IDS.forEach(tabId => {
+        const btn = document.getElementById(tabId);
+        if (!btn) return;
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            btn.focus();
+            switchTab(tabId);
+        }, true);
+    });
+}
+
 // Ecouter les demandes de navigation
 eventBus.on('navigate', (tabId) => {
     switchTab(tabId);
@@ -266,6 +279,9 @@ function showApp() {
         // du DSFR JS dès la première interaction clavier (suppression du délai 200ms
         // qui laissait une fenêtre aveugle où ArrowRight ne switchait pas le panel).
         observeTabChanges();
+
+        // Navigation souris/tactile tablist principale
+        initTabClickNav();
 
         // Navigation clavier tablist principale
         initTabKeyboardNav();
@@ -441,19 +457,20 @@ async function checkStatus() {
         // Etat generation TTS (semaphore)
         let generationHtml = '';
         try {
-            // Normaliser URL: fetch() n'honore pas <base href> pour URLs avec paramètres
-            // Utiliser apiRequest() du api-client qui applique _normalizeUrl()
-            const ttsResp = await fetch('api/tts/status', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('ov_access_token') || ''}` }
-            });
-            if (ttsResp.ok) {
-                const ttsJson = await ttsResp.json();
-                const gen = ttsJson.data?.generation;
-                if (gen) {
-                    const busyBadge = gen.busy
-                        ? `<span class="fr-badge fr-badge--sm fr-badge--warning fr-badge--no-icon">En cours (${escapeHtml(String(gen.elapsed_seconds))}s) — ${escapeHtml(gen.endpoint || '')}</span>`
-                        : badge(true, 'Disponible');
-                    generationHtml = `<tr><th scope="row" class="fr-pl-2w">Moteur génération</th><td>${busyBadge}</td></tr>`;
+            const accessToken = getAccessToken();
+            if (accessToken) {
+                const ttsResp = await fetch('api/tts/status', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (ttsResp.ok) {
+                    const ttsJson = await ttsResp.json();
+                    const gen = ttsJson.data?.generation;
+                    if (gen) {
+                        const busyBadge = gen.busy
+                            ? `<span class="fr-badge fr-badge--sm fr-badge--warning fr-badge--no-icon">En cours (${escapeHtml(String(gen.elapsed_seconds))}s) — ${escapeHtml(gen.endpoint || '')}</span>`
+                            : badge(true, 'Disponible');
+                        generationHtml = `<tr><th scope="row" class="fr-pl-2w">Moteur génération</th><td>${busyBadge}</td></tr>`;
+                    }
                 }
             }
         } catch { /* OmniVoice injoignable, deja gere */ }

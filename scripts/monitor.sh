@@ -25,9 +25,27 @@ check() {
     return 1
 }
 
+check_json() {
+    local name=$1
+    local url=$2
+    local timeout=${3:-8}
+    local tmp code preview
+    tmp=$(mktemp)
+    code=$(curl -sS -o "$tmp" -w "%{http_code}" --max-time "$timeout" "$url" 2>/dev/null || true)
+    if [ "$code" = "200" ] && python3 -m json.tool "$tmp" >/dev/null 2>&1; then
+        echo "$LOG_PREFIX OK   $name ($url)"
+        rm -f "$tmp"
+        return 0
+    fi
+    preview=$(tr '\n' ' ' < "$tmp" | cut -c1-80)
+    echo "$LOG_PREFIX FAIL $name ($url) → HTTP $code, réponse non JSON: $preview"
+    rm -f "$tmp"
+    return 1
+}
+
 ERRORS=0
 
-check "Keycloak          " "http://localhost:8082/" 5 || ERRORS=$((ERRORS+1))
+check "Keycloak realm    " "http://localhost:8082/realms/harmonia" 5 || ERRORS=$((ERRORS+1))
 check "OmniVoice health  " "http://localhost:8070/" 5 || ERRORS=$((ERRORS+1))
 check "OmniVoice /models  " "http://localhost:8070/models/status" 5 || ERRORS=$((ERRORS+1))
 check "omnistudio /health " "http://localhost:7870/api/health" 10 || ERRORS=$((ERRORS+1))
@@ -61,6 +79,12 @@ if command -v tailscale >/dev/null 2>&1; then
     else
         echo "$LOG_PREFIX WARN Funnel /omni absent (exposition 5G KO)"
     fi
+fi
+
+# Vérifie le symptôme "Unexpected token '<'" : l'API publique doit renvoyer du JSON, pas index.html.
+PUBLIC_OMNI_BASE_URL="${PUBLIC_OMNI_BASE_URL:-https://omni.appmiweb.com/omni}"
+if [ -n "$PUBLIC_OMNI_BASE_URL" ]; then
+    check_json "Public /api/status" "${PUBLIC_OMNI_BASE_URL%/}/api/status" 10 || ERRORS=$((ERRORS+1))
 fi
 
 echo ""

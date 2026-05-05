@@ -1,6 +1,6 @@
 """Stub FastAPI — Phase 0bis Architecture check.
 
-Minimal pour valider root_path="/omni" + assets statiques + Funnel path-based.
+Minimal pour valider FastAPI sans root_path + assets statiques + Funnel path-based.
 Ne fait rien d'applicatif, juste servir un index.html + 1 CSS + 1 JS pour prouver
 que tout est correctement routé sous le préfixe /omni.
 
@@ -22,14 +22,14 @@ from fastapi.responses import FileResponse
 # Tailscale Funnel avec --set-path=/omni STRIPPE le préfixe avant de forwarder
 # au backend. La cohérence cross-contexte (local direct OU via Funnel) est
 # assurée par <base href="/omni/"> dans l'index.html, qui normalise tous les
-# liens côté navigateur. root_path peut être défini mais FastAPI voit les
-# requêtes à la racine de toute façon.
+# liens côté navigateur. root_path doit rester vide : FastAPI voit les requêtes
+# à la racine quand le proxy strippe /omni.
 app = FastAPI(
     title="OmniStudio Stub",
     description="Stub Phase 0bis — architecture check",
     docs_url="/docs",
     redoc_url="/redoc",
-    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", "/omni"),
+    root_path=os.getenv("OMNISTUDIO_ROOT_PATH", ""),
 )
 
 _BASE = os.path.dirname(os.path.abspath(__file__))

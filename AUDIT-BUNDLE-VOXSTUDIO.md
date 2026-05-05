@@ -154,7 +154,7 @@ Code correspondant (`omnistudio/frontend/out/index.html:1188`) : `<input type="h
 - ✓ Utilise esbuild (minification moderne)
 - ✓ Smoke test cherche "VoxStudio" residus dans output (ligne 81)
 - ✓ Produit bundle `out-dist/` avec cache busting
-- ✓ Paths relatifs pour Funnel root_path="/omni/"
+- ✓ Paths relatifs pour Funnel `/omni/` sans `root_path` FastAPI
 
 **Verdict** : Correct. Smoke test est excellente.
 
@@ -196,4 +196,3 @@ Code correspondant (`omnistudio/frontend/out/index.html:1188`) : `<input type="h
 - **Risques** : Aucun bloquant. 2 typos mineurs (cosmétique).
 
 **Prêt production** : Oui. Recommandation : corriger 2 typos docs avant Phase 9 pour cohérence.
-
