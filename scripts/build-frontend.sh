@@ -17,9 +17,10 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 SRC_DIR="$ROOT_DIR/omnistudio/frontend/out"
 DIST_DIR="$ROOT_DIR/omnistudio/frontend/out-dist"
 
-# Verifier esbuild
-if ! command -v esbuild >/dev/null 2>&1; then
-    echo "[ERREUR] esbuild non installe. Installer avec : npm install -g esbuild"
+# Verifier esbuild local, verrouille par package-lock.json.
+ESBUILD_BIN="$ROOT_DIR/node_modules/.bin/esbuild"
+if [ ! -x "$ESBUILD_BIN" ]; then
+    echo "[ERREUR] esbuild local introuvable. Lancez : npm ci"
     exit 1
 fi
 
@@ -34,7 +35,7 @@ mkdir -p "$DIST_DIR/js" "$DIST_DIR/css"
 
 # 1. Bundle + minify JS
 echo "  JS : bundling + minification..."
-esbuild "$SRC_DIR/js/app.js" \
+"$ESBUILD_BIN" "$SRC_DIR/js/app.js" \
     --bundle \
     --minify \
     --sourcemap \
@@ -43,7 +44,7 @@ esbuild "$SRC_DIR/js/app.js" \
 
 # 2. Minify CSS (pas de --bundle : app.css n'a aucun @import)
 echo "  CSS : minification..."
-esbuild "$SRC_DIR/css/app.css" \
+"$ESBUILD_BIN" "$SRC_DIR/css/app.css" \
     --minify \
     --sourcemap \
     --outfile="$DIST_DIR/css/app.min.css"
@@ -78,16 +79,18 @@ sed \
 grep -q '<base href="/omni/">' "$DIST_DIR/index.html" || { echo "[ERREUR] <base href=\"/omni/\"> absent du build prod"; exit 1; }
 grep -q 'href="css/app.min.css?v=' "$DIST_DIR/index.html" || { echo "[ERREUR] index.html n'utilise pas app.min.css"; exit 1; }
 grep -q 'src="js/app.min.js?v=' "$DIST_DIR/index.html" || { echo "[ERREUR] index.html n'utilise pas app.min.js"; exit 1; }
-if rg -q 'VoxStudio|vx_access_token|vx-login-screen|data-vx-active' "$DIST_DIR/index.html" "$DIST_DIR/css/app.min.css" "$DIST_DIR/js/app.min.js"; then
+if grep -Eq 'VoxStudio|vx_access_token|vx-login-screen|data-vx-active' "$DIST_DIR/index.html" "$DIST_DIR/css/app.min.css" "$DIST_DIR/js/app.min.js"; then
     echo "[ERREUR] Bundle prod stale detecte (restes VoxStudio)"
     exit 1
 fi
 
 JS_SIZE=$(wc -c < "$DIST_DIR/js/app.min.js")
 CSS_SIZE=$(wc -c < "$DIST_DIR/css/app.min.css")
+JS_KB=$(( (JS_SIZE + 1023) / 1024 ))
+CSS_KB=$(( (CSS_SIZE + 1023) / 1024 ))
 echo ""
 echo "  Build termine :"
-echo "    JS  : $(echo "$JS_SIZE / 1024" | bc) Ko ($(wc -c < "$SRC_DIR/js/app.js" | xargs echo) -> $JS_SIZE octets)"
-echo "    CSS : $(echo "$CSS_SIZE / 1024" | bc) Ko"
+echo "    JS  : ${JS_KB} Ko ($(wc -c < "$SRC_DIR/js/app.js" | xargs echo) -> $JS_SIZE octets)"
+echo "    CSS : ${CSS_KB} Ko"
 echo "    Hash : $HASH"
 echo "    Dist : $DIST_DIR"

@@ -47,8 +47,20 @@ jobs:
             -r tests/requirements-test.txt \
             -r tests/e2e/requirements.txt
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
       - name: Static smoke
         run: ./scripts/ci-static-smoke.sh
+
+      - name: Build frontend
+        run: npm run build
 
       - name: Audit asset prefixes
         run: ./scripts/verify-assets-prefix.sh

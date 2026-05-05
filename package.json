@@ -1,0 +1,16 @@
+{
+  "name": "omnistudio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OmniStudio frontend build toolchain.",
+  "scripts": {
+    "build": "./scripts/build-frontend.sh",
+    "build:frontend": "./scripts/build-frontend.sh"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

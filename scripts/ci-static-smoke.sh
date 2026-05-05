@@ -8,6 +8,9 @@ FRONTEND_DIR="$ROOT_DIR/omnistudio/frontend/out"
 INDEX_HTML="$FRONTEND_DIR/index.html"
 SERVER_PY="$ROOT_DIR/omnistudio/server.py"
 STUB_SERVER_PY="$ROOT_DIR/omnistudio/stub_server.py"
+PACKAGE_JSON="$ROOT_DIR/package.json"
+PACKAGE_LOCK="$ROOT_DIR/package-lock.json"
+BUILD_FRONTEND="$ROOT_DIR/scripts/build-frontend.sh"
 
 ok() { echo "  [OK] $*"; }
 fail() { echo "  [FAIL] $*"; exit 1; }
@@ -17,6 +20,8 @@ echo "=== Smoke statique CI OmniStudio ==="
 [ -f "$INDEX_HTML" ] || fail "index.html absent: $INDEX_HTML"
 [ -f "$SERVER_PY" ] || fail "server.py absent: $SERVER_PY"
 [ -f "$STUB_SERVER_PY" ] || fail "stub_server.py absent: $STUB_SERVER_PY"
+[ -f "$PACKAGE_JSON" ] || fail "package.json absent: $PACKAGE_JSON"
+[ -f "$PACKAGE_LOCK" ] || fail "package-lock.json absent: $PACKAGE_LOCK"
 
 grep -q '<base href="/omni/">' "$INDEX_HTML" \
     && ok '<base href="/omni/"> present' \
@@ -37,6 +42,37 @@ for app_file in "$SERVER_PY" "$STUB_SERVER_PY"; do
     fi
 done
 ok 'FastAPI root_path force a vide'
+
+PACKAGE_JSON="$PACKAGE_JSON" PACKAGE_LOCK="$PACKAGE_LOCK" python3 - <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+package = json.loads(Path(os.environ["PACKAGE_JSON"]).read_text(encoding="utf-8"))
+lock = json.loads(Path(os.environ["PACKAGE_LOCK"]).read_text(encoding="utf-8"))
+
+declared = package.get("devDependencies", {}).get("esbuild")
+locked = lock.get("packages", {}).get("node_modules/esbuild", {}).get("version")
+if not declared:
+    print("esbuild absent de devDependencies", file=sys.stderr)
+    sys.exit(1)
+if not locked:
+    print("esbuild absent du package-lock.json", file=sys.stderr)
+    sys.exit(1)
+if declared != locked:
+    print(f"Version esbuild non verrouillee: package.json={declared}, lock={locked}", file=sys.stderr)
+    sys.exit(1)
+
+print(f"  [OK] esbuild local verrouille ({locked})")
+PY
+
+if grep -Eq '^[[:space:]]*(command -v esbuild|esbuild[[:space:]])|npm install -g esbuild' "$BUILD_FRONTEND"; then
+    fail "build-frontend.sh ne doit pas dépendre d'un esbuild global"
+fi
+grep -q 'node_modules/.bin/esbuild' "$BUILD_FRONTEND" \
+    && ok 'build frontend utilise esbuild local' \
+    || fail 'build-frontend.sh ne référence pas node_modules/.bin/esbuild'
 
 FRONTEND_DIR="$FRONTEND_DIR" python3 - <<'PY'
 import os
