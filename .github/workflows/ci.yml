@@ -57,7 +57,7 @@ jobs:
           cache: npm
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Static smoke
         run: ./scripts/ci-static-smoke.sh
